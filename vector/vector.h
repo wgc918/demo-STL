@@ -10,6 +10,16 @@
 namespace demo
 {
     template <typename T, typename Allocator = std::allocator<T>>
+    class vector;
+
+    template <typename T, typename Allocator>
+    bool operator==(const vector<T, Allocator> &lhs,
+                    const vector<T, Allocator> &rhs);
+    template <typename T, typename Allocator>
+    bool operator!=(const vector<T, Allocator> &lhs,
+                    const vector<T, Allocator> &rhs);
+
+    template <typename T, typename Allocator>
     class vector
     {
     public:
@@ -66,17 +76,17 @@ namespace demo
             // 获取底层指针（供reverse_iterator使用）
             pointer base() const noexcept;
 
-            friend class const_iterator;
-
         private:
             pointer m_ptr;
+
+            friend class const_iterator;
         };
 
         class const_iterator
         {
         public:
             using iterator_category = std::random_access_iterator_tag;
-            using value_type = typename vector::value_type;
+            using value_type = const typename vector::value_type;
             using reference = const typename vector::value_type &;
             using pointer = const typename vector::value_type *;
             using difference_type = typename vector::difference_type;
@@ -197,7 +207,7 @@ namespace demo
         template <typename... Args>
         reference emplace_back(Args &&...args);
         void pop_back();
-        void resize(size_type size, value_type val = value_type());
+        void resize(size_type size, const_reference val = value_type());
         void swap(vector &other);
 
     private:
@@ -207,14 +217,11 @@ namespace demo
         Allocator m_allocator;
 
         using alloc_traits = std::allocator_traits<allocator_type>;
+        friend bool operator!= <>(const vector<T, Allocator> &lhs,
+                                  const vector<T, Allocator> &rhs);
+        friend bool operator== <>(const vector<T, Allocator> &lhs,
+                                  const vector<T, Allocator> &rhs);
     };
-
-    template <class T, class Alloc>
-    bool operator==(const vector<T, Alloc> &lhs,
-                    const vector<T, Alloc> &rhs);
-    template <class T, class Alloc>
-    bool operator!=(const vector<T, Alloc> &lhs,
-                    const vector<T, Alloc> &rhs);
 
     // ------------------------------ iterator 实现 ------------------------------
     template <typename T, typename Allocator>
@@ -230,81 +237,98 @@ namespace demo
     }
 
     template <typename T, typename Allocator>
-    inline typename vector<T, Allocator>::reference vector<T, Allocator>::iterator::operator*() const noexcept
+    inline typename vector<T, Allocator>::reference vector<T, Allocator>::iterator::
+    operator*() const noexcept
     {
         return *m_ptr;
     }
 
     template <typename T, typename Allocator>
-    inline typename vector<T, Allocator>::pointer vector<T, Allocator>::iterator::operator->() const noexcept
+    inline typename vector<T, Allocator>::pointer vector<T, Allocator>::iterator::
+    operator->() const noexcept
     {
         return m_ptr;
     }
 
     template <typename T, typename Allocator>
-    inline typename vector<T, Allocator>::reference vector<T, Allocator>::iterator::operator[](difference_type n) const
+    inline typename vector<T, Allocator>::reference vector<T, Allocator>::iterator::
+    operator[](difference_type n) const
     {
         return m_ptr[n];
     }
 
     template <typename T, typename Allocator>
-    inline typename vector<T, Allocator>::iterator &vector<T, Allocator>::iterator::operator++() noexcept
+    inline typename vector<T, Allocator>::iterator &vector<T, Allocator>::iterator::
+    operator++() noexcept
     {
-        m_ptr++;
+        if (m_ptr != nullptr)
+            m_ptr++;
         return *this;
     }
 
     template <typename T, typename Allocator>
-    inline typename vector<T, Allocator>::iterator vector<T, Allocator>::iterator::operator++(int) noexcept
+    inline typename vector<T, Allocator>::iterator vector<T, Allocator>::iterator::
+    operator++(int) noexcept
     {
         iterator temp(m_ptr);
-        m_ptr++;
+        if (m_ptr != nullptr)
+            m_ptr++;
         return temp;
     }
 
     template <typename T, typename Allocator>
-    inline typename vector<T, Allocator>::iterator &vector<T, Allocator>::iterator::operator--() noexcept
+    inline typename vector<T, Allocator>::iterator &vector<T, Allocator>::iterator::
+    operator--() noexcept
     {
         m_ptr--;
         return *this;
     }
 
     template <typename T, typename Allocator>
-    inline typename vector<T, Allocator>::iterator vector<T, Allocator>::iterator::operator--(int) noexcept
+    inline typename vector<T, Allocator>::iterator vector<T, Allocator>::iterator::
+    operator--(int) noexcept
     {
         iterator temp(m_ptr);
-        m_ptr--;
+        if (m_ptr != nullptr)
+            m_ptr--;
         return temp;
     }
 
     template <typename T, typename Allocator>
-    inline typename vector<T, Allocator>::iterator vector<T, Allocator>::iterator::operator+(difference_type n) const noexcept
+    inline typename vector<T, Allocator>::iterator vector<T, Allocator>::iterator::
+    operator+(difference_type n) const noexcept
     {
         return iterator(m_ptr + n);
     }
 
     template <typename T, typename Allocator>
-    inline typename vector<T, Allocator>::iterator vector<T, Allocator>::iterator::operator-(difference_type n) const noexcept
+    inline typename vector<T, Allocator>::iterator vector<T, Allocator>::iterator::
+    operator-(difference_type n) const noexcept
     {
         return iterator(m_ptr - n);
     }
 
     template <typename T, typename Allocator>
-    inline typename vector<T, Allocator>::iterator &vector<T, Allocator>::iterator::operator+=(difference_type n) noexcept
+    inline typename vector<T, Allocator>::iterator &vector<T, Allocator>::iterator::
+    operator+=(difference_type n) noexcept
     {
-        m_ptr += n;
+        if (m_ptr != nullptr)
+            m_ptr += n;
         return *this;
     }
 
     template <typename T, typename Allocator>
-    inline typename vector<T, Allocator>::iterator &vector<T, Allocator>::iterator::operator-=(difference_type n) noexcept
+    inline typename vector<T, Allocator>::iterator &vector<T, Allocator>::iterator::
+    operator-=(difference_type n) noexcept
     {
-        m_ptr -= n;
+        if (m_ptr != nullptr)
+            m_ptr -= n;
         return *this;
     }
 
     template <typename T, typename Allocator>
-    inline typename vector<T, Allocator>::difference_type vector<T, Allocator>::iterator::operator-(const iterator &other) const noexcept
+    inline typename vector<T, Allocator>::difference_type vector<T, Allocator>::iterator::
+    operator-(const iterator &other) const noexcept
     {
         return static_cast<difference_type>(m_ptr - other.m_ptr);
     }
@@ -346,7 +370,8 @@ namespace demo
     }
 
     template <typename T, typename Allocator>
-    inline typename vector<T, Allocator>::pointer vector<T, Allocator>::iterator::base() const noexcept
+    inline typename vector<T, Allocator>::pointer vector<T, Allocator>::iterator::
+        base() const noexcept
     {
         return m_ptr;
     }
@@ -371,81 +396,99 @@ namespace demo
     }
 
     template <typename T, typename Allocator>
-    inline typename vector<T, Allocator>::const_reference vector<T, Allocator>::const_iterator::operator*() const noexcept
+    inline typename vector<T, Allocator>::const_reference vector<T, Allocator>::
+        const_iterator::operator*() const noexcept
     {
         return *m_ptr;
     }
 
     template <typename T, typename Allocator>
-    inline typename vector<T, Allocator>::const_pointer vector<T, Allocator>::const_iterator::operator->() const noexcept
+    inline typename vector<T, Allocator>::const_pointer vector<T, Allocator>::
+        const_iterator::operator->() const noexcept
     {
         return m_ptr;
     }
 
     template <typename T, typename Allocator>
-    inline typename vector<T, Allocator>::const_reference vector<T, Allocator>::const_iterator::operator[](difference_type offset) const
+    inline typename vector<T, Allocator>::const_reference vector<T, Allocator>::
+        const_iterator::operator[](difference_type offset) const
     {
         return m_ptr[offset];
     }
 
     template <typename T, typename Allocator>
-    inline typename vector<T, Allocator>::const_iterator &vector<T, Allocator>::const_iterator::operator++() noexcept
+    inline typename vector<T, Allocator>::const_iterator &vector<T, Allocator>::
+        const_iterator::operator++() noexcept
     {
-        m_ptr++;
+        if (m_ptr != nullptr)
+            m_ptr++;
         return *this;
     }
 
     template <typename T, typename Allocator>
-    inline typename vector<T, Allocator>::const_iterator vector<T, Allocator>::const_iterator::operator++(int) noexcept
+    inline typename vector<T, Allocator>::const_iterator vector<T, Allocator>::
+        const_iterator::operator++(int) noexcept
     {
         const_iterator temp(m_ptr);
-        m_ptr++;
+        if (m_ptr != nullptr)
+            m_ptr++;
         return temp;
     }
 
     template <typename T, typename Allocator>
-    inline typename vector<T, Allocator>::const_iterator &vector<T, Allocator>::const_iterator::operator--() noexcept
+    inline typename vector<T, Allocator>::const_iterator &vector<T, Allocator>::
+        const_iterator::operator--() noexcept
     {
-        m_ptr--;
+        if (m_ptr != nullptr)
+            m_ptr--;
         return *this;
     }
 
     template <typename T, typename Allocator>
-    inline typename vector<T, Allocator>::const_iterator vector<T, Allocator>::const_iterator::operator--(int) noexcept
+    inline typename vector<T, Allocator>::const_iterator vector<T, Allocator>::
+        const_iterator::operator--(int) noexcept
     {
         const_iterator temp(m_ptr);
-        m_ptr--;
+        if (m_ptr != nullptr)
+            m_ptr--;
         return temp;
     }
 
     template <typename T, typename Allocator>
-    inline typename vector<T, Allocator>::const_iterator vector<T, Allocator>::const_iterator::operator+(difference_type offset) const noexcept
+    inline typename vector<T, Allocator>::const_iterator vector<T, Allocator>::
+        const_iterator::operator+(difference_type offset) const noexcept
     {
         return const_iterator(m_ptr + offset);
     }
 
     template <typename T, typename Allocator>
-    inline typename vector<T, Allocator>::const_iterator vector<T, Allocator>::const_iterator::operator-(difference_type offset) const noexcept
+    inline typename vector<T, Allocator>::const_iterator vector<T, Allocator>::
+        const_iterator::operator-(difference_type offset) const noexcept
     {
         return const_iterator(m_ptr - offset);
     }
 
     template <typename T, typename Allocator>
-    inline typename vector<T, Allocator>::const_iterator &vector<T, Allocator>::const_iterator::operator+=(difference_type offset) noexcept
+    inline typename vector<T, Allocator>::const_iterator &vector<T, Allocator>::
+        const_iterator::operator+=(difference_type offset) noexcept
     {
-        m_ptr += offset;
+        if (m_ptr != nullptr)
+            m_ptr += offset;
         return *this;
     }
 
     template <typename T, typename Allocator>
-    inline typename vector<T, Allocator>::const_iterator &vector<T, Allocator>::const_iterator::operator-=(difference_type offset) noexcept
+    inline typename vector<T, Allocator>::const_iterator &vector<T, Allocator>::
+        const_iterator::operator-=(difference_type offset) noexcept
     {
-        m_ptr -= offset;
+        if (m_ptr != nullptr)
+            m_ptr -= offset;
         return *this;
     }
 
     template <typename T, typename Allocator>
-    inline typename vector<T, Allocator>::difference_type vector<T, Allocator>::const_iterator::operator-(const const_iterator &other) const noexcept
+    inline typename vector<T, Allocator>::difference_type vector<T, Allocator>::
+        const_iterator::operator-(const const_iterator &other) const noexcept
     {
         return static_cast<difference_type>(m_ptr - other.m_ptr);
     }
@@ -499,7 +542,8 @@ namespace demo
     }
 
     template <typename T, typename Allocator>
-    inline typename vector<T, Allocator>::pointer vector<T, Allocator>::const_iterator::base() const noexcept
+    inline typename vector<T, Allocator>::pointer vector<T, Allocator>::const_iterator::
+        base() const noexcept
     {
         return m_ptr;
     }
@@ -507,14 +551,22 @@ namespace demo
     // ------------------------------ vector 核心实现 ------------------------------
     template <typename T, typename Allocator>
     inline vector<T, Allocator>::vector()
-        : m_data(nullptr), m_size(0), m_capacity(0), m_allocator(Allocator())
+        : m_data(nullptr), m_size(0), m_capacity(0), m_allocator()
     {
     }
 
     template <typename T, typename Allocator>
     inline demo::vector<T, Allocator>::vector(size_type size)
-        : m_data(alloc_traits::allocate(m_allocator, size)), m_size(size), m_capacity(size)
     {
+        if (size > max_size())
+        {
+            throw std::length_error("forward_list count exceeds max_size");
+        }
+
+        m_data = alloc_traits::allocate(m_allocator, size);
+        m_size = size;
+        m_capacity = size;
+
         for (size_type i = 0; i < m_size; i++)
         {
             alloc_traits::construct(m_allocator, m_data + i, value_type());
@@ -523,8 +575,16 @@ namespace demo
 
     template <typename T, typename Allocator>
     inline vector<T, Allocator>::vector(size_type size, const_reference val)
-        : m_data(alloc_traits::allocate(m_allocator, size)), m_size(size), m_capacity(size)
     {
+        if (size > max_size())
+        {
+            throw std::length_error("forward_list count exceeds max_size");
+        }
+
+        m_data = alloc_traits::allocate(m_allocator, size);
+        m_size = size;
+        m_capacity = size;
+
         for (size_t i = 0; i < m_size; i++)
         {
             alloc_traits::construct(m_allocator, m_data + i, val);
@@ -643,7 +703,8 @@ namespace demo
 
     template <typename T, typename Allocator>
     inline vector<T, Allocator>::vector(vector &&other) noexcept
-        : m_data(other.m_data), m_size(other.m_size), m_capacity(other.m_capacity)
+        : m_data(other.m_data), m_size(other.m_size), m_capacity(other.m_capacity),
+          m_allocator(std::move(other.m_allocator))
     {
         other.m_data = nullptr;
         other.m_size = 0;
@@ -662,6 +723,7 @@ namespace demo
         m_data = other.m_data;
         m_size = other.m_size;
         m_capacity = other.m_capacity;
+        m_allocator == std::move(other.m_allocator);
 
         other.m_data = nullptr;
         other.m_size = 0;
@@ -753,7 +815,8 @@ namespace demo
     }
 
     template <typename T, typename Allocator>
-    inline typename vector<T, Allocator>::reference vector<T, Allocator>::at(size_type index)
+    inline typename vector<T, Allocator>::reference vector<T, Allocator>::
+        at(size_type index)
     {
         if (index >= m_size)
             throw std::out_of_range("vector::at: index out of range.");
@@ -762,7 +825,8 @@ namespace demo
     }
 
     template <typename T, typename Allocator>
-    inline typename vector<T, Allocator>::const_reference vector<T, Allocator>::at(size_type index) const
+    inline typename vector<T, Allocator>::const_reference vector<T, Allocator>::
+        at(size_type index) const
     {
         if (index >= m_size)
             throw std::out_of_range("vector::at: index out of range.");
@@ -771,13 +835,15 @@ namespace demo
     }
 
     template <typename T, typename Allocator>
-    inline typename vector<T, Allocator>::reference vector<T, Allocator>::operator[](size_type index)
+    inline typename vector<T, Allocator>::reference vector<T, Allocator>::
+    operator[](size_type index)
     {
         return m_data[index];
     }
 
     template <typename T, typename Allocator>
-    inline typename vector<T, Allocator>::const_reference vector<T, Allocator>::operator[](size_type index) const
+    inline typename vector<T, Allocator>::const_reference vector<T, Allocator>::
+    operator[](size_type index) const
     {
         return m_data[index]; // []不做越界检查
     }
@@ -1165,7 +1231,8 @@ namespace demo
 
     template <typename T, typename Allocator>
     template <typename InputIt>
-    inline typename vector<T, Allocator>::iterator vector<T, Allocator>::insert(const_iterator pos, InputIt first, InputIt last)
+    inline typename vector<T, Allocator>::iterator vector<T, Allocator>::
+        insert(const_iterator pos, InputIt first, InputIt last)
     {
         if (first == last)
             return iterator(const_cast<pointer>(pos.operator->()));
@@ -1193,7 +1260,8 @@ namespace demo
             {
                 for (size_type i = m_size + count - 1; i >= static_cast<size_type>(diff) + count; i--)
                 {
-                    alloc_traits::construct(m_allocator, m_data + i, std::move_if_noexcept(m_data[i - count]));
+                    alloc_traits::construct(m_allocator, m_data + i,
+                                            std::move_if_noexcept(m_data[i - count]));
                     moved_count++;
                     alloc_traits::destroy(m_allocator, m_data + i - count);
                 }
@@ -1204,7 +1272,8 @@ namespace demo
                 for (size_type i = 0; i < moved_count; ++i)
                 {
                     size_type idx = m_size + count - 1 - i;
-                    alloc_traits::construct(m_allocator, m_data + idx - count, std::move_if_noexcept(m_data[idx]));
+                    alloc_traits::construct(m_allocator, m_data + idx - count,
+                                            std::move_if_noexcept(m_data[idx]));
                     alloc_traits::destroy(m_allocator, m_data + idx);
                 }
                 throw;
@@ -1232,7 +1301,8 @@ namespace demo
                 {
                     for (size_type i = m_size; i > cur_diff; i--)
                     {
-                        alloc_traits::construct(m_allocator, m_data + i, std::move_if_noexcept(m_data[i - 1]));
+                        alloc_traits::construct(m_allocator, m_data + i,
+                                                std::move_if_noexcept(m_data[i - 1]));
                         moved_count++;
                         alloc_traits::destroy(m_allocator, m_data + i - 1);
                     }
@@ -1243,7 +1313,8 @@ namespace demo
                     for (size_type i = 0; i < moved_count; ++i)
                     {
                         size_type idx = m_size - i;
-                        alloc_traits::construct(m_allocator, m_data + idx - 1, std::move_if_noexcept(m_data[idx]));
+                        alloc_traits::construct(m_allocator, m_data + idx - 1,
+                                                std::move_if_noexcept(m_data[idx]));
                         alloc_traits::destroy(m_allocator, m_data + idx);
                     }
                     throw;
@@ -1278,7 +1349,8 @@ namespace demo
         {
             for (size_type i = m_size; i > static_cast<size_type>(diff); i--)
             {
-                alloc_traits::construct(m_allocator, m_data + i, std::move_if_noexcept(m_data[i - 1]));
+                alloc_traits::construct(m_allocator, m_data + i,
+                                        std::move_if_noexcept(m_data[i - 1]));
                 moved_count++;
                 alloc_traits::destroy(m_allocator, m_data + i - 1);
             }
@@ -1289,7 +1361,8 @@ namespace demo
             for (size_type i = 0; i < moved_count; ++i)
             {
                 size_type idx = m_size - i;
-                alloc_traits::construct(m_allocator, m_data + idx - 1, std::move_if_noexcept(m_data[idx]));
+                alloc_traits::construct(m_allocator, m_data + idx - 1,
+                                        std::move_if_noexcept(m_data[idx]));
                 alloc_traits::destroy(m_allocator, m_data + idx);
             }
             throw;
@@ -1401,7 +1474,7 @@ namespace demo
     }
 
     template <typename T, typename Allocator>
-    inline void vector<T, Allocator>::resize(size_type size, value_type val)
+    inline void vector<T, Allocator>::resize(size_type size, const_reference val)
     {
         if (m_size == size)
             return;
@@ -1436,8 +1509,8 @@ namespace demo
         swap(m_allocator, other.m_allocator);
     }
 
-    template <class T, class Alloc>
-    bool operator==(const vector<T, Alloc> &lhs, const vector<T, Alloc> &rhs)
+    template <typename T, typename Allocator>
+    bool operator==(const vector<T, Allocator> &lhs, const vector<T, Allocator> &rhs)
     {
         if (lhs.size() != rhs.size())
             return false;
@@ -1451,8 +1524,8 @@ namespace demo
         return true;
     }
 
-    template <class T, class Alloc>
-    bool operator!=(const vector<T, Alloc> &lhs, const vector<T, Alloc> &rhs)
+    template <typename T, typename Allocator>
+    bool operator!=(const vector<T, Allocator> &lhs, const vector<T, Allocator> &rhs)
     {
         return !operator==(lhs, rhs);
     }
