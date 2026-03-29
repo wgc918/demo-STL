@@ -6,6 +6,7 @@
 #include <sstream>      // 用于forward_list_to_string
 #include "forward_list.h"
 
+
 // 工具1：对比两个forward_list的所有元素（逐元素校验）
 template <typename T>
 bool forward_list_equals(const demo::forward_list<T> &actual, const std::forward_list<T> &expected)
@@ -18,6 +19,8 @@ bool forward_list_equals(const demo::forward_list<T> &actual, const std::forward
         if (*it_actual != *it_expected)
             return false;
     }
+
+    
 
     // 检查是否都到达末尾
     return (it_actual == actual.end() && it_expected == expected.end());
