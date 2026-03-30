@@ -98,17 +98,17 @@ namespace demo
             explicit const_iterator(iterator it) noexcept;
             const_iterator(const const_iterator &other) noexcept;
 
-            //解引用
+            // 解引用
             reference operator*() const noexcept;
             pointer operator->() const noexcept;
 
-            //自增/自减
+            // 自增/自减
             const_iterator &operator++() noexcept;
             const_iterator operator++(int) noexcept;
             const_iterator &operator--() noexcept;
             const_iterator operator--(int) noexcept;
 
-            //比较
+            // 比较
             bool operator==(const const_iterator other) const noexcept;
             bool operator!=(const const_iterator other) const noexcept;
             bool operator==(const iterator other) const noexcept;
@@ -117,6 +117,10 @@ namespace demo
         private:
             Node *m_ptr;
         };
+
+        // 使用标准库的反向迭代器适配器
+        using reverse_iterator = std::reverse_iterator<iterator>;
+        using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
     public:
         explicit list();
@@ -143,8 +147,78 @@ namespace demo
         reference back();
         const_reference back() const;
 
-        //迭代器
-        
+        // 迭代器
+        iterator begin();
+        const_iterator begin() const;
+        const_iterator cbegin() const noexcept;
+        iterator end();
+        const_iterator end() const;
+        const_iterator cend() const noexcept;
+        reverse_iterator rbegin();
+        const_reverse_iterator rbegin() const;
+        const_reverse_iterator crbegin() const noexcept;
+        reverse_iterator rend();
+        const_reverse_iterator rend() const;
+        const_reverse_iterator crend() const noexcept;
+
+        // 容量
+        bool empty() const;
+        size_type size() const noexcept;
+        size_type max() const;
+
+        // 修改器
+        void clear();
+        iterator insert(const_iterator pos, const_reference value);
+        iterator insert(const_iterator pos, value_type &&value);
+        iterator insert(const_iterator pos, size_type count, const_reference value);
+        template <typename InputIt>
+        iterator insert(const_iterator pos, InputIt first, InputIt last);
+        iterator insert(const_iterator pos, std::initializer_list<value_type> ilist);
+        template <typename... Args>
+        iterator emplace(const_iterator pos, Args &&...args);
+        iterator erase(iterator pos);
+        iterator erase(const_iterator pos);
+        iterator erase(iterator first, iterator last);
+        iterator erase(const_iterator first, const_iterator last);
+        void push_back(const_reference value);
+        void push_back(value_type &&value);
+        template <typename... Args>
+        reference empalce_back(Args &&...args);
+        void pop_back();
+        void push_front(const_reference value);
+        void push_front(value_type &&value);
+        template <typename... Args>
+        reference emplace_front(Args &&...argrs);
+        void pop_front();
+        void resize(size_type count);
+        void resize(size_type count, const_reference value);
+        void swap(list<T, Allocator> &other) noexcept;
+
+        // 操作
+        void merge(list<T, Allocator> &other);
+        void merge(list<T, Allocator> &&other);
+        template <typename Compare>
+        void merge(list<T, Allocator> &other, Compare comp);
+        template <typename Compare>
+        void merge(list<T, Allocator> &&other, Compare comp);
+        void splice(const_iterator pos, list<T, Allocator> &other);
+        void splice(const_iterator pos, list<T, Allocator> &&other);
+        void splice(const_iterator pos, list &other, const_iterator it);
+        void splice(const_iterator pos, list &&other, const_iterator it);
+        void splice(const_iterator pos, list &other,
+                    const_iterator first, const_iterator last);
+        void splice(const_iterator pos, list &&other,
+                    const_iterator first, const_iterator last);
+        size_type remove(const T &value);
+        template <class UnaryPredicate>
+        size_type remove_if(UnaryPredicate p);
+        void reverse();
+        size_type unique();
+        template <class BinaryPredicate>
+        size_type unique(BinaryPredicate p);
+        void sort();
+        template <class Compare>
+        void sort(Compare comp);
 
     private:
         using node_allocator = typename std::allocator_traits<Allocator>::template rebind_alloc<Node>;

@@ -47,7 +47,9 @@
     "istream": "cpp",
     "ostream": "cpp",
     "sstream": "cpp",
-    "streambuf": "cpp"
+    "streambuf": "cpp",
+    "list": "cpp",
+    "forward_list": "cpp"
   },
   "C_Cpp_Runner.cCompilerPath": "gcc",
   "C_Cpp_Runner.cppCompilerPath": "g++",
