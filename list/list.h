@@ -221,11 +221,612 @@ namespace demo
         void sort(Compare comp);
 
     private:
-        using node_allocator = typename std::allocator_traits<Allocator>::template rebind_alloc<Node>;
+        using node_allocator = typename std::allocator_traits<
+            Allocator>::template rebind_alloc<Node>;
 
         Node *m_head;
         node_allocator m_node_alloc;
 
         using alloc_traits = std::allocator_traits<node_allocator>;
     };
+
+    //------------------- iterator 实现 -------------------------------
+    template <typename T, typename Allocator>
+    inline list<T, Allocator>::iterator::iterator() noexcept
+        : m_ptr(nullptr)
+    {
+    }
+
+    template <typename T, typename Allocator>
+    inline list<T, Allocator>::iterator::iterator(Node *ptr) noexcept
+        : m_ptr(ptr)
+    {
+    }
+
+    template <typename T, typename Allocator>
+    inline list<T, Allocator>::iterator::iterator(const iterator &
+                                                      other) noexcept
+        : m_ptr(other.m_ptr)
+    {
+    }
+
+    // 解引用操作
+    template <typename T, typename Allocator>
+    inline typename list<T, Allocator>::iterator::reference
+    list<T, Allocator>::iterator::operator*() const noexcept
+    {
+        // c++标准库判空吗？？
+        return m_ptr->val;
+    }
+
+    template <typename T, typename Allocator>
+    inline typename list<T, Allocator>::iterator::pointer
+    list<T, Allocator>::iterator::operator->() const noexcept
+    {
+        return &m_ptr->val;
+    }
+
+    // 自增/自减
+    template <typename T, typename Allocator>
+    inline typename list<T, Allocator>::iterator &
+    list<T, Allocator>::iterator::operator++() noexcept
+    {
+        if (m_ptr != nullptr)
+            m_ptr = m_ptr->next;
+        return *this;
+    }
+
+    template <typename T, typename Allocator>
+    inline typename list<T, Allocator>::iterator list<T, Allocator>::
+        iterator::operator++(int) noexcept
+    {
+        iterator temp(m_ptr);
+        if (m_ptr != nullptr)
+            m_ptr = m_ptr->next;
+        return temp;
+    }
+
+    template <typename T, typename Allocator>
+    inline typename list<T, Allocator>::iterator &
+    list<T, Allocator>::iterator::operator--() noexcept
+    {
+        if (m_ptr != nullptr)
+            m_ptr = m_ptr->prev;
+        return *this;
+    }
+    template <typename T, typename Allocator>
+    inline typename list<T, Allocator>::iterator
+    list<T, Allocator>::iterator::operator--(int) noexcept
+    {
+        iterator temp(m_ptr);
+        if (m_ptr != nullptr)
+            m_ptr = m_ptr->prev;
+        return temp;
+    }
+
+    // 比较
+    template <typename T, typename Allocator>
+    inline bool list<T, Allocator>::iterator::
+    operator==(const iterator other) const noexcept
+    {
+        return m_ptr == other.m_ptr;
+    }
+
+    template <typename T, typename Allocator>
+    inline bool list<T, Allocator>::iterator::
+    operator!=(const iterator other) const noexcept
+    {
+        return !(*this == other);
+    }
+
+    template <typename T, typename Allocator>
+    inline bool list<T, Allocator>::iterator::
+    operator==(const const_iterator other) const noexcept
+    {
+        return m_ptr == other.m_ptr;
+    }
+
+    template <typename T, typename Allocator>
+    inline bool list<T, Allocator>::iterator::
+    operator!=(const const_iterator other) const noexcept
+    {
+        return !(*this == other);
+    }
+
+    //--------------- const_iterator 实现 -----------------------
+    template <typename T, typename Allocator>
+    inline list<T, Allocator>::const_iterator::
+        const_iterator() noexcept
+        : m_ptr(nullptr)
+    {
+    }
+
+    template <typename T, typename Allocator>
+    inline list<T, Allocator>::const_iterator::
+        const_iterator(Node *ptr) noexcept
+        : m_ptr(ptr)
+    {
+    }
+
+    template <typename T, typename Allocator>
+    inline list<T, Allocator>::const_iterator::
+        const_iterator(iterator it) noexcept
+        : m_ptr(it.m_ptr)
+    {
+    }
+
+    template <typename T, typename Allocator>
+    inline list<T, Allocator>::const_iterator::
+        const_iterator(const const_iterator &other) noexcept
+        : m_ptr(other.m_ptr)
+    {
+    }
+
+    // 解引用
+    template <typename T, typename Allocator>
+    inline typename list<T, Allocator>::const_iterator::reference
+    list<T, Allocator>::const_iterator::operator*() const noexcept
+    {
+        if (m_ptr != nullptr)
+            return m_ptr->val;
+    }
+
+    template <typename T, typename Allocator>
+    inline typename list<T, Allocator>::const_iterator::pointer
+    list<T, Allocator>::const_iterator::operator->() const noexcept
+    {
+        if (m_ptr != nullptr)
+            return &m_ptr->val;
+    }
+
+    // 自增/自减
+    template <typename T, typename Allocator>
+    inline typename list<T, Allocator>::const_iterator &
+    list<T, Allocator>::const_iterator::operator++() noexcept
+    {
+        if (m_ptr != nullptr)
+            m_ptr = m_ptr->next;
+        return *this;
+    }
+
+    template <typename T, typename Allocator>
+    inline typename list<T, Allocator>::const_iterator
+    list<T, Allocator>::const_iterator::operator++(int) noexcept
+    {
+        const_iterator temp(m_ptr);
+        if (m_ptr != nullptr)
+            m_ptr = m_ptr->next;
+        return temp;
+    }
+
+    template <typename T, typename Allocator>
+    inline typename list<T, Allocator>::const_iterator &
+    list<T, Allocator>::const_iterator::operator--() noexcept
+    {
+        if (m_ptr != nullptr)
+            m_ptr = m_ptr->prev;
+        return *this;
+    }
+
+    template <typename T, typename Allocator>
+    inline typename list<T, Allocator>::const_iterator
+    list<T, Allocator>::const_iterator::operator--(int) noexcept
+    {
+        const_iterator temp(m_ptr);
+        if (m_ptr != nullptr)
+            m_ptr = m_ptr->prev;
+        return temp;
+    }
+
+    // 比较
+    template <typename T, typename Allocator>
+    inline bool list<T, Allocator>::const_iterator::
+    operator==(const const_iterator other) const noexcept
+    {
+        return m_ptr == other.m_ptr;
+    }
+
+    template <typename T, typename Allocator>
+    inline bool list<T, Allocator>::const_iterator::
+    operator!=(const const_iterator other) const noexcept
+    {
+        return !(*this == other);
+    }
+
+    template <typename T, typename Allocator>
+    inline bool list<T, Allocator>::const_iterator::
+    operator==(const iterator other) const noexcept
+    {
+        return m_ptr == other.m_ptr;
+    }
+
+    template <typename T, typename Allocator>
+    inline bool list<T, Allocator>::const_iterator::
+    operator!=(const iterator other) const noexcept
+    {
+        return !(*this == other);
+    }
+
+    //------------------ list 实现 -----------------------
+    template <typename T, typename Allocator>
+    inline list<T, Allocator>::list()
+        : m_head(nullptr), m_node_alloc()
+    {
+        m_head = alloc_traits::allocate(m_node_alloc, 1);
+        alloc_traits::construct(m_node_alloc, m_head);
+        m_head->prev = m_head;
+        m_head->next = m_head;
+    }
+
+    template <typename T, typename Allocator>
+    inline list<T, Allocator>::list(size_type count, value_type value)
+        : m_head(nullptr), m_node_alloc()
+    {
+        if (count > max_size())
+            throw std::length_error("list count exceeds max_size");
+
+        m_head = alloc_traits::allocate(m_node_alloc, 1);
+        alloc_traits::construct(m_node_alloc, m_head);
+
+        Node *cur = m_head;
+        Node *pre = m_head;
+        for (size_type i = 0; i < count; ++i)
+        {
+            cur->next = alloc_traits::allocate(m_node_alloc, 1);
+            alloc_traits::construct(m_node_alloc, cur->next, value);
+            pre = cur;
+            cur = cur->next;
+            cur->prev = pre;
+        }
+
+        // 最后一个节点与头节点相连成环
+        cur->next = m_head;
+        m_head->pre = cur;
+    }
+
+    template <typename T, typename Allocator>
+    inline list<T, Allocator>::list(std::initializer_list<value_type> ilist)
+        : m_head(nullptr), m_node_alloc()
+    {
+        m_head = alloc_traits::allocate(m_node_alloc, 1);
+        alloc_traits::construct(m_node_alloc, m_head);
+        assign(ilist);
+    }
+
+    template <typename T, typename Allocator>
+    template <typename InputIt>
+    inline list<T, Allocator>::list(InputIt first, InputIt last)
+        : m_head(nullptr), m_node_alloc()
+    {
+        m_head = alloc_traits::allocate(m_node_alloc, 1);
+        alloc_traits::construct(m_node_alloc, m_head);
+        assign(first, last);
+    }
+
+    template <typename T, typename Allocator>
+    inline list<T, Allocator>::list(const list<T, Allocator> &other)
+        : m_head(nullptr), m_node_alloc()
+    {
+        m_head = alloc_traits::allocate(m_node_alloc, 1);
+        alloc_traits::construct(m_node_alloc, m_head);
+        m_head->next = nullptr;
+        m_head->prev = nullptr;
+
+        Node *cur = m_head;
+        Node *pre = m_head;
+        for (Node *i = other.m_head->next; i != other.m_head; i = i->next)
+        {
+            cur->next = alloc_traits::allocate(m_node_alloc, 1);
+            alloc_traits::construct(m_node_alloc, cur->next, i->val);
+            pre = cur;
+            cur = cur->next;
+            cur->prev = pre;
+        }
+
+        // 最后一个节点与头节点相连成环
+        cur->next = m_head;
+        m_head->pre = cur;
+    }
+
+    template <typename T, typename Allocator>
+    inline list<T, Allocator> &list<T, Allocator>::
+    operator=(const list<T, Allocator> &other)
+    {
+        if (this != &other)
+        {
+            clear();
+
+            Node *cur = m_head;
+            Node *pre = m_head;
+            for (Node *i = other.m_head->next; i != other.m_head; i = i->next)
+            {
+                cur->next = alloc_traits::allocate(m_node_alloc, 1);
+                alloc_traits::construct(m_node_alloc, cur->next, i->val);
+                pre = cur;
+                cur = cur->next;
+                cur->prev = pre;
+            }
+
+            // 最后一个节点与头节点相连成环
+            cur->next = m_head;
+            m_head->pre = cur;
+        }
+        return *this;
+    }
+
+    template <typename T, typename Allocator>
+    inline list<T, Allocator>::list(list<T, Allocator> &&other) noexcept
+        : m_head(nullptr), m_node_alloc()
+    {
+        m_head = other.m_head;
+
+        other.m_head = alloc_traits::allocate(m_node_alloc, 1);
+        alloc_traits::construct(m_node_alloc, other.m_head);
+    }
+    template <typename T, typename Allocator>
+    inline list<T, Allocator> &list<T, Allocator>::
+    operator=(list<T, Allocator> &&other) noexcept
+    {
+        if (this != &other)
+        {
+            clear();
+
+            m_head = other.m_head;
+
+            other.m_head = alloc_traits::allocate(m_node_alloc, 1);
+            alloc_traits::construct(m_node_alloc, other.m_head);
+        }
+        return *this;
+    }
+
+    template <typename T, typename Allocator>
+    inline list<T, Allocator>::~list()
+    {
+        clear();
+        if (m_head != nullptr)
+            delete m_head;
+        m_head = nullptr;
+    }
+
+    template <typename T, typename Allocator>
+    inline void list<T, Allocator>::assign(size_type count,
+                                           const_reference value)
+    {
+        if (count > max_size())
+            throw std::length_error("list count exceeds max_size");
+
+        clear();
+
+        Node *pre = m_head;
+        Node *cur = m_head;
+        for (int i = 0; i < count; i++)
+        {
+            cur->next = alloc_traits::allocate(m_node_alloc, 1);
+            alloc_traits::construct(m_node_alloc, cur->next, value);
+            pre = cur;
+            cur = cur->next;
+            cur->prev = pre;
+        }
+
+        // 最后一个节点与头节点相连成环
+        cur->next = m_head;
+        m_head->pre = cur;
+    }
+
+    template <typename T, typename Allocator>
+    inline void list<T, Allocator>::assign(
+        std::initializer_list<value_type> ilist)
+    {
+        clear();
+
+        Node *pre = m_head;
+        Node *cur = m_head;
+        for (const_reference item : ilist)
+        {
+            cur->next = alloc_traits::allocate(m_node_alloc, 1);
+            alloc_traits::construct(m_node_alloc, cur->next, item);
+            pre = cur;
+            cur = cur->next;
+            cur->prev = pre;
+        }
+
+        // 最后一个节点与头节点相连成环
+        cur->next = m_head;
+        m_head->pre = cur;
+    }
+
+    template <typename T, typename Allocator>
+    template <typename InputIt>
+    inline void list<T, Allocator>::assign(InputIt first, InputIt last)
+    {
+        clear();
+
+        Node *pre = m_head;
+        Node *cur = m_head;
+        for (; first != last; first++)
+        {
+            cur->next = alloc_traits::allocate(m_node_alloc, 1);
+            alloc_traits::construct(m_node_alloc, cur->next, *first);
+            pre = cur;
+            cur = cur->next;
+            cur->prev = pre;
+        }
+
+        // 最后一个节点与头节点相连成环
+        cur->next = m_head;
+        m_head->pre = cur;
+    }
+
+    template <typename T, typename Allocator>
+    inline typename list<T, Allocator>::allocator_type
+    list<T, Allocator>::get_allocator() const
+    {
+        return typename std::allocator_traits<node_allocator>::
+            template rebind_alloc<T>(m_node_alloc);
+    }
+
+    template <typename T, typename Allocator>
+    inline typename list<T, Allocator>::reference
+    list<T, Allocator>::front()
+    {
+        if (empty())
+            throw std::out_of_range("list::front: empty list");
+        return m_head->next->val;
+    }
+
+    template <typename T, typename Allocator>
+    inline typename list<T, Allocator>::const_reference
+    list<T, Allocator>::front() const
+    {
+        if (empty())
+            throw std::out_of_range("list::front: empty list");
+        return m_head->next->val;
+    }
+
+    template <typename T, typename Allocator>
+    inline typename list<T, Allocator>::reference
+    list<T, Allocator>::back()
+    {
+        if (empty())
+            throw std::out_of_range("list::back: empty list");
+        return m_head->prev->val;
+    }
+    template <typename T, typename Allocator>
+    inline typename list<T, Allocator>::const_reference
+    list<T, Allocator>::back() const
+    {
+        if (empty())
+            throw std::out_of_range("list::back: empty list");
+        return m_head->prev->val;
+    }
+
+    template <typename T, typename Allocator>
+    inline typename list<T, Allocator>::iterator
+    list<T, Allocator>::begin()
+    {
+        return iterator(m_head->next);
+    }
+
+    template <typename T, typename Allocator>
+    inline typename list<T, Allocator>::const_iterator
+    list<T, Allocator>::begin() const
+    {
+        return const_iterator(m_head->next);
+    }
+
+    template <typename T, typename Allocator>
+    inline typename list<T, Allocator>::const_iterator
+    list<T, Allocator>::cbegin() const noexcept
+    {
+        return begin();
+    }
+
+    template <typename T, typename Allocator>
+    inline typename list<T, Allocator>::iterator
+    list<T, Allocator>::end()
+    {
+        return iterator(m_head);
+    }
+
+    template <typename T, typename Allocator>
+    inline typename list<T, Allocator>::const_iterator
+    list<T, Allocator>::end() const
+    {
+        return iterator(m_head);
+    }
+
+    template <typename T, typename Allocator>
+    inline typename list<T, Allocator>::const_iterator
+    list<T, Allocator>::cend() const noexcept
+    {
+        return end();
+    }
+
+    template <typename T, typename Allocator>
+    inline typename list<T, Allocator>::reverse_iterator
+    list<T, Allocator>::rbegin()
+    {
+        return reverse_iterator(end());
+    }
+    template <typename T, typename Allocator>
+    inline typename list<T, Allocator>::const_reverse_iterator
+    list<T, Allocator>::rbegin() const
+    {
+        return reverse_iterator(end());
+    }
+
+    template <typename T, typename Allocator>
+    inline typename list<T, Allocator>::const_reverse_iterator
+    list<T, Allocator>::crbegin() const noexcept
+    {
+        return rbegin();
+    }
+
+    template <typename T, typename Allocator>
+    inline typename list<T, Allocator>::reverse_iterator
+    list<T, Allocator>::rend()
+    {
+        return reverse_iterator(begin());
+    }
+    template <typename T, typename Allocator>
+    inline typename list<T, Allocator>::const_reverse_iterator
+    list<T, Allocator>::rend() const
+    {
+        return reverse_iterator(begin());
+    }
+    template <typename T, typename Allocator>
+    inline typename list<T, Allocator>::const_reverse_iterator
+    list<T, Allocator>::crend() const noexcept
+    {
+        return rend();
+    }
+
+    template <typename T, typename Allocator>
+    inline bool list<T, Allocator>::empty() const
+    {
+        return m_head->next == m_head;
+    }
+
+    template <typename T, typename Allocator>
+    inline typename list<T, Allocator>::size_type
+    list<T, Allocator>::size() const noexcept
+    {
+        size_type count = 0;
+        Node *cur = m_head->next;
+        while (cur != m_head)
+        {
+            count++;
+            cur = cur->next;
+        }
+        return count;
+    }
+
+    template <typename T, typename Allocator>
+    inline typename list<T, Allocator>::size_type
+    list<T, Allocator>::max() const
+    {
+        return alloc_traits::max_size(m_node_alloc);
+    }
+
+    template <typename T, typename Allocator>
+    inline void list<T, Allocator>::clear()
+    {
+        Node *pre = m_head;
+        Node *cur = m_head->next;
+        Node *del_node = nullptr;
+        while (cur != m_head)
+        {
+            del_node = cur;
+            pre->next = cur->next;
+            cur->next = del_node->next;
+            del_node->next->prev = pre;
+
+            alloc_traits::destroy(m_node_alloc, del_node);
+            alloc_traits::deallocate(m_node_alloc, del_node, 1);
+        }
+
+        m_head->next = m_head;
+        m_head->prev = m_head;
+    }
+
 } // namespace demo
