@@ -39,8 +39,8 @@ namespace demo
         struct Node
         {
             value_type val;
-            pointer prev;
-            pointer next;
+            Node *prev;
+            Node *next;
 
             template <typename... Args>
             Node(Args &&...args) : val(std::forward<Args>(args)...),
@@ -86,6 +86,8 @@ namespace demo
 
         class const_iterator
         {
+            friend class list;
+
         public:
             using iterator_category = std::bidirectional_iterator_tag;
             using value_type = T;
@@ -168,6 +170,7 @@ namespace demo
 
         // 修改器
         void clear();
+        // 标准库对pos做判断吗
         iterator insert(const_iterator pos, const_reference value);
         iterator insert(const_iterator pos, value_type &&value);
         iterator insert(const_iterator pos, size_type count, const_reference value);
@@ -828,5 +831,428 @@ namespace demo
         m_head->next = m_head;
         m_head->prev = m_head;
     }
+
+    template <typename T, typename Allocator>
+    inline typename list<T, Allocator>::iterator
+    list<T, Allocator>::insert(const_iterator pos,
+                               const_reference value)
+    {
+        Node *pre = pos.m_ptr->prev;
+        Node *next = pos.m_ptr;
+
+        Node *new_node = alloc_traits::allocate(m_node_alloc, 1);
+        alloc_traits::construct(m_node_alloc, new_node, value);
+        // 与前节点相连
+        new_node->prev = pre;
+        pre->next = new_node;
+        // 与后节点相连
+        new_node->next = next;
+        next->prev = new_node;
+
+        return iterator(new_node);
+    }
+
+    template <typename T, typename Allocator>
+    inline typename list<T, Allocator>::iterator
+    list<T, Allocator>::insert(const_iterator pos, value_type &&value)
+    {
+        Node *pre = pos.m_ptr->prev;
+        Node *next = pos.m_ptr;
+
+        Node *new_node = alloc_traits::allocate(m_node_alloc, 1);
+        alloc_traits::construct(m_node_alloc, new_node,
+                                std::forward<value_type>(value)); // 用move 还是forward好呢
+        // 与前节点相连
+        new_node->prev = pre;
+        pre->next = new_node;
+        // 与后节点相连
+        new_node->next = next;
+        next->prev = new_node;
+
+        return iterator(new_node);
+    }
+
+    template <typename T, typename Allocator>
+    inline typename list<T, Allocator>::iterator
+    list<T, Allocator>::insert(const_iterator pos,
+                               size_type count, const_reference value)
+    {
+        Node *pre = pos.m_ptr->prev;
+        Node *next = pos.m_ptr;
+
+        Node *new_node = nullptr;
+        iterator ret(pos.m_ptr);
+
+        for (size_type i = 0; i < count; i++)
+        {
+            new_node = alloc_traits::allocate(m_node_alloc, 1);
+            alloc_traits::construct(m_node_alloc, new_node, value);
+            new_node->prev = pre;
+            pre->next = new_node;
+
+            pre = pre->next;
+
+            if (i == 0)
+                ret.m_ptr = new_node;
+        }
+
+        // 插入的最后一个节点与pos节点相连
+        new_node->next = next;
+        next->prev = new_node;
+
+        return ret;
+    }
+
+    template <typename T, typename Allocator>
+    template <typename InputIt>
+    inline typename list<T, Allocator>::iterator
+    list<T, Allocator>::insert(const_iterator pos,
+                               InputIt first, InputIt last)
+    {
+        Node *pre = pos.m_ptr->prev;
+        Node *next = pos.m_ptr;
+
+        Node *new_node = nullptr;
+        iterator ret(pos.m_ptr);
+        bool is = true;
+
+        for (; first != last; first++)
+        {
+            new_node = alloc_traits::allocate(m_node_alloc, 1);
+            alloc_traits::construct(m_node_alloc, new_node, *first);
+            new_node->prev = pre;
+            pre->next = new_node;
+
+            pre = pre->next;
+
+            if (is)
+            {
+                ret.m_ptr = new_node;
+                is = false;
+            }
+        }
+
+        new_node->next = next;
+        next->prev = new_node;
+
+        return ret;
+    }
+
+    template <typename T, typename Allocator>
+    inline typename list<T, Allocator>::iterator
+    list<T, Allocator>::insert(const_iterator pos,
+                               std::initializer_list<value_type> ilist)
+    {
+        Node *pre = pos.m_ptr->prev;
+        Node *next = pos.m_ptr;
+
+        Node *new_node;
+        iterator ret(pos.m_ptr);
+        bool is = true;
+
+        for (const_reference value : ilist)
+        {
+            new_node = alloc_traits::allocate(m_node_alloc, 1);
+            alloc_traits::construct(m_node_alloc, new_node, value);
+            new_node->prev = pre;
+            pre->next = new_node;
+
+            pre = pre->next;
+
+            if (is)
+            {
+                ret.m_ptr = new_node;
+                is = false;
+            }
+        }
+
+        new_node->next = next;
+        next->prev = new_node;
+
+        return ret;
+    }
+
+    template <typename T, typename Allocator>
+    template <typename... Args>
+    inline typename list<T, Allocator>::iterator
+    list<T, Allocator>::emplace(const_iterator pos, Args &&...args)
+    {
+
+        Node *pre = pos.m_ptr->prev;
+        Node *next = pos.m_ptr;
+
+        Node *new_node = alloc_traits::allocate(m_node_alloc, 1);
+        alloc_traits::construct(m_node_alloc, new_node,
+                                std::forward<Args>(args)...);
+        new_node->prev = pre;
+        pre->next = new_node;
+        new_node->next = next;
+        next->prev = new_node;
+
+        return iterator(new_node);
+    }
+
+    template <typename T, typename Allocator>
+    inline typename list<T, Allocator>::iterator
+    list<T, Allocator>::erase(iterator pos)
+    {
+        return erase(const_iterator(pos));
+    }
+
+    template <typename T, typename Allocator>
+    inline typename list<T, Allocator>::iterator
+    list<T, Allocator>::erase(const_iterator pos)
+    {
+        if (pos == end() || pos.m_ptr == nullptr)
+            return pos;
+
+        Node *pre = pos.m_ptr->prev;
+        Node *next = pos.m_ptr->next;
+        Node *del_node = pos.m_ptr;
+
+        pre->next = next;
+        next->prev = pre;
+
+        alloc_traits::destroy(m_node_alloc, del_node);
+        alloc_traits::deallocate(m_node_alloc, del_node, 1);
+
+        return iterator(next);
+    }
+
+    template <typename T, typename Allocator>
+    inline typename list<T, Allocator>::iterator
+    list<T, Allocator>::erase(iterator first, iterator last)
+    {
+        erase(const_iterator(first), const_iterator(last));
+    }
+
+    template <typename T, typename Allocator>
+    inline typename list<T, Allocator>::iterator
+    list<T, Allocator>::erase(const_iterator first, const_iterator last)
+    {
+        if (first == last)
+            return first;
+
+        Node *pre = first.m_ptr->prev;
+        Node *next = last.m_ptr;
+        Node *cur = first.m_ptr;
+        Node *del_node = nullptr;
+
+        pre->next = next;
+        next->prev = pre;
+
+        while (cur != last.m_ptr)
+        {
+            del_node = cur;
+            cur = cur->next;
+
+            alloc_traits::destroy(m_node_alloc, del_node);
+            alloc_traits::deallocate(m_node_alloc, del_node, 1);
+        }
+
+        return last;
+    }
+
+    template <typename T, typename Allocator>
+    inline void list<T, Allocator>::push_back(const_reference value)
+    {
+        push_back(value_type(value));
+    }
+
+    template <typename T, typename Allocator>
+    inline void list<T, Allocator>::push_back(value_type &&value)
+    {
+        Node *pre = m_head->prev;
+        Node *new_node = alloc_traits::allocate(m_node_alloc, 1);
+        alloc_traits::construct(m_node_alloc, new_node, std::move(value));
+
+        pre->next = new_node;
+        new_node->prev = pre;
+
+        new_node->next = m_head;
+        m_head->prev = new_node;
+    }
+
+    template <typename T, typename Allocator>
+    template <typename... Args>
+    inline typename list<T, Allocator>::reference
+    list<T, Allocator>::empalce_back(Args &&...args)
+    {
+        Node *pre = m_head->prev;
+        Node *new_node = alloc_traits::allocate(m_node_alloc, 1);
+        alloc_traits::construct(m_node_alloc, new_node,
+                                std::forward<Args>(args)...);
+
+        pre->next = new_node;
+        new_node->prev = pre;
+
+        new_node->next = m_head;
+        m_head->prev = new_node;
+    }
+
+    template <typename T, typename Allocator>
+    inline void list<T, Allocator>::pop_back()
+    {
+        if (empty())
+            throw std::out_of_range("list::pop_back: list is empty");
+
+        Node *del_node = m_head->prev;
+        m_head->prev = del_node->prev;
+        del_node->prev->next = m_head;
+
+        alloc_traits::destroy(m_node_alloc, del_node);
+        alloc_traits::deallocate(m_node_alloc, del_node, 1);
+    }
+
+    template <typename T, typename Allocator>
+    inline void list<T, Allocator>::push_front(const_reference value)
+    {
+        push_front(value_type(value));
+    }
+
+    template <typename T, typename Allocator>
+    inline void list<T, Allocator>::push_front(value_type &&value)
+    {
+        Node *pre = m_head;
+        Node *next = m_head->next;
+
+        Node *new_node = alloc_traits::allocate(m_node_alloc, 1);
+        alloc_traits::construct(m_node_alloc, new_node, std::move(value));
+
+        pre->next = new_node;
+        new_node->prev = pre;
+
+        new_node->next = next;
+        next->prev = new_node;
+    }
+
+    template <typename T, typename Allocator>
+    template <typename... Args>
+    inline typename list<T, Allocator>::reference
+    list<T, Allocator>::emplace_front(Args &&...argrs)
+    {
+        Node *pre = m_head;
+        Node *next = m_head->next;
+
+        Node *new_node = alloc_traits::allocate(m_node_alloc, 1);
+        alloc_traits::construct(m_node_alloc, new_node, std::forward<Args>(args)...);
+
+        pre->next = new_node;
+        new_node->prev = pre;
+
+        new_node->next = next;
+        next->prev = new_node;
+    }
+
+    template <typename T, typename Allocator>
+    inline void list<T, Allocator>::pop_front()
+    {
+        if (empty())
+            throw std::out_of_range("list::pop_front: list is empty");
+
+        Node *pre = m_head;
+        Node *del_node = m_head->next;
+
+        pre->next = del_node->next;
+        del_node->next->prev = pre;
+
+        alloc_traits::destroy(m_node_alloc, del_node);
+        alloc_traits::deallocate(m_node_alloc, del_node, 1);
+    }
+
+    template <typename T, typename Allocator>
+    inline void list<T, Allocator>::resize(size_type count)
+    {
+        size_type size = 0;
+        Node *cur = m_head->next;
+        while (cur != m_head)
+        {
+            size++;
+            cur = cur->next;
+        }
+
+        if (size == count)
+            return;
+        else if (size < count)
+        {
+            Node *new_node = nullptr;
+            Node *pre = m_head->prev;
+
+            for (size_type i = 0; i < count - size; i++)
+            {
+                new_node = alloc_traits::allocate(m_node_alloc, 1);
+                alloc_traits::construct(m_node_alloc, new_node);
+                pre->next = new_node;
+                new_node->prev = pre;
+
+                pre = pre->next;
+            }
+
+            new_node->next = m_head;
+            m_head->prev = new_node;
+        }
+        else
+        {
+            for (size_type i = 0; i < size - count; i++)
+                pop_back();
+        }
+    }
+    template <typename T, typename Allocator>
+    inline void list<T, Allocator>::resize(size_type count, const_reference value)
+    {
+        size_type size = 0;
+        Node *cur = m_head->next;
+        while (cur != m_head)
+        {
+            size++;
+            cur = cur->next;
+        }
+
+        if (size == count)
+            return;
+        else if (size < count)
+        {
+            insert(end(), count - size, value);
+        }
+        else
+        {
+            for (size_type i = 0; i < size - count; i++)
+                pop_back();
+        }
+    }
+
+    template <typename T, typename Allocator>
+    inline void list<T, Allocator>::swap(list<T, Allocator> &other) noexcept
+    {
+        using swap = std::swap;
+        swap(m_head, other.m_head);
+        swap(m_node_alloc, m_node_alloc);
+    }
+
+    // 操作
+    void merge(list<T, Allocator> &other);
+    void merge(list<T, Allocator> &&other);
+    template <typename Compare>
+    void merge(list<T, Allocator> &other, Compare comp);
+    template <typename Compare>
+    void merge(list<T, Allocator> &&other, Compare comp);
+    void splice(const_iterator pos, list<T, Allocator> &other);
+    void splice(const_iterator pos, list<T, Allocator> &&other);
+    void splice(const_iterator pos, list &other, const_iterator it);
+    void splice(const_iterator pos, list &&other, const_iterator it);
+    void splice(const_iterator pos, list &other,
+                const_iterator first, const_iterator last);
+    void splice(const_iterator pos, list &&other,
+                const_iterator first, const_iterator last);
+    size_type remove(const T &value);
+    template <class UnaryPredicate>
+    size_type remove_if(UnaryPredicate p);
+    void reverse();
+    size_type unique();
+    template <class BinaryPredicate>
+    size_type unique(BinaryPredicate p);
+    void sort();
+    template <class Compare>
+    void sort(Compare comp);
 
 } // namespace demo
