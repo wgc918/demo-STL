@@ -228,6 +228,7 @@ namespace demo
             Allocator>::template rebind_alloc<Node>;
 
         Node *m_head;
+        size_type m_size;
         node_allocator m_node_alloc;
 
         using alloc_traits = std::allocator_traits<node_allocator>;
@@ -453,7 +454,7 @@ namespace demo
     //------------------ list 实现 -----------------------
     template <typename T, typename Allocator>
     inline list<T, Allocator>::list()
-        : m_head(nullptr), m_node_alloc()
+        : m_head(nullptr), m_size(0), m_node_alloc()
     {
         m_head = alloc_traits::allocate(m_node_alloc, 1);
         alloc_traits::construct(m_node_alloc, m_head);
@@ -463,7 +464,7 @@ namespace demo
 
     template <typename T, typename Allocator>
     inline list<T, Allocator>::list(size_type count, value_type value)
-        : m_head(nullptr), m_node_alloc()
+        : m_head(nullptr), m_size(0), m_node_alloc()
     {
         if (count > max_size())
             throw std::length_error("list count exceeds max_size");
@@ -480,6 +481,7 @@ namespace demo
             pre = cur;
             cur = cur->next;
             cur->prev = pre;
+            m_size++;
         }
 
         // 最后一个节点与头节点相连成环
@@ -489,7 +491,7 @@ namespace demo
 
     template <typename T, typename Allocator>
     inline list<T, Allocator>::list(std::initializer_list<value_type> ilist)
-        : m_head(nullptr), m_node_alloc()
+        : m_head(nullptr), m_size(0), m_node_alloc()
     {
         m_head = alloc_traits::allocate(m_node_alloc, 1);
         alloc_traits::construct(m_node_alloc, m_head);
@@ -499,7 +501,7 @@ namespace demo
     template <typename T, typename Allocator>
     template <typename InputIt>
     inline list<T, Allocator>::list(InputIt first, InputIt last)
-        : m_head(nullptr), m_node_alloc()
+        : m_head(nullptr), m_size(0), m_node_alloc()
     {
         m_head = alloc_traits::allocate(m_node_alloc, 1);
         alloc_traits::construct(m_node_alloc, m_head);
@@ -508,7 +510,7 @@ namespace demo
 
     template <typename T, typename Allocator>
     inline list<T, Allocator>::list(const list<T, Allocator> &other)
-        : m_head(nullptr), m_node_alloc()
+        : m_head(nullptr), m_size(0), m_node_alloc()
     {
         m_head = alloc_traits::allocate(m_node_alloc, 1);
         alloc_traits::construct(m_node_alloc, m_head);
@@ -524,6 +526,7 @@ namespace demo
             pre = cur;
             cur = cur->next;
             cur->prev = pre;
+            m_size++;
         }
 
         // 最后一个节点与头节点相连成环
@@ -548,6 +551,7 @@ namespace demo
                 pre = cur;
                 cur = cur->next;
                 cur->prev = pre;
+                m_size++;
             }
 
             // 最后一个节点与头节点相连成环
@@ -562,7 +566,9 @@ namespace demo
         : m_head(nullptr), m_node_alloc()
     {
         m_head = other.m_head;
+        m_size = other.m_size;
 
+        other.m_size = 0;
         other.m_head = alloc_traits::allocate(m_node_alloc, 1);
         alloc_traits::construct(m_node_alloc, other.m_head);
     }
@@ -575,7 +581,9 @@ namespace demo
             clear();
 
             m_head = other.m_head;
+            m_size = other.m_size;
 
+            other.m_size = 0;
             other.m_head = alloc_traits::allocate(m_node_alloc, 1);
             alloc_traits::construct(m_node_alloc, other.m_head);
         }
@@ -609,6 +617,7 @@ namespace demo
             pre = cur;
             cur = cur->next;
             cur->prev = pre;
+            m_size++;
         }
 
         // 最后一个节点与头节点相连成环
@@ -631,6 +640,7 @@ namespace demo
             pre = cur;
             cur = cur->next;
             cur->prev = pre;
+            m_size++;
         }
 
         // 最后一个节点与头节点相连成环
@@ -653,6 +663,7 @@ namespace demo
             pre = cur;
             cur = cur->next;
             cur->prev = pre;
+            m_size++;
         }
 
         // 最后一个节点与头节点相连成环
@@ -794,14 +805,7 @@ namespace demo
     inline typename list<T, Allocator>::size_type
     list<T, Allocator>::size() const noexcept
     {
-        size_type count = 0;
-        Node *cur = m_head->next;
-        while (cur != m_head)
-        {
-            count++;
-            cur = cur->next;
-        }
-        return count;
+        return m_size;
     }
 
     template <typename T, typename Allocator>
@@ -830,6 +834,7 @@ namespace demo
 
         m_head->next = m_head;
         m_head->prev = m_head;
+        m_size = 0;
     }
 
     template <typename T, typename Allocator>
@@ -848,6 +853,8 @@ namespace demo
         // 与后节点相连
         new_node->next = next;
         next->prev = new_node;
+
+        m_size++;
 
         return iterator(new_node);
     }
@@ -868,6 +875,8 @@ namespace demo
         // 与后节点相连
         new_node->next = next;
         next->prev = new_node;
+
+        m_size++;
 
         return iterator(new_node);
     }
@@ -891,6 +900,8 @@ namespace demo
             pre->next = new_node;
 
             pre = pre->next;
+
+            m_size++;
 
             if (i == 0)
                 ret.m_ptr = new_node;
@@ -924,6 +935,8 @@ namespace demo
             pre->next = new_node;
 
             pre = pre->next;
+
+            m_size++;
 
             if (is)
             {
@@ -959,6 +972,8 @@ namespace demo
 
             pre = pre->next;
 
+            m_size++;
+
             if (is)
             {
                 ret.m_ptr = new_node;
@@ -989,6 +1004,8 @@ namespace demo
         new_node->next = next;
         next->prev = new_node;
 
+        m_size++;
+
         return iterator(new_node);
     }
 
@@ -1015,6 +1032,8 @@ namespace demo
 
         alloc_traits::destroy(m_node_alloc, del_node);
         alloc_traits::deallocate(m_node_alloc, del_node, 1);
+
+        m_size--;
 
         return iterator(next);
     }
@@ -1048,6 +1067,8 @@ namespace demo
 
             alloc_traits::destroy(m_node_alloc, del_node);
             alloc_traits::deallocate(m_node_alloc, del_node, 1);
+
+            m_size--;
         }
 
         return last;
@@ -1071,6 +1092,8 @@ namespace demo
 
         new_node->next = m_head;
         m_head->prev = new_node;
+
+        m_size++;
     }
 
     template <typename T, typename Allocator>
@@ -1088,6 +1111,8 @@ namespace demo
 
         new_node->next = m_head;
         m_head->prev = new_node;
+
+        m_size++;
     }
 
     template <typename T, typename Allocator>
@@ -1102,6 +1127,8 @@ namespace demo
 
         alloc_traits::destroy(m_node_alloc, del_node);
         alloc_traits::deallocate(m_node_alloc, del_node, 1);
+
+        m_size--;
     }
 
     template <typename T, typename Allocator>
@@ -1124,6 +1151,8 @@ namespace demo
 
         new_node->next = next;
         next->prev = new_node;
+
+        m_size++;
     }
 
     template <typename T, typename Allocator>
@@ -1142,6 +1171,8 @@ namespace demo
 
         new_node->next = next;
         next->prev = new_node;
+
+        m_size++;
     }
 
     template <typename T, typename Allocator>
@@ -1158,22 +1189,16 @@ namespace demo
 
         alloc_traits::destroy(m_node_alloc, del_node);
         alloc_traits::deallocate(m_node_alloc, del_node, 1);
+
+        m_size--;
     }
 
     template <typename T, typename Allocator>
     inline void list<T, Allocator>::resize(size_type count)
     {
-        size_type size = 0;
-        Node *cur = m_head->next;
-        while (cur != m_head)
-        {
-            size++;
-            cur = cur->next;
-        }
-
-        if (size == count)
+        if (m_size == count)
             return;
-        else if (size < count)
+        else if (m_size < count)
         {
             Node *new_node = nullptr;
             Node *pre = m_head->prev;
@@ -1230,12 +1255,82 @@ namespace demo
     }
 
     // 操作
-    void merge(list<T, Allocator> &other);
-    void merge(list<T, Allocator> &&other);
+    template <typename T, typename Allocator>
+    inline void list<T, Allocator>::merge(list<T, Allocator> &other)
+    {
+    }
+
+    template <typename T, typename Allocator>
+    inline void list<T, Allocator>::merge(list<T, Allocator> &&other)
+    {
+    }
+
+    template <typename T, typename Allocator>
     template <typename Compare>
-    void merge(list<T, Allocator> &other, Compare comp);
+    inline void list<T, Allocator>::merge(list<T, Allocator> &other, Compare comp)
+    {
+        if (this == &other)
+            return;
+
+        if (other.empty())
+            return;
+
+        if (this->empty())
+        {
+            std::swap(m_size, other.m_size);
+            std::swap(m_node_alloc, other.m_node_alloc);
+            std::swap(m_head->next, other.m_head->next);
+            return;
+        }
+
+        // 默认从 other 合并到 this
+        Node *cur = m_head;
+        Node *cur_this = m_head->next;
+        Node *cur_other = other.m_head->next;
+
+        while (cur_this != m_head && cur_other != other.m_head)
+        {
+            if (comp(cur_this->val, cur_other->val))
+            {
+                cur = cur->next;
+                cur_this = cur_this->next;
+            }
+            else
+            {
+                cur->next = cur_other;
+                cur_other->prev = cur;
+                Node *next = cur_other->next;
+
+                // 将 cur_other 嵌入到 this 中
+                cur_other->next = cur_this;
+                cur_this->prev = cur_other;
+
+                cur = cur->next;
+                cur_other = next;
+            }
+        }
+
+        if (cur_other != other.m_head)
+        {
+            cur->next = cur_other;
+            cur_other->prev = cur;
+
+            Node *last_node_other = other.m_head->prev;
+            last_node_other->next = m_head;
+            m_head->prev = last_node_other;
+        }
+
+        // other 恢复有效空态
+        other.m_head->next = other.m_head;
+        other.m_head->prev = other.m_head;
+    }
+
+    template <typename T, typename Allocator>
     template <typename Compare>
-    void merge(list<T, Allocator> &&other, Compare comp);
+    inline void list<T, Allocator>::merge(list<T, Allocator> &&other, Compare comp)
+    {
+    }
+
     void splice(const_iterator pos, list<T, Allocator> &other);
     void splice(const_iterator pos, list<T, Allocator> &&other);
     void splice(const_iterator pos, list &other, const_iterator it);
