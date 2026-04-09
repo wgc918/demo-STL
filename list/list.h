@@ -1047,7 +1047,8 @@ namespace demo
 
     template <typename T, typename Allocator>
     inline typename list<T, Allocator>::iterator
-    list<T, Allocator>::erase(const_iterator first, const_iterator last)
+    list<T, Allocator>::erase(const_iterator first,
+                              const_iterator last)
     {
         if (first == last)
             return first;
@@ -1085,7 +1086,8 @@ namespace demo
     {
         Node *pre = m_head->prev;
         Node *new_node = alloc_traits::allocate(m_node_alloc, 1);
-        alloc_traits::construct(m_node_alloc, new_node, std::move(value));
+        alloc_traits::construct(m_node_alloc, new_node,
+                                std::move(value));
 
         pre->next = new_node;
         new_node->prev = pre;
@@ -1164,7 +1166,8 @@ namespace demo
         Node *next = m_head->next;
 
         Node *new_node = alloc_traits::allocate(m_node_alloc, 1);
-        alloc_traits::construct(m_node_alloc, new_node, std::forward<Args>(args)...);
+        alloc_traits::construct(m_node_alloc, new_node,
+                                std::forward<Args>(args)...);
 
         pre->next = new_node;
         new_node->prev = pre;
@@ -1223,7 +1226,8 @@ namespace demo
         }
     }
     template <typename T, typename Allocator>
-    inline void list<T, Allocator>::resize(size_type count, const_reference value)
+    inline void list<T, Allocator>::resize(size_type count,
+                                           const_reference value)
     {
         size_type size = 0;
         Node *cur = m_head->next;
@@ -1258,16 +1262,19 @@ namespace demo
     template <typename T, typename Allocator>
     inline void list<T, Allocator>::merge(list<T, Allocator> &other)
     {
+        merge(other, std::less<>);
     }
 
     template <typename T, typename Allocator>
     inline void list<T, Allocator>::merge(list<T, Allocator> &&other)
     {
+        merge(other);
     }
 
     template <typename T, typename Allocator>
     template <typename Compare>
-    inline void list<T, Allocator>::merge(list<T, Allocator> &other, Compare comp)
+    inline void list<T, Allocator>::merge(list<T, Allocator> &other,
+                                          Compare comp)
     {
         if (this == &other)
             return;
@@ -1327,16 +1334,70 @@ namespace demo
 
     template <typename T, typename Allocator>
     template <typename Compare>
-    inline void list<T, Allocator>::merge(list<T, Allocator> &&other, Compare comp)
+    inline void list<T, Allocator>::merge(list<T, Allocator> &&other,
+                                          Compare comp)
     {
+        merge(other, comp);
     }
 
-    void splice(const_iterator pos, list<T, Allocator> &other);
-    void splice(const_iterator pos, list<T, Allocator> &&other);
-    void splice(const_iterator pos, list &other, const_iterator it);
+    template <typename T, typename Allocator>
+    inline void list<T, Allocator>::splice(const_iterator pos,
+                                           list<T, Allocator> &other)
+    {
+        if (other.empty())
+            return;
+
+        Node *pre = pos.m_ptr->prev;
+        Node *next = pos.m_ptr;
+        Node *cur = other.m_head->next;
+
+        while (cur != other.m_head)
+        {
+            pre->next = cur;
+            cur->prev = pre;
+
+            pre = pre->next;
+            cur = cur->next;
+        }
+
+        pre->next = next;
+        next->prev = pre;
+
+        // other置空
+        other.m_head->next = other.m_head;
+        other.m_head->prev = other.m_head;
+    }
+
+    template <typename T, typename Allocator>
+    inline void list<T, Allocator>::splice(const_iterator pos,
+                                           list<T, Allocator> &&other)
+    {
+        splice(pos, other);
+    }
+
+    template <typename T, typename Allocator>
+    inline void list<T, Allocator>::splice(const_iterator pos,
+                                           list &other, const_iterator it)
+    {
+        Node *pre = pos.m_ptr->prev;
+        Node *next = pos.m_ptr;
+
+        // 将it从other中分离出来
+        it.m_ptr->prev->next = it.m_ptr->next;
+        it.m_ptr->next->prev = it.m_ptr->prev;
+
+        pre->next = it.m_ptr;
+        it.m_ptr->prev = pre;
+        it.m_ptr->next = next;
+        next->prev = it.m_ptr;
+    }
+
+    template <typename T, typename Allocator>
     void splice(const_iterator pos, list &&other, const_iterator it);
+    template <typename T, typename Allocator>
     void splice(const_iterator pos, list &other,
                 const_iterator first, const_iterator last);
+    template <typename T, typename Allocator>
     void splice(const_iterator pos, list &&other,
                 const_iterator first, const_iterator last);
     size_type remove(const T &value);
