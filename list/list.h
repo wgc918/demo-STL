@@ -132,6 +132,7 @@ namespace demo
         list(InputIt first, InputIt last);
         list(const list<T, Allocator> &other);
         list<T, Allocator> &operator=(const list<T, Allocator> &other);
+        list<T, Allocator> &operator=(std::initializer_list<value_type> ilist);
         list(list<T, Allocator> &&other) noexcept;
         list<T, Allocator> &operator=(list<T, Allocator> &&other) noexcept;
         ~list();
@@ -265,7 +266,7 @@ namespace demo
     inline typename list<T, Allocator>::iterator::reference
     list<T, Allocator>::iterator::operator*() const noexcept
     {
-        // c++标准库判空吗？？
+        // c++标准库判空吗？？  答案是不判空
         return m_ptr->val;
     }
 
@@ -281,8 +282,7 @@ namespace demo
     inline typename list<T, Allocator>::iterator &
     list<T, Allocator>::iterator::operator++() noexcept
     {
-        if (m_ptr != nullptr)
-            m_ptr = m_ptr->next;
+        m_ptr = m_ptr->next;
         return *this;
     }
 
@@ -291,8 +291,7 @@ namespace demo
         iterator::operator++(int) noexcept
     {
         iterator temp(m_ptr);
-        if (m_ptr != nullptr)
-            m_ptr = m_ptr->next;
+        m_ptr = m_ptr->next;
         return temp;
     }
 
@@ -300,17 +299,16 @@ namespace demo
     inline typename list<T, Allocator>::iterator &
     list<T, Allocator>::iterator::operator--() noexcept
     {
-        if (m_ptr != nullptr)
-            m_ptr = m_ptr->prev;
+        m_ptr = m_ptr->prev;
         return *this;
     }
+
     template <typename T, typename Allocator>
     inline typename list<T, Allocator>::iterator
     list<T, Allocator>::iterator::operator--(int) noexcept
     {
         iterator temp(m_ptr);
-        if (m_ptr != nullptr)
-            m_ptr = m_ptr->prev;
+        m_ptr = m_ptr->prev;
         return temp;
     }
 
@@ -377,16 +375,14 @@ namespace demo
     inline typename list<T, Allocator>::const_iterator::reference
     list<T, Allocator>::const_iterator::operator*() const noexcept
     {
-        if (m_ptr != nullptr)
-            return m_ptr->val;
+        return m_ptr->val;
     }
 
     template <typename T, typename Allocator>
     inline typename list<T, Allocator>::const_iterator::pointer
     list<T, Allocator>::const_iterator::operator->() const noexcept
     {
-        if (m_ptr != nullptr)
-            return &m_ptr->val;
+        return &m_ptr->val;
     }
 
     // 自增/自减
@@ -394,8 +390,7 @@ namespace demo
     inline typename list<T, Allocator>::const_iterator &
     list<T, Allocator>::const_iterator::operator++() noexcept
     {
-        if (m_ptr != nullptr)
-            m_ptr = m_ptr->next;
+        m_ptr = m_ptr->next;
         return *this;
     }
 
@@ -404,8 +399,7 @@ namespace demo
     list<T, Allocator>::const_iterator::operator++(int) noexcept
     {
         const_iterator temp(m_ptr);
-        if (m_ptr != nullptr)
-            m_ptr = m_ptr->next;
+        m_ptr = m_ptr->next;
         return temp;
     }
 
@@ -413,8 +407,7 @@ namespace demo
     inline typename list<T, Allocator>::const_iterator &
     list<T, Allocator>::const_iterator::operator--() noexcept
     {
-        if (m_ptr != nullptr)
-            m_ptr = m_ptr->prev;
+        m_ptr = m_ptr->prev;
         return *this;
     }
 
@@ -423,8 +416,7 @@ namespace demo
     list<T, Allocator>::const_iterator::operator--(int) noexcept
     {
         const_iterator temp(m_ptr);
-        if (m_ptr != nullptr)
-            m_ptr = m_ptr->prev;
+        m_ptr = m_ptr->prev;
         return temp;
     }
 
