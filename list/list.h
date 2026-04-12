@@ -126,7 +126,7 @@ namespace demo
 
     public:
         explicit list();
-        explicit list(size_type count, value_type value = value_type());
+        explicit list(size_type count, const_reference value = value_type());
         list(std::initializer_list<value_type> ilist);
         template <typename InputIt>
         list(InputIt first, InputIt last);
@@ -167,11 +167,10 @@ namespace demo
         // 容量
         bool empty() const;
         size_type size() const noexcept;
-        size_type max() const;
+        size_type max_size() const;
 
         // 修改器
         void clear();
-        // 标准库对pos做判断吗
         iterator insert(const_iterator pos, const_reference value);
         iterator insert(const_iterator pos, value_type &&value);
         iterator insert(const_iterator pos, size_type count, const_reference value);
@@ -461,30 +460,34 @@ namespace demo
     }
 
     template <typename T, typename Allocator>
-    inline list<T, Allocator>::list(size_type count, value_type value)
+    inline list<T, Allocator>::list(size_type count, const_reference value)
         : m_head(nullptr), m_size(0), m_node_alloc()
     {
-        if (count > max_size())
-            throw std::length_error("list count exceeds max_size");
+        // if (count > max_size())
+        //     throw std::length_error("list count exceeds max_size");
+
+        // m_head = alloc_traits::allocate(m_node_alloc, 1);
+        // alloc_traits::construct(m_node_alloc, m_head);
+
+        // Node *cur = m_head;
+        // Node *pre = m_head;
+        // for (size_type i = 0; i < count; ++i)
+        // {
+        //     cur->next = alloc_traits::allocate(m_node_alloc, 1);
+        //     alloc_traits::construct(m_node_alloc, cur->next, value);
+        //     pre = cur;
+        //     cur = cur->next;
+        //     cur->prev = pre;
+        //     m_size++;
+        // }
+
+        // // 最后一个节点与头节点相连成环
+        // cur->next = m_head;
+        // m_head->pre = cur;
 
         m_head = alloc_traits::allocate(m_node_alloc, 1);
         alloc_traits::construct(m_node_alloc, m_head);
-
-        Node *cur = m_head;
-        Node *pre = m_head;
-        for (size_type i = 0; i < count; ++i)
-        {
-            cur->next = alloc_traits::allocate(m_node_alloc, 1);
-            alloc_traits::construct(m_node_alloc, cur->next, value);
-            pre = cur;
-            cur = cur->next;
-            cur->prev = pre;
-            m_size++;
-        }
-
-        // 最后一个节点与头节点相连成环
-        cur->next = m_head;
-        m_head->pre = cur;
+        assign(count, value);
     }
 
     template <typename T, typename Allocator>
@@ -512,8 +515,6 @@ namespace demo
     {
         m_head = alloc_traits::allocate(m_node_alloc, 1);
         alloc_traits::construct(m_node_alloc, m_head);
-        m_head->next = nullptr;
-        m_head->prev = nullptr;
 
         Node *cur = m_head;
         Node *pre = m_head;
@@ -561,7 +562,7 @@ namespace demo
 
     template <typename T, typename Allocator>
     inline list<T, Allocator>::list(list<T, Allocator> &&other) noexcept
-        : m_head(nullptr), m_node_alloc()
+        : m_head(nullptr), m_size(0), m_node_alloc()
     {
         m_head = other.m_head;
         m_size = other.m_size;
@@ -808,7 +809,7 @@ namespace demo
 
     template <typename T, typename Allocator>
     inline typename list<T, Allocator>::size_type
-    list<T, Allocator>::max() const
+    list<T, Allocator>::max_size() const
     {
         return alloc_traits::max_size(m_node_alloc);
     }
@@ -816,15 +817,13 @@ namespace demo
     template <typename T, typename Allocator>
     inline void list<T, Allocator>::clear()
     {
-        Node *pre = m_head;
         Node *cur = m_head->next;
         Node *del_node = nullptr;
         while (cur != m_head)
         {
             del_node = cur;
-            pre->next = cur->next;
-            cur->next = del_node->next;
-            del_node->next->prev = pre;
+            // del_node->next->prev = pre; 单向遍历删除就好，可以不用维护 prev
+            cur = del_node->next;
 
             alloc_traits::destroy(m_node_alloc, del_node);
             alloc_traits::deallocate(m_node_alloc, del_node, 1);
@@ -866,7 +865,7 @@ namespace demo
 
         Node *new_node = alloc_traits::allocate(m_node_alloc, 1);
         alloc_traits::construct(m_node_alloc, new_node,
-                                std::forward<value_type>(value)); // 用move 还是forward好呢
+                                std::move(value));
         // 与前节点相连
         new_node->prev = pre;
         pre->next = new_node;
@@ -884,6 +883,12 @@ namespace demo
     list<T, Allocator>::insert(const_iterator pos,
                                size_type count, const_reference value)
     {
+        if (count == 0)
+            return iterator(pos.m_ptr);
+
+        if (count + m_size > max_size())
+            throw std::length_error("list::insert: count exceeds max_size");
+
         Node *pre = pos.m_ptr->prev;
         Node *next = pos.m_ptr;
 
@@ -923,7 +928,7 @@ namespace demo
 
         Node *new_node = nullptr;
         iterator ret(pos.m_ptr);
-        bool is = true;
+        bool is = true; // 标记第一个节点
 
         for (; first != last; first++)
         {
@@ -1018,7 +1023,7 @@ namespace demo
     inline typename list<T, Allocator>::iterator
     list<T, Allocator>::erase(const_iterator pos)
     {
-        if (pos == end() || pos.m_ptr == nullptr)
+        if (pos == end())
             return pos;
 
         Node *pre = pos.m_ptr->prev;
@@ -1261,13 +1266,13 @@ namespace demo
     template <typename T, typename Allocator>
     inline void list<T, Allocator>::merge(list<T, Allocator> &other)
     {
-        merge(other, std::less<>);
+        merge(other, std::less<>());
     }
 
     template <typename T, typename Allocator>
     inline void list<T, Allocator>::merge(list<T, Allocator> &&other)
     {
-        merge(other);
+        merge(other, std::less<>());
     }
 
     template <typename T, typename Allocator>
