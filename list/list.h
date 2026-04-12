@@ -224,6 +224,12 @@ namespace demo
         void sort(Compare comp);
 
     private:
+        Node *split(Node *head, size_type len);
+        Node *merge_tow(Node *la, Node *lb);
+        template <typename Compare>
+        Node *merge_tow(Node *la, Node *lb, Compare comp);
+
+    private:
         using node_allocator = typename std::allocator_traits<
             Allocator>::template rebind_alloc<Node>;
 
@@ -1214,6 +1220,7 @@ namespace demo
                 new_node->prev = pre;
 
                 pre = pre->next;
+                m_size++;
             }
 
             new_node->next = m_head;
@@ -1327,6 +1334,8 @@ namespace demo
             m_head->prev = last_node_other;
         }
 
+        m_size + other.m_size;
+
         // other 恢复有效空态
         other.m_head->next = other.m_head;
         other.m_head->prev = other.m_head;
@@ -1363,6 +1372,8 @@ namespace demo
         pre->next = next;
         next->prev = pre;
 
+        m_size + other.m_size;
+
         // other置空
         other.m_head->next = other.m_head;
         other.m_head->prev = other.m_head;
@@ -1390,25 +1401,319 @@ namespace demo
         it.m_ptr->prev = pre;
         it.m_ptr->next = next;
         next->prev = it.m_ptr;
+
+        m_size++;
+        other.m_size--;
     }
 
     template <typename T, typename Allocator>
-    void splice(const_iterator pos, list &&other, const_iterator it);
+    inline void list<T, Allocator>::splice(const_iterator pos,
+                                           list &&other, const_iterator it)
+    {
+        splice(pos, other, it);
+    }
+
     template <typename T, typename Allocator>
-    void splice(const_iterator pos, list &other,
-                const_iterator first, const_iterator last);
+    inline void list<T, Allocator>::splice(const_iterator pos, list &other,
+                                           const_iterator first, const_iterator last)
+    {
+        if (other.empty())
+            return;
+
+        Node *pre = pos.m_ptr->prev;
+        Node *next = pos.m_ptr;
+        Node *pre_other = first.m_ptr->prev;
+
+        while (first != last)
+        {
+            pre->next = first.m_ptr;
+            first.m_ptr->prev = pre;
+
+            pre = pre->next;
+            first++;
+
+            m_size++;
+            other.m_size--;
+        }
+
+        pre->next = next;
+        next->prev = pre;
+
+        pre_other->next = last.m_ptr;
+        last.m_ptr->prev = pre_other;
+    }
+
     template <typename T, typename Allocator>
-    void splice(const_iterator pos, list &&other,
-                const_iterator first, const_iterator last);
-    size_type remove(const T &value);
+    inline void list<T, Allocator>::splice(const_iterator pos, list &&other,
+                                           const_iterator first, const_iterator last)
+    {
+        splice(pos, other, first, last);
+    }
+
+    template <typename T, typename Allocator>
+    inline typename list<T, Allocator>::size_type
+    list<T, Allocator>::remove(const T &value)
+    {
+        return remove_if([&](const T &val)
+                         { return val == value; });
+    }
+
+    template <typename T, typename Allocator>
     template <class UnaryPredicate>
-    size_type remove_if(UnaryPredicate p);
-    void reverse();
-    size_type unique();
+    inline typename list<T, Allocator>::size_type
+    list<T, Allocator>::remove_if(UnaryPredicate p)
+    {
+        if (empty())
+            return;
+
+        size_type count = 0;
+        Node *pre = m_head;
+        Node *cur = m_head->next;
+        Node *next = nullptr;
+
+        while (cur != m_head)
+        {
+            if (p(cur->val))
+            {
+                next = cur->next;
+
+                pre->next = next;
+                next->prev = pre;
+
+                alloc_traits::destroy(m_node_alloc, cur);
+                alloc_traits::deallocate(m_node_alloc, cur, 1);
+                m_size--;
+                count++;
+                cur = next;
+            }
+            else
+            {
+                cur = cur->next;
+                pre = pre->next;
+            }
+        }
+
+        return count;
+    }
+
+    template <typename T, typename Allocator>
+    inline void list<T, Allocator>::reverse()
+    {
+        if (empty())
+            return;
+
+        // 不能直接交换前哨节点的prev和next,虽然这样做是O(1)
+        // 但是会破坏链表结构，导致迭代器的++变为了--
+
+        Node *cur = m_head->next;
+        Node *next = nullptr;
+
+        m_head->prev = cur;
+        while (cur != m_head)
+        {
+            next = cur->next;
+            cur->next = cur->prev;
+            cur->prev = next;
+
+            if (next == m_head)
+                m_head->next = cur;
+
+            cur = next;
+        }
+    }
+
+    template <typename T, typename Allocator>
+    inline typename list<T, Allocator>::size_type list<T, Allocator>::unique()
+    {
+        return unique(std::equal_to<T>());
+    }
+
+    template <typename T, typename Allocator>
     template <class BinaryPredicate>
-    size_type unique(BinaryPredicate p);
-    void sort();
+    inline typename list<T, Allocator>::size_type
+    list<T, Allocator>::unique(BinaryPredicate p)
+    {
+        if (empty())
+            return;
+
+        size_type count = 0;
+        Node *pre = m_head->next;
+        Node *cur = pre->next;
+
+        while (cur != m_head)
+        {
+            if (p(cur->val, pre->val))
+            {
+                Node *next = cur->next;
+
+                pre->next = next;
+                next->prev = pre;
+
+                alloc_traits::destroy(m_node_alloc, cur);
+                alloc_traits::deallocate(m_node_alloc, cur, 1);
+                m_size--;
+                count++;
+                cur = next;
+            }
+            else
+            {
+                pre = pre->next;
+                cur = cur->next;
+            }
+        }
+
+        return count;
+    }
+
+    template <typename T, typename Allocator>
+    inline void list<T, Allocator>::sort()
+    {
+        sort(std::less<>());
+    }
+
+    template <typename T, typename Allocator>
     template <class Compare>
-    void sort(Compare comp);
+    inline void list<T, Allocator>::sort(Compare comp)
+    {
+        if (empty())
+            return;
+
+        Node *head = m_head->next;
+        Node *cur = nullptr;
+        Node *left = nullptr;
+        Node *right = nullptr;
+
+        Node *temp = alloc_traits::allocate(m_node_alloc, 1); // 临时前哨节点
+        alloc_traits::construct(m_node_alloc, temp);
+
+        for (size_type i = 1; i < m_size; i *= 2)
+        {
+            cur = head;
+            Node *tail = temp;
+
+            while (cur != m_head)
+            {
+                left = cur;
+                right = split(left, i);
+                cur = split(right, i);
+                tail->next = merge_tow(left, right, comp);
+                while (tail->next != m_head)
+                    tail = tail->next;
+            }
+
+            head = temp->next;
+        }
+
+        m_head->next = head;
+
+        // 排序最后，统一修复所有 prev 指针
+        Node *p = m_head->next;
+        while (p != m_head)
+        {
+            p->next->prev = p;
+            p = p->next;
+        }
+
+        alloc_traits::destroy(m_node_alloc, temp);
+        alloc_traits::deallocate(m_node_alloc, temp, 1);
+    }
+
+    template <typename T, typename Allocator>
+    inline typename list<T, Allocator>::Node *
+    list<T, Allocator>::split(Node *head, size_type len)
+    {
+        if (head == m_head)
+            return head;
+
+        Node *cur = head;
+        // 向前走 n-1 步（拆分出前 n 个节点）
+        for (size_type i = 1; i < len && cur->next != m_head; i++)
+            cur = cur->next;
+
+        Node *next_part = cur->next;
+        cur->next = m_head;
+
+        return next_part;
+    }
+
+    template <typename T, typename Allocator>
+    inline typename list<T, Allocator>::Node *
+    list<T, Allocator>::merge_tow(Node *la, Node *lb)
+    {
+        return merge_tow(la, lb, std::less<T>());
+    }
+
+    template <typename T, typename Allocator>
+    template <typename Compare>
+    inline typename list<T, Allocator>::Node *
+    list<T, Allocator>::merge_tow(Node *la, Node *lb,
+                                  Compare comp)
+    {
+        if (la == m_head)
+            return lb;
+        if (lb == m_head)
+            return la;
+        if (la == lb)
+            return la;
+
+        Node *cur_a = la;
+        Node *cur_b = lb;
+        Node *temp = alloc_traits::allocate(m_node_alloc, 1); // 创建一个临时前哨节点用于合并
+        alloc_traits::construct(m_node_alloc, temp);
+        temp->next = la;
+        Node *pre = temp;
+
+        while (cur_a != m_head && cur_b != m_head)
+        {
+            if (comp(cur_a->val, cur_b->val))
+            {
+                pre = cur_a;
+                cur_a = cur_a->next;
+            }
+            else
+            {
+                Node *next = cur_b->next;
+                pre->next = cur_b;
+                cur_b->next = cur_a;
+
+                pre = pre->next;
+                cur_b = next;
+            }
+        }
+
+        if (cur_b != m_head)
+            pre->next = cur_b;
+
+        Node *res = temp->next;
+        alloc_traits::destroy(m_node_alloc, temp);
+        alloc_traits::deallocate(m_node_alloc, temp, 1);
+
+        return res;
+    }
+
+    template <typename T, typename Allocator>
+    bool operator==(const list<T, Allocator> &lhs, const list<T, Allocator> &rhs)
+    {
+        if (lhs.size() != rhs.size())
+            return false;
+
+        typename list<T, Allocator>::Node *cur_a = lhs.m_head->next;
+        typename list<T, Allocator>::Node *cur_b = rhs.m_head->next;
+
+        for (; cur_a != lhs.m_head && cur_b != rhs.m_head;
+             cur_a = cur_a->next, cur_b = cur_b->next)
+        {
+            if (cur_a->val != cur_b->val)
+                return false;
+        }
+
+        return true;
+    }
+
+    template <typename T, typename Allocator>
+    bool operator!=(const list<T, Allocator> &lhs, const list<T, Allocator> &rhs)
+    {
+        return !(lhs == rhs);
+    }
 
 } // namespace demo
