@@ -1233,23 +1233,15 @@ namespace demo
     inline void list<T, Allocator>::resize(size_type count,
                                            const_reference value)
     {
-        size_type size = 0;
-        Node *cur = m_head->next;
-        while (cur != m_head)
-        {
-            size++;
-            cur = cur->next;
-        }
-
-        if (size == count)
+        if (m_size == count)
             return;
-        else if (size < count)
+        else if (m_size < count)
         {
-            insert(end(), count - size, value);
+            insert(end(), count - m_size, value);
         }
         else
         {
-            for (size_type i = 0; i < size - count; i++)
+            for (size_type i = 0; i < m_size - count; i++)
                 pop_back();
         }
     }
@@ -1288,9 +1280,15 @@ namespace demo
 
         if (this->empty())
         {
-            std::swap(m_size, other.m_size);
-            std::swap(m_node_alloc, other.m_node_alloc);
-            std::swap(m_head->next, other.m_head->next);
+            m_head->next = other.m_head->next;
+            m_head->prev = other.m_head->prev;
+
+            //  other 置空
+            other.m_head->next = other.m_head;
+            other.m_head->prev = other.m_head;
+
+            m_size = other.m_size;
+            other.m_size = 0;
             return;
         }
 
@@ -1331,7 +1329,7 @@ namespace demo
             m_head->prev = last_node_other;
         }
 
-        m_size + other.m_size;
+        m_size += other.m_size;
 
         // other 恢复有效空态
         other.m_head->next = other.m_head;
