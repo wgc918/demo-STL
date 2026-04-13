@@ -1334,6 +1334,7 @@ namespace demo
         // other 恢复有效空态
         other.m_head->next = other.m_head;
         other.m_head->prev = other.m_head;
+        other.m_size = 0;
     }
 
     template <typename T, typename Allocator>
@@ -1348,7 +1349,7 @@ namespace demo
     inline void list<T, Allocator>::splice(const_iterator pos,
                                            list<T, Allocator> &other)
     {
-        if (other.empty())
+        if (other.empty() || this == &other)
             return;
 
         Node *pre = pos.m_ptr->prev;
@@ -1367,11 +1368,12 @@ namespace demo
         pre->next = next;
         next->prev = pre;
 
-        m_size + other.m_size;
+        m_size += other.m_size;
 
         // other置空
         other.m_head->next = other.m_head;
         other.m_head->prev = other.m_head;
+        other.m_size = 0;
     }
 
     template <typename T, typename Allocator>
@@ -1385,6 +1387,9 @@ namespace demo
     inline void list<T, Allocator>::splice(const_iterator pos,
                                            list &other, const_iterator it)
     {
+        if (it == other.end() || this == &other)
+            return;
+
         Node *pre = pos.m_ptr->prev;
         Node *next = pos.m_ptr;
 
@@ -1412,7 +1417,7 @@ namespace demo
     inline void list<T, Allocator>::splice(const_iterator pos, list &other,
                                            const_iterator first, const_iterator last)
     {
-        if (other.empty())
+        if (other.empty() || this == &other)
             return;
 
         Node *pre = pos.m_ptr->prev;
