@@ -117,7 +117,7 @@ int main() {
 ```
 demo-STL/
 ├── README.md                    # 项目说明文档（本文件）
-├── 自定义STL容器综合文档.md        # 容器综合文档入口
+├── 自定义STL容器综合文档.md       # 容器综合文档入口
 ├── CMakeLists.txt               # 项目构建配置
 ├── list/                        # 链表容器模块
 │   ├── list.h                   # 双向链表实现
@@ -211,6 +211,6 @@ demo-STL/
 
 **文档版本**：v1.0 
 **最后更新**：2026-04-14 
-**项目地址**：[demo-STL](https://github.com/wgc-918/demo-STL)
+**项目地址**：[demo-STL](https://github.com/wgc918/demo-STL)
 
 > **提示**：如需了解各容器的详细实现，请查阅 [自定义STL容器综合文档](./自定义STL容器综合文档.md)
