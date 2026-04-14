@@ -4,6 +4,7 @@
 #include <iterator>
 #include <memory>
 #include <initializer_list>
+#include <iostream>
 
 namespace demo
 {
@@ -97,7 +98,7 @@ namespace demo
 
             const_iterator() noexcept;
             explicit const_iterator(Node *ptr) noexcept;
-            explicit const_iterator(iterator it) noexcept;
+            const_iterator(iterator it) noexcept;
             const_iterator(const const_iterator &other) noexcept;
 
             // 解引用
@@ -140,7 +141,9 @@ namespace demo
         void assign(size_type count, const_reference value);
         void assign(std::initializer_list<value_type> ilist);
         template <typename InputIt>
-        void assign(InputIt first, InputIt last);
+        typename std::enable_if<
+            !std::is_integral<InputIt>::value, void>::type
+        assign(InputIt first, InputIt last);
 
         allocator_type get_allocator() const;
 
@@ -175,7 +178,9 @@ namespace demo
         iterator insert(const_iterator pos, value_type &&value);
         iterator insert(const_iterator pos, size_type count, const_reference value);
         template <typename InputIt>
-        iterator insert(const_iterator pos, InputIt first, InputIt last);
+        typename std::enable_if<
+            !std::is_integral<InputIt>::value, iterator>::type
+        insert(const_iterator pos, InputIt first, InputIt last);
         iterator insert(const_iterator pos, std::initializer_list<value_type> ilist);
         template <typename... Args>
         iterator emplace(const_iterator pos, Args &&...args);
@@ -487,6 +492,8 @@ namespace demo
 
         m_head = alloc_traits::allocate(m_node_alloc, 1);
         alloc_traits::construct(m_node_alloc, m_head);
+        m_head->prev = m_head;
+        m_head->next = m_head;
         assign(count, value);
     }
 
@@ -496,6 +503,8 @@ namespace demo
     {
         m_head = alloc_traits::allocate(m_node_alloc, 1);
         alloc_traits::construct(m_node_alloc, m_head);
+        m_head->prev = m_head;
+        m_head->next = m_head;
         assign(ilist);
     }
 
@@ -506,6 +515,8 @@ namespace demo
     {
         m_head = alloc_traits::allocate(m_node_alloc, 1);
         alloc_traits::construct(m_node_alloc, m_head);
+        m_head->prev = m_head;
+        m_head->next = m_head;
         assign(first, last);
     }
 
@@ -530,7 +541,7 @@ namespace demo
 
         // 最后一个节点与头节点相连成环
         cur->next = m_head;
-        m_head->pre = cur;
+        m_head->prev = cur;
     }
 
     template <typename T, typename Allocator>
@@ -555,8 +566,16 @@ namespace demo
 
             // 最后一个节点与头节点相连成环
             cur->next = m_head;
-            m_head->pre = cur;
+            m_head->prev = cur;
         }
+        return *this;
+    }
+
+    template <typename T, typename Allocator>
+    inline list<T, Allocator> &list<T, Allocator>::
+    operator=(std::initializer_list<value_type> ilist)
+    {
+        assign(ilist);
         return *this;
     }
 
@@ -570,6 +589,8 @@ namespace demo
         other.m_size = 0;
         other.m_head = alloc_traits::allocate(m_node_alloc, 1);
         alloc_traits::construct(m_node_alloc, other.m_head);
+        other.m_head->prev = other.m_head;
+        other.m_head->next = other.m_head;
     }
     template <typename T, typename Allocator>
     inline list<T, Allocator> &list<T, Allocator>::
@@ -585,6 +606,8 @@ namespace demo
             other.m_size = 0;
             other.m_head = alloc_traits::allocate(m_node_alloc, 1);
             alloc_traits::construct(m_node_alloc, other.m_head);
+            other.m_head->prev = other.m_head;
+            other.m_head->next = other.m_head;
         }
         return *this;
     }
@@ -594,8 +617,10 @@ namespace demo
     {
         clear();
         if (m_head != nullptr)
-            delete m_head;
-        m_head = nullptr;
+        {
+            alloc_traits::destroy(m_node_alloc, m_head);
+            alloc_traits::deallocate(m_node_alloc, m_head, 1);
+        }
     }
 
     template <typename T, typename Allocator>
@@ -609,7 +634,7 @@ namespace demo
 
         Node *pre = m_head;
         Node *cur = m_head;
-        for (int i = 0; i < count; i++)
+        for (size_type i = 0; i < count; i++)
         {
             cur->next = alloc_traits::allocate(m_node_alloc, 1);
             alloc_traits::construct(m_node_alloc, cur->next, value);
@@ -621,7 +646,7 @@ namespace demo
 
         // 最后一个节点与头节点相连成环
         cur->next = m_head;
-        m_head->pre = cur;
+        m_head->prev = cur;
     }
 
     template <typename T, typename Allocator>
@@ -644,13 +669,20 @@ namespace demo
 
         // 最后一个节点与头节点相连成环
         cur->next = m_head;
-        m_head->pre = cur;
+        m_head->prev = cur;
     }
 
     template <typename T, typename Allocator>
     template <typename InputIt>
-    inline void list<T, Allocator>::assign(InputIt first, InputIt last)
+    inline typename std::enable_if<
+        !std::is_integral<InputIt>::value, void>::type
+    list<T, Allocator>::assign(InputIt first, InputIt last)
     {
+        using Check = typename std::enable_if<
+            !std::is_integral<InputIt>::value>::type;
+
+        using value_type = typename std::iterator_traits<InputIt>::value_type;
+
         clear();
 
         Node *pre = m_head;
@@ -667,7 +699,7 @@ namespace demo
 
         // 最后一个节点与头节点相连成环
         cur->next = m_head;
-        m_head->pre = cur;
+        m_head->prev = cur;
     }
 
     template <typename T, typename Allocator>
@@ -745,7 +777,7 @@ namespace demo
     inline typename list<T, Allocator>::const_iterator
     list<T, Allocator>::end() const
     {
-        return iterator(m_head);
+        return const_iterator(m_head);
     }
 
     template <typename T, typename Allocator>
@@ -765,7 +797,7 @@ namespace demo
     inline typename list<T, Allocator>::const_reverse_iterator
     list<T, Allocator>::rbegin() const
     {
-        return reverse_iterator(end());
+        return const_reverse_iterator(end());
     }
 
     template <typename T, typename Allocator>
@@ -785,7 +817,7 @@ namespace demo
     inline typename list<T, Allocator>::const_reverse_iterator
     list<T, Allocator>::rend() const
     {
-        return reverse_iterator(begin());
+        return const_reverse_iterator(begin());
     }
     template <typename T, typename Allocator>
     inline typename list<T, Allocator>::const_reverse_iterator
@@ -919,10 +951,15 @@ namespace demo
 
     template <typename T, typename Allocator>
     template <typename InputIt>
-    inline typename list<T, Allocator>::iterator
+    inline typename std::enable_if<
+        !std::is_integral<InputIt>::value, typename list<T, Allocator>::iterator>::type
     list<T, Allocator>::insert(const_iterator pos,
                                InputIt first, InputIt last)
     {
+        using Check = typename std::enable_if<
+            !std::is_integral<InputIt>::value>::type;
+        using value_type = typename std::iterator_traits<InputIt>::value_type;
+
         Node *pre = pos.m_ptr->prev;
         Node *next = pos.m_ptr;
 
@@ -959,10 +996,13 @@ namespace demo
     list<T, Allocator>::insert(const_iterator pos,
                                std::initializer_list<value_type> ilist)
     {
+        if (ilist.size() == 0)
+            return iterator(pos.m_ptr);
+
         Node *pre = pos.m_ptr->prev;
         Node *next = pos.m_ptr;
 
-        Node *new_node;
+        Node *new_node = nullptr;
         iterator ret(pos.m_ptr);
         bool is = true;
 
@@ -1024,7 +1064,7 @@ namespace demo
     list<T, Allocator>::erase(const_iterator pos)
     {
         if (pos == end())
-            return pos;
+            return iterator(pos.m_ptr);
 
         Node *pre = pos.m_ptr->prev;
         Node *next = pos.m_ptr->next;
@@ -1045,7 +1085,7 @@ namespace demo
     inline typename list<T, Allocator>::iterator
     list<T, Allocator>::erase(iterator first, iterator last)
     {
-        erase(const_iterator(first), const_iterator(last));
+        return erase(const_iterator(first), const_iterator(last));
     }
 
     template <typename T, typename Allocator>
@@ -1054,7 +1094,7 @@ namespace demo
                               const_iterator last)
     {
         if (first == last)
-            return first;
+            return iterator(first.m_ptr);
 
         Node *pre = first.m_ptr->prev;
         Node *next = last.m_ptr;
@@ -1075,13 +1115,14 @@ namespace demo
             m_size--;
         }
 
-        return last;
+        return iterator(last.m_ptr);
     }
 
     template <typename T, typename Allocator>
     inline void list<T, Allocator>::push_back(const_reference value)
     {
-        push_back(value_type(value));
+        // push_back(value_type(value));
+        empalce_back(value);
     }
 
     template <typename T, typename Allocator>
@@ -1118,6 +1159,8 @@ namespace demo
         m_head->prev = new_node;
 
         m_size++;
+
+        return new_node->val;
     }
 
     template <typename T, typename Allocator>
@@ -1163,7 +1206,7 @@ namespace demo
     template <typename T, typename Allocator>
     template <typename... Args>
     inline typename list<T, Allocator>::reference
-    list<T, Allocator>::emplace_front(Args &&...argrs)
+    list<T, Allocator>::emplace_front(Args &&...args)
     {
         Node *pre = m_head;
         Node *next = m_head->next;
@@ -1179,6 +1222,8 @@ namespace demo
         next->prev = new_node;
 
         m_size++;
+
+        return new_node->val;
     }
 
     template <typename T, typename Allocator>
@@ -1209,7 +1254,9 @@ namespace demo
             Node *new_node = nullptr;
             Node *pre = m_head->prev;
 
-            for (size_type i = 0; i < count - size; i++)
+            size_type diff = count - m_size; // 一定不要把 count-m_size 写在循环条件里
+
+            for (size_type i = 0; i < diff; i++)
             {
                 new_node = alloc_traits::allocate(m_node_alloc, 1);
                 alloc_traits::construct(m_node_alloc, new_node);
@@ -1225,7 +1272,8 @@ namespace demo
         }
         else
         {
-            for (size_type i = 0; i < size - count; i++)
+            size_type diff = m_size - count; // 一定不要把 m_size-count 写在循环条件里
+            for (size_type i = 0; i < diff; i++)
                 pop_back();
         }
     }
@@ -1241,7 +1289,8 @@ namespace demo
         }
         else
         {
-            for (size_type i = 0; i < m_size - count; i++)
+            size_type diff = m_size - count; // 一定不要把 m_size-count 写在循环条件里
+            for (size_type i = 0; i < diff; i++)
                 pop_back();
         }
     }
@@ -1249,9 +1298,10 @@ namespace demo
     template <typename T, typename Allocator>
     inline void list<T, Allocator>::swap(list<T, Allocator> &other) noexcept
     {
-        using swap = std::swap;
+        using std::swap;
         swap(m_head, other.m_head);
-        swap(m_node_alloc, m_node_alloc);
+        swap(m_node_alloc, other.m_node_alloc);
+        swap(m_size, other.m_size);
     }
 
     // 操作
@@ -1276,19 +1326,24 @@ namespace demo
             return;
 
         if (other.empty())
+        {
+            std::cout << "other is empty.return" << std::endl;
             return;
+        }
 
         if (this->empty())
         {
             m_head->next = other.m_head->next;
             m_head->prev = other.m_head->prev;
+            other.m_head->next->prev = m_head;
+            other.m_head->prev->next = m_head;
+            m_size = other.m_size;
 
             //  other 置空
             other.m_head->next = other.m_head;
             other.m_head->prev = other.m_head;
-
-            m_size = other.m_size;
             other.m_size = 0;
+
             return;
         }
 
@@ -1464,7 +1519,7 @@ namespace demo
     list<T, Allocator>::remove_if(UnaryPredicate p)
     {
         if (empty())
-            return;
+            return 0;
 
         size_type count = 0;
         Node *pre = m_head;
@@ -1534,7 +1589,7 @@ namespace demo
     list<T, Allocator>::unique(BinaryPredicate p)
     {
         if (empty())
-            return;
+            return 0;
 
         size_type count = 0;
         Node *pre = m_head->next;
