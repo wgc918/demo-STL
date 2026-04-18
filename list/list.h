@@ -287,7 +287,8 @@ namespace demo
         /// @tparam InputIt 输入迭代器类型
         /// @param first 范围起始迭代器
         /// @param last 范围结束迭代器
-        template <typename InputIt>
+        template <typename InputIt,
+                  std::enable_if_t<!std::is_integral<InputIt>::value, int> = 0>
         list(InputIt first, InputIt last);
 
         /// @brief 拷贝构造函数
@@ -938,7 +939,8 @@ namespace demo
     }
 
     template <typename T, typename Allocator>
-    template <typename InputIt>
+    template <typename InputIt,
+              std::enable_if_t<!std::is_integral<InputIt>::value, int>>
     inline list<T, Allocator>::list(InputIt first, InputIt last)
         : m_head(nullptr), m_size(0), m_node_alloc()
     {
