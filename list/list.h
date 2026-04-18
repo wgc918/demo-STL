@@ -1,3 +1,39 @@
+//-----------------------------------------------------------------------------
+// 版权所有 (C) 2026 demo-STL 项目
+//
+// 文件: list.h
+// 作者: wgc
+// 创建日期: 2026年1月
+// 最后修改: 2026年4月
+//
+// 描述:
+//     本文件实现了一个 STL 风格的双向链表容器 (list)。
+//     该容器支持高效的插入、删除操作，以及各种标准的链表操作。
+//
+// 功能特性:
+//     - 双向迭代器支持
+//     - 高效的任意位置插入/删除
+//     - 合并、拼接、排序等操作
+//     - 符合 STL 容器规范
+//
+// 许可证:
+//     MIT License
+//
+//     版权所有 (c) 2026 wgc
+//
+//     特此免费授予获得本软件副本和相关文档文件（以下简称"软件"）的任何人以处理软件的权利，
+//     包括但不限于使用、复制、修改、合并、出版、分发、再许可和/或出售软件副本，
+//     以及允许软件适用者这样做，须在下列条件下：
+//
+//     上述版权声明和本许可声明应包含在软件的所有副本或实质性部分中。
+//
+//     软件按"原样"提供，不提供任何形式的明示或暗示的保证，
+//     包括但不限于对适销性、特定用途适用性和非侵权性的保证。
+//     在任何情况下，作者或版权持有人均不对任何索赔、损害或其他责任负责，
+//     无论是在合同诉讼、侵权诉讼或其他诉讼中，
+//     由于软件或软件的使用或其他交易产生的。
+//-----------------------------------------------------------------------------
+
 #pragma once
 
 #include <type_traits>
@@ -11,9 +47,22 @@ namespace demo
               typename Allocator = std::allocator<T>>
     class list;
 
+    /// @brief 比较两个链表是否相等
+    /// @tparam T 元素类型
+    /// @tparam Allocator 分配器类型
+    /// @param lhs 左操作数
+    /// @param rhs 右操作数
+    /// @return 如果两个链表相等返回true，否则返回false
     template <typename T, typename Allocator>
     bool operator==(const list<T, Allocator> &lhs,
                     const list<T, Allocator> &rhs);
+
+    /// @brief 比较两个链表是否不相等
+    /// @tparam T 元素类型
+    /// @tparam Allocator 分配器类型
+    /// @param lhs 左操作数
+    /// @param rhs 右操作数
+    /// @return 如果两个链表不相等返回true，否则返回false
     template <typename T, typename Allocator>
     bool operator!=(const list<T, Allocator> &lhs,
                     const list<T, Allocator> &rhs);
@@ -29,22 +78,26 @@ namespace demo
             const list<T, Allocator> &rhs);
 
     public:
-        using value_type = T;
-        using allocator_type = Allocator;
-        using reference = T &;
-        using const_reference = const T &;
-        using pointer = T *;
-        using const_pointr = const T *;
-        using size_type = std::size_t;
-        using difference_type = std::ptrdiff_t;
+        using value_type = T;                   ///< 元素类型
+        using allocator_type = Allocator;       ///< 分配器类型
+        using reference = T &;                  ///< 元素引用类型
+        using const_reference = const T &;      ///< 常量元素引用类型
+        using pointer = T *;                    ///< 元素指针类型
+        using const_pointr = const T *;         ///< 常量元素指针类型
+        using size_type = std::size_t;          ///< 大小类型
+        using difference_type = std::ptrdiff_t; ///< 差值类型
 
     private:
+        /// @brief 链表节点结构体
         struct Node
         {
-            value_type val;
-            Node *prev;
-            Node *next;
+            value_type val; ///< 节点存储的值
+            Node *prev;     ///< 指向前一个节点的指针
+            Node *next;     ///< 指向后一个节点的指针
 
+            /// @brief 构造函数，使用完美转发构造节点值
+            /// @tparam Args 构造参数类型
+            /// @param args 构造参数
             template <typename... Args>
             Node(Args &&...args)
                 : val(std::forward<Args>(args)...),
@@ -53,201 +106,560 @@ namespace demo
 
     public:
         class const_iterator;
+
+        /// @brief 双向迭代器类
         class iterator
         {
             friend class list;
 
         public:
             using iterator_category =
-                std::bidirectional_iterator_tag;
-            using value_type = T;
-            using pointer = T *;
-            using reference = T &;
-            using difference_type = std::ptrdiff_t;
+                std::bidirectional_iterator_tag;    ///< 迭代器类别
+            using value_type = T;                   ///< 元素类型
+            using pointer = T *;                    ///< 元素指针类型
+            using reference = T &;                  ///< 元素引用类型
+            using difference_type = std::ptrdiff_t; ///< 差值类型
 
+            /// @brief 默认构造函数，创建空迭代器
             iterator() noexcept;
+
+            /// @brief 构造函数，从节点指针创建迭代器
+            /// @param ptr 指向节点的指针
             explicit iterator(Node *ptr) noexcept;
+
+            /// @brief 拷贝构造函数
+            /// @param other 要拷贝的迭代器
             iterator(const iterator &other) noexcept;
 
-            // 解引用操作
+            /// @brief 解引用操作符，返回当前元素的引用
+            /// @return 当前元素的引用
             reference operator*() const noexcept;
+
+            /// @brief 箭头操作符，返回当前元素的指针
+            /// @return 当前元素的指针
             pointer operator->() const noexcept;
 
-            // 自增/自减
+            /// @brief 前置自增，移动到下一个元素
+            /// @return 自增后的迭代器引用
             iterator &operator++() noexcept;
+
+            /// @brief 后置自增，移动到下一个元素
+            /// @return 自增前的迭代器副本
             iterator operator++(int) noexcept;
+
+            /// @brief 前置自减，移动到前一个元素
+            /// @return 自减后的迭代器引用
             iterator &operator--() noexcept;
+
+            /// @brief 后置自减，移动到前一个元素
+            /// @return 自减前的迭代器副本
             iterator operator--(int) noexcept;
 
-            // 比较
+            /// @brief 比较两个迭代器是否相等
+            /// @param other 要比较的另一个迭代器
+            /// @return 如果相等返回true，否则返回false
             bool operator==(
                 const iterator other) const noexcept;
+
+            /// @brief 比较两个迭代器是否不相等
+            /// @param other 要比较的另一个迭代器
+            /// @return 如果不相等返回true，否则返回false
             bool operator!=(
                 const iterator other) const noexcept;
+
+            /// @brief 与const_iterator比较是否相等
+            /// @param other 要比较的const_iterator
+            /// @return 如果相等返回true，否则返回false
             bool operator==(
                 const const_iterator other) const noexcept;
+
+            /// @brief 与const_iterator比较是否不相等
+            /// @param other 要比较的const_iterator
+            /// @return 如果不相等返回true，否则返回false
             bool operator!=(
                 const const_iterator other) const noexcept;
 
         private:
-            Node *m_ptr;
+            Node *m_ptr; ///< 指向当前节点的指针
         };
 
+        /// @brief 常量双向迭代器类
         class const_iterator
         {
             friend class list;
 
         public:
             using iterator_category =
-                std::bidirectional_iterator_tag;
-            using value_type = T;
-            using pointer = const T *;
-            using reference = const T &;
-            using difference_type = std::ptrdiff_t;
+                std::bidirectional_iterator_tag;    ///< 迭代器类别
+            using value_type = T;                   ///< 元素类型
+            using pointer = const T *;              ///< 常量元素指针类型
+            using reference = const T &;            ///< 常量元素引用类型
+            using difference_type = std::ptrdiff_t; ///< 差值类型
 
+            /// @brief 默认构造函数，创建空迭代器
             const_iterator() noexcept;
+
+            /// @brief 构造函数，从节点指针创建迭代器
+            /// @param ptr 指向节点的指针
             explicit const_iterator(Node *ptr) noexcept;
+
+            /// @brief 从非const迭代器构造
+            /// @param it 非const迭代器
             const_iterator(iterator it) noexcept;
+
+            /// @brief 拷贝构造函数
+            /// @param other 要拷贝的迭代器
             const_iterator(const const_iterator &other) noexcept;
 
-            // 解引用
+            /// @brief 解引用操作符，返回当前元素的常量引用
+            /// @return 当前元素的常量引用
             reference operator*() const noexcept;
+
+            /// @brief 箭头操作符，返回当前元素的常量指针
+            /// @return 当前元素的常量指针
             pointer operator->() const noexcept;
 
-            // 自增/自减
+            /// @brief 前置自增，移动到下一个元素
+            /// @return 自增后的迭代器引用
             const_iterator &operator++() noexcept;
+
+            /// @brief 后置自增，移动到下一个元素
+            /// @return 自增前的迭代器副本
             const_iterator operator++(int) noexcept;
+
+            /// @brief 前置自减，移动到前一个元素
+            /// @return 自减后的迭代器引用
             const_iterator &operator--() noexcept;
+
+            /// @brief 后置自减，移动到前一个元素
+            /// @return 自减前的迭代器副本
             const_iterator operator--(int) noexcept;
 
-            // 比较
+            /// @brief 比较两个const_iterator是否相等
+            /// @param other 要比较的另一个迭代器
+            /// @return 如果相等返回true，否则返回false
             bool operator==(
                 const const_iterator other) const noexcept;
+
+            /// @brief 比较两个const_iterator是否不相等
+            /// @param other 要比较的另一个迭代器
+            /// @return 如果不相等返回true，否则返回false
             bool operator!=(
                 const const_iterator other) const noexcept;
+
+            /// @brief 与iterator比较是否相等
+            /// @param other 要比较的iterator
+            /// @return 如果相等返回true，否则返回false
             bool operator==(const iterator other) const noexcept;
+
+            /// @brief 与iterator比较是否不相等
+            /// @param other 要比较的iterator
+            /// @return 如果不相等返回true，否则返回false
             bool operator!=(const iterator other) const noexcept;
 
         private:
-            Node *m_ptr;
+            Node *m_ptr; ///< 指向当前节点的指针
         };
 
-        // 使用标准库的反向迭代器适配器
+        /// @brief 反向迭代器类型，使用标准库适配器
         using reverse_iterator =
             std::reverse_iterator<iterator>;
+
+        /// @brief 常量反向迭代器类型，使用标准库适配器
         using const_reverse_iterator =
             std::reverse_iterator<const_iterator>;
 
     public:
+        /// @brief 默认构造函数，创建空链表
         explicit list();
+
+        /// @brief 填充构造函数，创建包含count个value的链表
+        /// @param count 元素数量
+        /// @param value 元素值
         explicit list(size_type count,
                       const_reference value = value_type());
+
+        /// @brief 初始化列表构造函数
+        /// @param ilist 初始化列表
         list(std::initializer_list<value_type> ilist);
+
+        /// @brief 范围构造函数，复制[first, last)范围内的元素
+        /// @tparam InputIt 输入迭代器类型
+        /// @param first 范围起始迭代器
+        /// @param last 范围结束迭代器
         template <typename InputIt>
         list(InputIt first, InputIt last);
+
+        /// @brief 拷贝构造函数
+        /// @param other 要拷贝的链表
         list(const list<T, Allocator> &other);
+
+        /// @brief 拷贝赋值运算符
+        /// @param other 要拷贝的链表
+        /// @return 当前链表的引用
         list<T, Allocator> &operator=(
             const list<T, Allocator> &other);
+
+        /// @brief 初始化列表赋值运算符
+        /// @param ilist 初始化列表
+        /// @return 当前链表的引用
         list<T, Allocator> &operator=(
             std::initializer_list<value_type> ilist);
+
+        /// @brief 移动构造函数
+        /// @param other 要移动的链表
         list(list<T, Allocator> &&other) noexcept;
+
+        /// @brief 移动赋值运算符
+        /// @param other 要移动的链表
+        /// @return 当前链表的引用
         list<T, Allocator> &operator=(
             list<T, Allocator> &&other) noexcept;
+
+        /// @brief 析构函数，释放所有资源
         ~list();
 
+        /// @brief 将链表内容替换为count个value
+        /// @param count 元素数量
+        /// @param value 元素值
         void assign(size_type count, const_reference value);
+
+        /// @brief 将链表内容替换为初始化列表中的元素
+        /// @param ilist 初始化列表
         void assign(std::initializer_list<value_type> ilist);
+
+        /// @brief 将链表内容替换为[first, last)范围内的元素
+        /// @tparam InputIt 输入迭代器类型
+        /// @param first 范围起始迭代器
+        /// @param last 范围结束迭代器
         template <typename InputIt,
                   std::enable_if_t<!std::is_integral<InputIt>::value, int> = 0>
         void assign(InputIt first, InputIt last);
 
+        /// @brief 获取分配器
+        /// @return 分配器对象
         allocator_type get_allocator() const;
 
         // 元素访问
+        /// @brief 获取第一个元素的引用
+        /// @return 第一个元素的引用
+        /// @throw std::out_of_range 如果链表为空
         reference front();
+
+        /// @brief 获取第一个元素的常量引用
+        /// @return 第一个元素的常量引用
+        /// @throw std::out_of_range 如果链表为空
         const_reference front() const;
+
+        /// @brief 获取最后一个元素的引用
+        /// @return 最后一个元素的引用
+        /// @throw std::out_of_range 如果链表为空
         reference back();
+
+        /// @brief 获取最后一个元素的常量引用
+        /// @return 最后一个元素的常量引用
+        /// @throw std::out_of_range 如果链表为空
         const_reference back() const;
 
         // 迭代器
+        /// @brief 返回指向第一个元素的迭代器
+        /// @return 指向首元素的迭代器
         iterator begin();
+
+        /// @brief 返回指向第一个元素的常量迭代器
+        /// @return 指向首元素的常量迭代器
         const_iterator begin() const;
+
+        /// @brief 返回指向第一个元素的常量迭代器（const版本）
+        /// @return 指向首元素的常量迭代器
         const_iterator cbegin() const noexcept;
+
+        /// @brief 返回指向末尾的迭代器
+        /// @return 指向末尾的迭代器
         iterator end();
+
+        /// @brief 返回指向末尾的常量迭代器
+        /// @return 指向末尾的常量迭代器
         const_iterator end() const;
+
+        /// @brief 返回指向末尾的常量迭代器（const版本）
+        /// @return 指向末尾的常量迭代器
         const_iterator cend() const noexcept;
+
+        /// @brief 返回指向最后一个元素的反向迭代器
+        /// @return 指向末尾的反向迭代器
         reverse_iterator rbegin();
+
+        /// @brief 返回指向最后一个元素的常量反向迭代器
+        /// @return 指向末尾的常量反向迭代器
         const_reverse_iterator rbegin() const;
+
+        /// @brief 返回指向最后一个元素的常量反向迭代器（const版本）
+        /// @return 指向末尾的常量反向迭代器
         const_reverse_iterator crbegin() const noexcept;
+
+        /// @brief 返回指向第一个元素之前位置的反向迭代器
+        /// @return 指向首元素之前位置的反向迭代器
         reverse_iterator rend();
+
+        /// @brief 返回指向第一个元素之前位置的常量反向迭代器
+        /// @return 指向首元素之前位置的常量反向迭代器
         const_reverse_iterator rend() const;
+
+        /// @brief 返回指向第一个元素之前位置的常量反向迭代器（const版本）
+        /// @return 指向首元素之前位置的常量反向迭代器
         const_reverse_iterator crend() const noexcept;
 
         // 容量
+        /// @brief 检查链表是否为空
+        /// @return 如果为空返回true，否则返回false
         bool empty() const;
+
+        /// @brief 返回链表中的元素数量
+        /// @return 元素数量
         size_type size() const noexcept;
+
+        /// @brief 返回链表能容纳的最大元素数量
+        /// @return 最大元素数量
         size_type max_size() const;
 
         // 修改器
+        /// @brief 清空链表，删除所有元素
         void clear();
+
+        /// @brief 在指定位置插入元素（拷贝版本）
+        /// @param pos 插入位置
+        /// @param value 要插入的值
+        /// @return 指向新插入元素的迭代器
         iterator insert(const_iterator pos, const_reference value);
+
+        /// @brief 在指定位置插入元素（移动版本）
+        /// @param pos 插入位置
+        /// @param value 要插入的值（右值）
+        /// @return 指向新插入元素的迭代器
         iterator insert(const_iterator pos, value_type &&value);
+
+        /// @brief 在指定位置插入count个相同元素
+        /// @param pos 插入位置
+        /// @param count 插入数量
+        /// @param value 要插入的值
+        /// @return 指向第一个新插入元素的迭代器
         iterator insert(const_iterator pos,
                         size_type count, const_reference value);
+
+        /// @brief 在指定位置插入[first, last)范围内的元素
+        /// @tparam InputIt 输入迭代器类型
+        /// @param pos 插入位置
+        /// @param first 范围起始迭代器
+        /// @param last 范围结束迭代器
+        /// @return 指向第一个新插入元素的迭代器
         template <typename InputIt,
                   std::enable_if_t<!std::is_integral<InputIt>::value, int> = 0>
         iterator insert(const_iterator pos, InputIt first, InputIt last);
+
+        /// @brief 在指定位置插入初始化列表中的元素
+        /// @param pos 插入位置
+        /// @param ilist 初始化列表
+        /// @return 指向第一个新插入元素的迭代器
         iterator insert(const_iterator pos,
                         std::initializer_list<value_type> ilist);
+
+        /// @brief 在指定位置原地构造元素
+        /// @tparam Args 构造参数类型
+        /// @param pos 插入位置
+        /// @param args 构造参数
+        /// @return 指向新构造元素的迭代器
         template <typename... Args>
         iterator emplace(const_iterator pos, Args &&...args);
+
+        /// @brief 删除指定位置的元素
+        /// @param pos 要删除的元素位置
+        /// @return 指向被删除元素之后的迭代器
         iterator erase(iterator pos);
+
+        /// @brief 删除指定位置的元素（const版本）
+        /// @param pos 要删除的元素位置
+        /// @return 指向被删除元素之后的迭代器
         iterator erase(const_iterator pos);
+
+        /// @brief 删除[first, last)范围内的元素
+        /// @param first 范围起始迭代器
+        /// @param last 范围结束迭代器
+        /// @return 指向最后一个被删除元素之后的迭代器
         iterator erase(iterator first, iterator last);
+
+        /// @brief 删除[first, last)范围内的元素（const版本）
+        /// @param first 范围起始迭代器
+        /// @param last 范围结束迭代器
+        /// @return 指向最后一个被删除元素之后的迭代器
         iterator erase(const_iterator first, const_iterator last);
+
+        /// @brief 在末尾添加元素（拷贝版本）
+        /// @param value 要添加的值
         void push_back(const_reference value);
+
+        /// @brief 在末尾添加元素（移动版本）
+        /// @param value 要添加的值（右值）
         void push_back(value_type &&value);
+
+        /// @brief 在末尾原地构造元素
+        /// @tparam Args 构造参数类型
+        /// @param args 构造参数
+        /// @return 指向新构造元素的引用
         template <typename... Args>
         reference emplace_back(Args &&...args);
+
+        /// @brief 删除末尾元素
+        /// @throw std::out_of_range 如果链表为空
         void pop_back();
+
+        /// @brief 在开头添加元素（拷贝版本）
+        /// @param value 要添加的值
         void push_front(const_reference value);
+
+        /// @brief 在开头添加元素（移动版本）
+        /// @param value 要添加的值（右值）
         void push_front(value_type &&value);
+
+        /// @brief 在开头原地构造元素
+        /// @tparam Args 构造参数类型
+        /// @param args 构造参数
+        /// @return 指向新构造元素的引用
         template <typename... Args>
         reference emplace_front(Args &&...argrs);
+
+        /// @brief 删除开头元素
+        /// @throw std::out_of_range 如果链表为空
         void pop_front();
+
+        /// @brief 调整链表大小，新元素默认构造
+        /// @param count 新的大小
         void resize(size_type count);
+
+        /// @brief 调整链表大小，新元素用指定值填充
+        /// @param count 新的大小
+        /// @param value 用于填充新元素的值
         void resize(size_type count, const_reference value);
+
+        /// @brief 交换两个链表的内容
+        /// @param other 要交换的链表
         void swap(list<T, Allocator> &other) noexcept;
 
         // 操作
+        /// @brief 合并两个已排序的链表（使用默认比较器）
+        /// @param other 要合并的链表，合并后other为空
         void merge(list<T, Allocator> &other);
+
+        /// @brief 合并两个已排序的链表（移动版本）
+        /// @param other 要合并的链表，合并后other为空
         void merge(list<T, Allocator> &&other);
+
+        /// @brief 使用指定比较器合并两个已排序的链表
+        /// @tparam Compare 比较函数类型
+        /// @param other 要合并的链表，合并后other为空
+        /// @param comp 比较函数
         template <typename Compare>
         void merge(list<T, Allocator> &other, Compare comp);
+
+        /// @brief 使用指定比较器合并两个已排序的链表（移动版本）
+        /// @tparam Compare 比较函数类型
+        /// @param other 要合并的链表，合并后other为空
+        /// @param comp 比较函数
         template <typename Compare>
         void merge(list<T, Allocator> &&other, Compare comp);
+
+        /// @brief 将other链表的所有元素移动到pos位置之前
+        /// @param pos 插入位置
+        /// @param other 要移动的链表，移动后other为空
         void splice(const_iterator pos, list<T, Allocator> &other);
+
+        /// @brief 将other链表的所有元素移动到pos位置之前（移动版本）
+        /// @param pos 插入位置
+        /// @param other 要移动的链表，移动后other为空
         void splice(const_iterator pos, list<T, Allocator> &&other);
+
+        /// @brief 将other中指定位置的元素移动到pos位置之前
+        /// @param pos 插入位置
+        /// @param other 源链表
+        /// @param it 要移动的元素位置
         void splice(const_iterator pos, list &other, const_iterator it);
+
+        /// @brief 将other中指定位置的元素移动到pos位置之前（移动版本）
+        /// @param pos 插入位置
+        /// @param other 源链表
+        /// @param it 要移动的元素位置
         void splice(const_iterator pos, list &&other, const_iterator it);
+
+        /// @brief 将other中[first, last)范围内的元素移动到pos位置之前
+        /// @param pos 插入位置
+        /// @param other 源链表
+        /// @param first 范围起始迭代器
+        /// @param last 范围结束迭代器
         void splice(const_iterator pos, list &other,
                     const_iterator first, const_iterator last);
+
+        /// @brief 将other中[first, last)范围内的元素移动到pos位置之前（移动版本）
+        /// @param pos 插入位置
+        /// @param other 源链表
+        /// @param first 范围起始迭代器
+        /// @param last 范围结束迭代器
         void splice(const_iterator pos, list &&other,
                     const_iterator first, const_iterator last);
+
+        /// @brief 删除所有等于value的元素
+        /// @param value 要删除的值
+        /// @return 删除的元素数量
         size_type remove(const T &value);
+
+        /// @brief 删除所有满足条件的元素
+        /// @tparam UnaryPredicate 一元谓词类型
+        /// @param p 谓词函数，返回true表示删除该元素
+        /// @return 删除的元素数量
         template <class UnaryPredicate>
         size_type remove_if(UnaryPredicate p);
+
+        /// @brief 反转链表
         void reverse();
+
+        /// @brief 移除连续重复的元素（使用默认相等比较）
+        /// @return 移除的元素数量
         size_type unique();
+
+        /// @brief 移除连续重复的元素（使用指定比较器）
+        /// @tparam BinaryPredicate 二元谓词类型
+        /// @param p 比较函数，返回true表示两个元素相等
+        /// @return 移除的元素数量
         template <class BinaryPredicate>
         size_type unique(BinaryPredicate p);
+
+        /// @brief 排序链表（使用默认比较器）
         void sort();
+
+        /// @brief 使用指定比较器排序链表
+        /// @tparam Compare 比较函数类型
+        /// @param comp 比较函数
         template <class Compare>
         void sort(Compare comp);
 
     private:
+        /// @brief 将链表从指定位置拆分为两部分
+        /// @param head 链表头
+        /// @param len 第一部分的长度
+        /// @return 第二部分的头节点
         Node *split(Node *head, size_type len);
+
+        /// @brief 合并两个已排序的链表（使用默认比较器）
+        /// @param la 第一个链表头
+        /// @param lb 第二个链表头
+        /// @return 合并后的链表头
         Node *merge_tow(Node *la, Node *lb);
+
+        /// @brief 使用指定比较器合并两个已排序的链表
+        /// @tparam Compare 比较函数类型
+        /// @param la 第一个链表头
+        /// @param lb 第二个链表头
+        /// @param comp 比较函数
+        /// @return 合并后的链表头
         template <typename Compare>
         Node *merge_tow(Node *la, Node *lb, Compare comp);
 
