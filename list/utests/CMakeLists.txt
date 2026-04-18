@@ -36,9 +36,10 @@ include_directories(
 # 添加测试源文件
 set(TEST_SOURCES
     test_list.cpp
+    test_forward_list.cpp
     main.cpp
 )
 
 # 添加测试目标（使用 doctest 的 IMPLEMENT_WITH_MAIN 模式）
-add_executable(list_tests ${TEST_SOURCES})
+add_executable(test ${TEST_SOURCES})
 
