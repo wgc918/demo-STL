@@ -953,44 +953,47 @@ namespace demo
     template <typename T, typename Allocator>
     inline void forward_list<T, Allocator>::merge(forward_list &other)
     {
-        if (this == &other)
-            return;
+        // if (this == &other)
+        //     return;
 
-        if (other.empty())
-            return;
+        // if (other.empty())
+        //     return;
 
-        if (this->empty())
-        {
-            std::swap(m_head->next, other.m_head->next);
-            return;
-        }
+        // if (this->empty())
+        // {
+        //     m_head->next = other.m_head->next;
+        //     other.m_head->next = nullptr;
+        //     return;
+        // }
 
-        using Comp = std::less<>;
-        Comp comp;
+        // using Comp = std::less<>;
+        // Comp comp;
 
-        Node *prev = m_head;
-        Node *curr = m_head->next;
-        Node *other_curr = other.m_head->next;
-        other.m_head->next = nullptr;
+        // Node *prev = m_head;
+        // Node *curr = m_head->next;
+        // Node *other_curr = other.m_head->next;
+        // other.m_head->next = nullptr;
 
-        while (curr != nullptr && other_curr != nullptr)
-        {
-            if (comp(curr->value, other_curr->value))
-            {
-                prev = curr;
-                curr = curr->next;
-            }
-            else
-            {
-                prev->next = other_curr;
-                other_curr = other_curr->next;
-                prev->next->next = curr;
-                prev = prev->next;
-            }
-        }
+        // while (curr != nullptr && other_curr != nullptr)
+        // {
+        //     if (comp(curr->value, other_curr->value))
+        //     {
+        //         prev = curr;
+        //         curr = curr->next;
+        //     }
+        //     else
+        //     {
+        //         prev->next = other_curr;
+        //         other_curr = other_curr->next;
+        //         prev->next->next = curr;
+        //         prev = prev->next;
+        //     }
+        // }
 
-        if (other_curr != nullptr)
-            prev->next = other_curr;
+        // if (other_curr != nullptr)
+        //     prev->next = other_curr;
+
+        merge(other, std::less<>);
     }
 
     template <typename T, typename Allocator>
@@ -1012,7 +1015,8 @@ namespace demo
 
         if (this->empty())
         {
-            std::swap(m_head->next, other.m_head->next);
+            m_head->next = other.m_head->next;
+            other.m_head->next = nullptr;
             return;
         }
 
@@ -1141,29 +1145,32 @@ namespace demo
     inline typename forward_list<T, Allocator>::size_type
     forward_list<T, Allocator>::remove(const T &value)
     {
-        size_type count = 0;
-        Node *pre = m_head;
-        Node *cur = m_head->next;
-        while (cur != nullptr)
-        {
-            if (cur->value == value)
-            {
-                Node *next = cur->next;
-                pre->next = cur->next;
-                alloc_traits::destroy(m_node_alloc, cur);
-                alloc_traits::deallocate(m_node_alloc, cur, 1);
+        // size_type count = 0;
+        // Node *pre = m_head;
+        // Node *cur = m_head->next;
+        // while (cur != nullptr)
+        // {
+        //     if (cur->value == value)
+        //     {
+        //         Node *next = cur->next;
+        //         pre->next = cur->next;
+        //         alloc_traits::destroy(m_node_alloc, cur);
+        //         alloc_traits::deallocate(m_node_alloc, cur, 1);
 
-                cur = next;
-                count++;
-            }
-            else
-            {
-                pre = pre->next;
-                cur = cur->next;
-            }
-        }
+        //         cur = next;
+        //         count++;
+        //     }
+        //     else
+        //     {
+        //         pre = pre->next;
+        //         cur = cur->next;
+        //     }
+        // }
 
-        return count;
+        // return count;
+
+        remove_if([&](int val)
+                  { return val == value; });
     }
 
     template <typename T, typename Allocator>
@@ -1221,33 +1228,35 @@ namespace demo
     inline typename forward_list<T, Allocator>::size_type
     forward_list<T, Allocator>::unique()
     {
-        if (empty())
-            return 0;
+        // if (empty())
+        //     return 0;
 
-        size_type count = 0;
-        Node *pre = m_head->next;
-        Node *cur = pre->next;
-        while (cur != nullptr)
-        {
-            if (pre->value == cur->value)
-            {
-                Node *next = cur->next;
-                pre->next = next;
+        // size_type count = 0;
+        // Node *pre = m_head->next;
+        // Node *cur = pre->next;
+        // while (cur != nullptr)
+        // {
+        //     if (pre->value == cur->value)
+        //     {
+        //         Node *next = cur->next;
+        //         pre->next = next;
 
-                alloc_traits::destroy(m_node_alloc, cur);
-                alloc_traits::deallocate(m_node_alloc, cur, 1);
+        //         alloc_traits::destroy(m_node_alloc, cur);
+        //         alloc_traits::deallocate(m_node_alloc, cur, 1);
 
-                cur = next;
-                count++;
-            }
-            else
-            {
-                pre = pre->next;
-                cur = cur->next;
-            }
-        }
+        //         cur = next;
+        //         count++;
+        //     }
+        //     else
+        //     {
+        //         pre = pre->next;
+        //         cur = cur->next;
+        //     }
+        // }
 
-        return count;
+        // return count;
+
+        unique(std::equal_to<>());
     }
 
     template <typename T, typename Allocator>
@@ -1311,11 +1320,12 @@ namespace demo
             cur = cur->next;
         }
 
+        Node *temp = alloc_traits::allocate(m_node_alloc, 1); // 临时前哨节点
+        alloc_traits::construct(m_node_alloc, temp);
+
         for (size_type i = 1; i < len; i *= 2)
         {
             cur = head;
-            Node *temp = alloc_traits::allocate(m_node_alloc, 1); // 临时前哨节点
-            alloc_traits::construct(m_node_alloc, temp);
             Node *tail = temp;
 
             while (cur != nullptr)
@@ -1330,9 +1340,10 @@ namespace demo
             }
 
             head = temp->next;
-            alloc_traits::destroy(m_node_alloc, temp);
-            alloc_traits::deallocate(m_node_alloc, temp, 1);
         }
+
+        alloc_traits::destroy(m_node_alloc, temp);
+        alloc_traits::deallocate(m_node_alloc, temp, 1);
 
         m_head->next = head;
     }
