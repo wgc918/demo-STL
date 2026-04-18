@@ -208,7 +208,7 @@ namespace demo
         void push_back(const_reference value);
         void push_back(value_type &&value);
         template <typename... Args>
-        reference empalce_back(Args &&...args);
+        reference emplace_back(Args &&...args);
         void pop_back();
         void push_front(const_reference value);
         void push_front(value_type &&value);
@@ -1128,7 +1128,7 @@ namespace demo
     inline void list<T, Allocator>::push_back(const_reference value)
     {
         // push_back(value_type(value));
-        empalce_back(value);
+        emplace_back(value);
     }
 
     template <typename T, typename Allocator>
@@ -1151,7 +1151,7 @@ namespace demo
     template <typename T, typename Allocator>
     template <typename... Args>
     inline typename list<T, Allocator>::reference
-    list<T, Allocator>::empalce_back(Args &&...args)
+    list<T, Allocator>::emplace_back(Args &&...args)
     {
         Node *pre = m_head->prev;
         Node *new_node = alloc_traits::allocate(m_node_alloc, 1);

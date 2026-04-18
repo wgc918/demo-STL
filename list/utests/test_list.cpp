@@ -601,10 +601,10 @@ TEST_SUITE("List Modifiers - Insert")
         CHECK(lst.front() == "aaa");
     }
 
-    TEST_CASE("empalce_back() constructs at back")
+    TEST_CASE("emplace_back() constructs at back")
     {
         demo::list<std::string> lst;
-        lst.empalce_back(3, 'b'); // "bbb"
+        lst.emplace_back(3, 'b'); // "bbb"
 
         CHECK(lst.back() == "bbb");
     }
@@ -1229,8 +1229,8 @@ TEST_SUITE("List Edge Cases and Exceptions")
         lst.emplace(lst.end(), 3, 'y');
         CHECK(lst.back() == "yyy");
 
-        // 测试empalce_back
-        lst.empalce_back(4, 'z');
+        // 测试emplace_back
+        lst.emplace_back(4, 'z');
         CHECK(lst.back() == "zzzz");
     }
 
