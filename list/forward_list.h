@@ -37,7 +37,8 @@ namespace demo
             Node *next;
 
             template <typename... Args>
-            Node(Args &&...args) : value(std::forward<Args>(args)...), next(nullptr) {}
+            Node(Args &&...args)
+                : value(std::forward<Args>(args)...), next(nullptr) {}
             ~Node() = default;
         };
 
@@ -46,7 +47,8 @@ namespace demo
         class iterator
         {
         public:
-            using iterator_category = std::forward_iterator_tag;
+            using iterator_category =
+                std::forward_iterator_tag;
             using value_type = T;
             using difference_type = std::ptrdiff_t;
             using pointer = T *;
@@ -65,19 +67,20 @@ namespace demo
             iterator operator++(int) noexcept;
 
             // 比较
-            bool operator==(const iterator &other) const noexcept;
-            bool operator!=(const iterator &other) const noexcept;
+            bool operator==(
+                const iterator &other) const noexcept;
+            bool operator!=(
+                const iterator &other) const noexcept;
 
         private:
             Node *m_ptr;
-
-            friend class forward_list; // 便于直接访问 m_ptr
         };
 
         class const_iterator
         {
         public:
-            using iterator_category = std::forward_iterator_tag;
+            using iterator_category =
+                std::forward_iterator_tag;
             using value_type = const T;
             using difference_type = std::ptrdiff_t;
             using pointer = const T *;
@@ -97,15 +100,17 @@ namespace demo
             const_iterator operator++(int) noexcept;
 
             // 比较
-            bool operator==(const const_iterator &other) const noexcept;
-            bool operator==(const iterator &other) const noexcept;
-            bool operator!=(const const_iterator &other) const noexcept;
-            bool operator!=(const iterator &other) const noexcept;
+            bool operator==(const const_iterator
+                                &other) const noexcept;
+            bool operator==(const iterator
+                                &other) const noexcept;
+            bool operator!=(const const_iterator
+                                &other) const noexcept;
+            bool operator!=(const iterator
+                                &other) const noexcept;
 
         private:
             Node *m_ptr;
-
-            friend class forward_list; // 便于直接访问 m_ptr
         };
 
         // 构造
@@ -145,13 +150,20 @@ namespace demo
 
         // 修改器
         void clear() noexcept;
-        iterator insert_after(const_iterator pos, const_reference val);
-        iterator insert_after(const_iterator pos, value_type &&val);
-        iterator insert_after(const_iterator pos, size_type count,
+        iterator insert_after(const_iterator pos,
+                              const_reference val);
+        iterator insert_after(const_iterator pos,
+                              value_type &&val);
+        iterator insert_after(const_iterator pos,
+                              size_type count,
                               const_reference value);
-        template <class InputIt>
-        iterator insert_after(const_iterator pos, InputIt first, InputIt last);
-        iterator insert_after(const_iterator pos, std::initializer_list<T> ilist);
+        template <typename InputIt,
+                  std::enable_if_t<
+                      !std::is_integral<InputIt>::value, int> = 0>
+        iterator insert_after(const_iterator pos,
+                              InputIt first, InputIt last);
+        iterator insert_after(const_iterator pos,
+                              std::initializer_list<T> ilist);
         template <typename... Args>
         iterator emplace_after(const_iterator pos, Args &&...args);
         iterator erase_after(const_iterator pos);
@@ -215,19 +227,22 @@ namespace demo
 
     // ------------------------------ iterator 实现 ------------------------------
     template <typename T, typename Allocator>
-    inline forward_list<T, Allocator>::iterator::iterator() noexcept
+    inline forward_list<T, Allocator>::iterator::
+        iterator() noexcept
         : m_ptr(nullptr)
     {
     }
 
     template <typename T, typename Allocator>
-    inline forward_list<T, Allocator>::iterator::iterator(Node *ptr) noexcept
+    inline forward_list<T, Allocator>::iterator::
+        iterator(Node *ptr) noexcept
         : m_ptr(ptr)
     {
     }
 
     template <typename T, typename Allocator>
-    inline forward_list<T, Allocator>::iterator::iterator(const iterator &other) noexcept
+    inline forward_list<T, Allocator>::iterator::
+        iterator(const iterator &other) noexcept
         : m_ptr(other.m_ptr)
     {
     }
@@ -246,8 +261,8 @@ namespace demo
     }
 
     template <typename T, typename Allocator>
-    inline typename forward_list<T, Allocator>::iterator &forward_list<T, Allocator>::iterator::
-    operator++() noexcept
+    inline typename forward_list<T, Allocator>::iterator &
+    forward_list<T, Allocator>::iterator::operator++() noexcept
     {
         if (m_ptr != nullptr)
             m_ptr = m_ptr->next;
@@ -255,8 +270,8 @@ namespace demo
     }
 
     template <typename T, typename Allocator>
-    inline typename forward_list<T, Allocator>::iterator forward_list<T, Allocator>::iterator::
-    operator++(int) noexcept
+    inline typename forward_list<T, Allocator>::iterator
+    forward_list<T, Allocator>::iterator::operator++(int) noexcept
     {
         iterator temp(m_ptr);
         if (m_ptr != nullptr)
@@ -266,58 +281,64 @@ namespace demo
     }
 
     template <typename T, typename Allocator>
-    inline bool forward_list<T, Allocator>::iterator::operator==(const iterator &other) const noexcept
+    inline bool forward_list<T, Allocator>::iterator::
+    operator==(const iterator &other) const noexcept
     {
         return m_ptr == other.m_ptr;
     }
     template <typename T, typename Allocator>
-    inline bool forward_list<T, Allocator>::iterator::operator!=(const iterator &other) const noexcept
+    inline bool forward_list<T, Allocator>::iterator::
+    operator!=(const iterator &other) const noexcept
     {
         return m_ptr != other.m_ptr;
     }
 
     // ------------------------------ const_iterator 实现 ------------------------------
     template <typename T, typename Allocator>
-    inline forward_list<T, Allocator>::const_iterator::const_iterator() noexcept
+    inline forward_list<T, Allocator>::const_iterator::
+        const_iterator() noexcept
         : m_ptr(nullptr)
     {
     }
 
     template <typename T, typename Allocator>
-    inline forward_list<T, Allocator>::const_iterator::const_iterator(const iterator &it) noexcept
+    inline forward_list<T, Allocator>::const_iterator::
+        const_iterator(const iterator &it) noexcept
         : m_ptr(it.m_ptr)
     {
     }
 
     template <typename T, typename Allocator>
-    inline forward_list<T, Allocator>::const_iterator::const_iterator(Node *ptr) noexcept
+    inline forward_list<T, Allocator>::const_iterator::
+        const_iterator(Node *ptr) noexcept
         : m_ptr(ptr)
     {
     }
 
     template <typename T, typename Allocator>
-    inline forward_list<T, Allocator>::const_iterator::const_iterator(const const_iterator &other) noexcept
+    inline forward_list<T, Allocator>::const_iterator::
+        const_iterator(const const_iterator &other) noexcept
         : m_ptr(other.m_ptr)
     {
     }
 
     template <typename T, typename Allocator>
-    inline typename forward_list<T, Allocator>::const_iterator::reference forward_list<T, Allocator>::
-        const_iterator::operator*() const noexcept
+    inline typename forward_list<T, Allocator>::const_iterator::reference
+    forward_list<T, Allocator>::const_iterator::operator*() const noexcept
     {
         return m_ptr->value;
     }
 
     template <typename T, typename Allocator>
-    inline typename forward_list<T, Allocator>::const_iterator::pointer forward_list<T, Allocator>::
-        const_iterator::operator->() const noexcept
+    inline typename forward_list<T, Allocator>::const_iterator::pointer
+    forward_list<T, Allocator>::const_iterator::operator->() const noexcept
     {
         return &m_ptr->value;
     }
 
     template <typename T, typename Allocator>
-    inline typename forward_list<T, Allocator>::const_iterator &forward_list<T, Allocator>::
-        const_iterator::operator++() noexcept
+    inline typename forward_list<T, Allocator>::const_iterator &
+    forward_list<T, Allocator>::const_iterator::operator++() noexcept
     {
         if (m_ptr != nullptr)
             m_ptr = m_ptr->next;
@@ -325,8 +346,8 @@ namespace demo
     }
 
     template <typename T, typename Allocator>
-    inline typename forward_list<T, Allocator>::const_iterator forward_list<T, Allocator>::
-        const_iterator::operator++(int) noexcept
+    inline typename forward_list<T, Allocator>::const_iterator
+    forward_list<T, Allocator>::const_iterator::operator++(int) noexcept
     {
         const_iterator temp(m_ptr);
         if (m_ptr != nullptr)
@@ -336,22 +357,22 @@ namespace demo
     }
 
     template <typename T, typename Allocator>
-    inline bool forward_list<T, Allocator>::
-        const_iterator::operator==(const const_iterator &other) const noexcept
+    inline bool forward_list<T, Allocator>::const_iterator::
+    operator==(const const_iterator &other) const noexcept
     {
         return m_ptr == other.m_ptr;
     }
 
     template <typename T, typename Allocator>
-    inline bool forward_list<T, Allocator>::
-        const_iterator::operator==(const iterator &other) const noexcept
+    inline bool forward_list<T, Allocator>::const_iterator::
+    operator==(const iterator &other) const noexcept
     {
         return m_ptr == other.m_ptr;
     }
 
     template <typename T, typename Allocator>
-    inline bool forward_list<T, Allocator>::
-        const_iterator::operator!=(const const_iterator &other) const noexcept
+    inline bool forward_list<T, Allocator>::const_iterator::
+    operator!=(const const_iterator &other) const noexcept
     {
         return m_ptr != other.m_ptr;
     }
@@ -375,9 +396,7 @@ namespace demo
     inline forward_list<T, Allocator>::forward_list(size_type count)
     {
         if (count > max_size())
-        {
             throw std::length_error("forward_list count exceeds max_size");
-        }
 
         m_head = alloc_traits::allocate(m_node_alloc, 1);
         alloc_traits::construct(m_node_alloc, m_head);
@@ -392,12 +411,11 @@ namespace demo
     }
 
     template <typename T, typename Allocator>
-    inline forward_list<T, Allocator>::forward_list(size_type count, const_reference val)
+    inline forward_list<T, Allocator>::forward_list(size_type count,
+                                                    const_reference val)
     {
         if (count > max_size())
-        {
             throw std::length_error("forward_list count exceeds max_size");
-        }
 
         m_head = alloc_traits::allocate(m_node_alloc, 1);
         alloc_traits::construct(m_node_alloc, m_head);
@@ -413,7 +431,8 @@ namespace demo
 
     template <typename T, typename Allocator>
     template <typename InputIt>
-    inline forward_list<T, Allocator>::forward_list(InputIt first, InputIt last)
+    inline forward_list<T, Allocator>::forward_list(InputIt first,
+                                                    InputIt last)
     {
         m_head = alloc_traits::allocate(m_node_alloc, 1);
         alloc_traits::construct(m_node_alloc, m_head);
@@ -428,7 +447,8 @@ namespace demo
     }
 
     template <typename T, typename Allocator>
-    inline forward_list<T, Allocator>::forward_list(std::initializer_list<value_type> ilist)
+    inline forward_list<T, Allocator>::forward_list(
+        std::initializer_list<value_type> ilist)
     {
         m_head = alloc_traits::allocate(m_node_alloc, 1);
         alloc_traits::construct(m_node_alloc, m_head);
@@ -497,7 +517,8 @@ namespace demo
     }
 
     template <typename T, typename Allocator>
-    inline forward_list<T, Allocator>::forward_list(forward_list &&other) noexcept
+    inline forward_list<T, Allocator>::forward_list(
+        forward_list &&other) noexcept
         : m_node_alloc(std::move(other.m_node_alloc))
     {
         m_head = other.m_head;
@@ -539,7 +560,8 @@ namespace demo
     }
 
     template <typename T, typename Allocator>
-    inline void forward_list<T, Allocator>::assign(size_type count, const_reference val)
+    inline void forward_list<T, Allocator>::assign(
+        size_type count, const_reference val)
     {
         clear();
 
@@ -554,7 +576,8 @@ namespace demo
 
     template <typename T, typename Allocator>
     template <typename InputIt>
-    inline void forward_list<T, Allocator>::assign(InputIt first, InputIt last)
+    inline void forward_list<T, Allocator>::assign(
+        InputIt first, InputIt last)
     {
         clear();
 
@@ -568,7 +591,8 @@ namespace demo
     }
 
     template <typename T, typename Allocator>
-    inline void forward_list<T, Allocator>::assign(std::initializer_list<value_type> ilist)
+    inline void forward_list<T, Allocator>::assign(
+        std::initializer_list<value_type> ilist)
     {
         clear();
 
@@ -584,70 +608,71 @@ namespace demo
     template <typename T, typename Allocator>
     inline Allocator forward_list<T, Allocator>::get_allocator() const
     {
-        using elem_allocator = typename std::allocator_traits<node_allocator>::
-            template rebind_alloc<T>;
+        using elem_allocator =
+            typename std::allocator_traits<node_allocator>::
+                template rebind_alloc<T>;
         return elem_allocator(m_node_alloc);
     }
 
     template <typename T, typename Allocator>
-    inline typename forward_list<T, Allocator>::iterator forward_list<T, Allocator>::
-        before_begin() noexcept
+    inline typename forward_list<T, Allocator>::iterator
+    forward_list<T, Allocator>::before_begin() noexcept
     {
         return iterator(m_head);
     }
 
     template <typename T, typename Allocator>
-    inline typename forward_list<T, Allocator>::const_iterator forward_list<T, Allocator>::
-        before_begin() const noexcept
+    inline typename forward_list<T, Allocator>::const_iterator
+    forward_list<T, Allocator>::before_begin() const noexcept
     {
         return const_iterator(m_head);
     }
 
     template <typename T, typename Allocator>
-    inline typename forward_list<T, Allocator>::const_iterator forward_list<T, Allocator>::
-        cbefore_begin() const noexcept
+    inline typename forward_list<T, Allocator>::const_iterator
+    forward_list<T, Allocator>::cbefore_begin() const noexcept
     {
         return const_iterator(m_head);
     }
 
     template <typename T, typename Allocator>
-    inline typename forward_list<T, Allocator>::iterator forward_list<T, Allocator>::
-        begin() noexcept
+    inline typename forward_list<T, Allocator>::iterator
+    forward_list<T, Allocator>::begin() noexcept
     {
         return iterator(m_head->next);
     }
 
     template <typename T, typename Allocator>
-    inline typename forward_list<T, Allocator>::const_iterator forward_list<T, Allocator>::
-        begin() const noexcept
+    inline typename forward_list<T, Allocator>::const_iterator
+    forward_list<T, Allocator>::begin() const noexcept
     {
         return const_iterator(m_head->next);
     }
 
     template <typename T, typename Allocator>
-    inline typename forward_list<T, Allocator>::const_iterator forward_list<T, Allocator>::
-        cbegin() const noexcept
+    inline typename forward_list<T, Allocator>::const_iterator
+    forward_list<T, Allocator>::cbegin() const noexcept
     {
         return const_iterator(m_head->next);
     }
 
     template <typename T, typename Allocator>
-    inline typename forward_list<T, Allocator>::iterator forward_list<T, Allocator>::
-        end() noexcept
+    inline typename forward_list<T, Allocator>::iterator
+    forward_list<T, Allocator>::end() noexcept
     {
         return iterator(nullptr);
     }
 
     template <typename T, typename Allocator>
-    inline typename forward_list<T, Allocator>::const_iterator forward_list<T, Allocator>::
-        end() const noexcept
+    inline typename forward_list<T, Allocator>::const_iterator
+    forward_list<T, Allocator>::end() const noexcept
     {
         return const_iterator(nullptr);
     }
 
     template <typename T, typename Allocator>
-    inline typename forward_list<T, Allocator>::const_iterator forward_list<T, Allocator>::
-        cend() const noexcept
+    inline typename forward_list<T, Allocator>::const_iterator
+    forward_list<T, Allocator>::cend() const noexcept
     {
         return const_iterator(nullptr);
     }
@@ -659,8 +684,8 @@ namespace demo
     }
 
     template <typename T, typename Allocator>
-    inline typename forward_list<T, Allocator>::size_type forward_list<T, Allocator>::
-        max_size() const noexcept
+    inline typename forward_list<T, Allocator>::size_type
+    forward_list<T, Allocator>::max_size() const noexcept
     {
         return alloc_traits::max_size(m_node_alloc);
     }
@@ -680,8 +705,8 @@ namespace demo
     }
 
     template <typename T, typename Allocator>
-    inline typename forward_list<T, Allocator>::iterator forward_list<T, Allocator>::
-        insert_after(const_iterator pos, const_reference val)
+    inline typename forward_list<T, Allocator>::iterator
+    forward_list<T, Allocator>::insert_after(const_iterator pos, const_reference val)
     {
         Node *cur = pos.m_ptr;
         Node *next = cur->next;
@@ -696,8 +721,8 @@ namespace demo
     }
 
     template <typename T, typename Allocator>
-    inline typename forward_list<T, Allocator>::iterator forward_list<T, Allocator>::
-        insert_after(const_iterator pos, value_type &&val)
+    inline typename forward_list<T, Allocator>::iterator
+    forward_list<T, Allocator>::insert_after(const_iterator pos, value_type &&val)
     {
         Node *cur = pos.m_ptr;
         Node *next = cur->next;
@@ -731,7 +756,8 @@ namespace demo
     }
 
     template <typename T, typename Allocator>
-    template <class InputIt>
+    template <typename InputIt,
+              std::enable_if_t<!std::is_integral<InputIt>::value, int>>
     inline typename forward_list<T, Allocator>::iterator forward_list<T, Allocator>::
         insert_after(const_iterator pos, InputIt first, InputIt last)
     {
@@ -771,14 +797,15 @@ namespace demo
 
     template <typename T, typename Allocator>
     template <typename... Args>
-    inline typename forward_list<T, Allocator>::iterator forward_list<T, Allocator>::
-        emplace_after(const_iterator pos, Args &&...args)
+    inline typename forward_list<T, Allocator>::iterator
+    forward_list<T, Allocator>::emplace_after(const_iterator pos, Args &&...args)
     {
         Node *cur = pos.m_ptr;
         Node *next = cur->next;
 
         cur->next = alloc_traits::allocate(m_node_alloc, 1);
-        alloc_traits::construct(m_node_alloc, cur->next, std::forward<Args>(args)...);
+        alloc_traits::construct(m_node_alloc,
+                                cur->next, std::forward<Args>(args)...);
 
         cur = cur->next;
         cur->next = next;
@@ -787,8 +814,8 @@ namespace demo
     }
 
     template <typename T, typename Allocator>
-    inline typename forward_list<T, Allocator>::iterator forward_list<T, Allocator>::
-        erase_after(const_iterator pos)
+    inline typename forward_list<T, Allocator>::iterator
+    forward_list<T, Allocator>::erase_after(const_iterator pos)
     {
         if (pos == end())
             return end();
@@ -809,7 +836,8 @@ namespace demo
     }
 
     template <typename T, typename Allocator>
-    inline typename forward_list<T, Allocator>::iterator forward_list<T, Allocator>::
+    inline typename forward_list<T, Allocator>::iterator
+    forward_list<T, Allocator>::
         erase_after(const_iterator first, const_iterator last)
     {
         Node *pre = first.m_ptr;
@@ -829,7 +857,8 @@ namespace demo
     }
 
     template <typename T, typename Allocator>
-    inline void forward_list<T, Allocator>::push_front(const_reference val)
+    inline void forward_list<T, Allocator>::
+        push_front(const_reference val)
     {
         Node *next = m_head->next;
         m_head->next = alloc_traits::allocate(m_node_alloc, 1);
@@ -838,22 +867,25 @@ namespace demo
     }
 
     template <typename T, typename Allocator>
-    inline void forward_list<T, Allocator>::push_front(value_type &&val)
+    inline void forward_list<T, Allocator>::
+        push_front(value_type &&val)
     {
         Node *next = m_head->next;
         m_head->next = alloc_traits::allocate(m_node_alloc, 1);
-        alloc_traits::construct(m_node_alloc, m_head->next, std::move(val));
+        alloc_traits::construct(m_node_alloc,
+                                m_head->next, std::move(val));
         m_head->next->next = next;
     }
 
     template <typename T, typename Allocator>
     template <typename... Args>
-    inline typename forward_list<T, Allocator>::reference forward_list<T, Allocator>::
-        emplace_front(Args &&...args)
+    inline typename forward_list<T, Allocator>::reference
+    forward_list<T, Allocator>::emplace_front(Args &&...args)
     {
         Node *next = m_head->next;
         m_head->next = alloc_traits::allocate(m_node_alloc, 1);
-        alloc_traits::construct(m_node_alloc, m_head->next, std::forward<Args>(args)...);
+        alloc_traits::construct(m_node_alloc,
+                                m_head->next, std::forward<Args>(args)...);
         m_head->next->next = next;
 
         return m_head->next->value;
@@ -863,7 +895,8 @@ namespace demo
     inline void forward_list<T, Allocator>::pop_front()
     {
         if (empty())
-            throw std::out_of_range("forward_list::pop_front: empty forward_list");
+            throw std::out_of_range("forward_list::pop_front:\
+                 empty forward_list");
 
         Node *del_node = m_head->next;
         Node *next = del_node->next;
@@ -875,7 +908,8 @@ namespace demo
     }
 
     template <typename T, typename Allocator>
-    inline void forward_list<T, Allocator>::resize(size_type count, const_reference val)
+    inline void forward_list<T, Allocator>::resize(size_type count,
+                                                   const_reference val)
     {
         size_type size = std::distance(begin(), end());
 
@@ -914,7 +948,8 @@ namespace demo
     }
 
     template <typename T, typename Allocator>
-    inline void forward_list<T, Allocator>::swap(forward_list &other) noexcept
+    inline void forward_list<T, Allocator>::swap(
+        forward_list &other) noexcept
     {
         using std::swap;
         swap(m_head, other.m_head);
@@ -972,7 +1007,8 @@ namespace demo
 
     template <typename T, typename Allocator>
     template <typename Compare>
-    inline void forward_list<T, Allocator>::merge(forward_list &other, Compare comp)
+    inline void forward_list<T, Allocator>::merge(
+        forward_list &other, Compare comp)
     {
         if (this == &other)
             return;
@@ -1013,14 +1049,16 @@ namespace demo
 
     template <typename T, typename Allocator>
     template <typename Compare>
-    inline void forward_list<T, Allocator>::merge(forward_list &&other, Compare comp)
+    inline void forward_list<T, Allocator>::merge(
+        forward_list &&other, Compare comp)
     {
         merge(other, comp);
     }
 
     template <typename T, typename Allocator>
-    inline void forward_list<T, Allocator>::splice_after(const_iterator pos,
-                                                         forward_list &other)
+    inline void forward_list<T, Allocator>::splice_after(
+        const_iterator pos,
+        forward_list &other)
     {
         if (this == &other || other.empty())
             return;
@@ -1039,8 +1077,9 @@ namespace demo
     }
 
     template <typename T, typename Allocator>
-    inline void forward_list<T, Allocator>::splice_after(const_iterator pos,
-                                                         forward_list &&other)
+    inline void forward_list<T, Allocator>::splice_after(
+        const_iterator pos,
+        forward_list &&other)
     {
         splice_after(pos, other);
     }
@@ -1049,7 +1088,8 @@ namespace demo
     inline void forward_list<T, Allocator>::splice_after(
         const_iterator pos, forward_list &other, const_iterator it)
     {
-        if (this == &other || it.m_ptr == nullptr || it.m_ptr->next == nullptr)
+        if (this == &other || it.m_ptr == nullptr ||
+            it.m_ptr->next == nullptr)
             return;
 
         Node *cur = pos.m_ptr;
@@ -1134,8 +1174,8 @@ namespace demo
 
     template <typename T, typename Allocator>
     template <typename UnaryPredicate>
-    inline typename forward_list<T, Allocator>::size_type forward_list<T, Allocator>::
-        remove_if(UnaryPredicate p)
+    inline typename forward_list<T, Allocator>::size_type
+    forward_list<T, Allocator>::remove_if(UnaryPredicate p)
     {
         size_type count = 0;
         Node *pre = m_head;
@@ -1184,7 +1224,8 @@ namespace demo
     }
 
     template <typename T, typename Allocator>
-    inline typename forward_list<T, Allocator>::size_type forward_list<T, Allocator>::unique()
+    inline typename forward_list<T, Allocator>::size_type
+    forward_list<T, Allocator>::unique()
     {
         if (empty())
             return 0;
@@ -1217,8 +1258,8 @@ namespace demo
 
     template <typename T, typename Allocator>
     template <typename BinaryPredicate>
-    inline typename forward_list<T, Allocator>::size_type forward_list<T, Allocator>::
-        unique(BinaryPredicate p)
+    inline typename forward_list<T, Allocator>::size_type
+    forward_list<T, Allocator>::unique(BinaryPredicate p)
     {
         if (empty())
             return 0;
@@ -1303,8 +1344,8 @@ namespace demo
     }
 
     template <typename T, typename Allocator>
-    inline typename forward_list<T, Allocator>::Node *forward_list<T, Allocator>::
-        split(Node *head, size_type n)
+    inline typename forward_list<T, Allocator>::Node *
+    forward_list<T, Allocator>::split(Node *head, size_type n)
     {
         if (head == nullptr)
             return nullptr;
@@ -1321,8 +1362,8 @@ namespace demo
     }
 
     template <typename T, typename Allocator>
-    inline typename forward_list<T, Allocator>::Node *forward_list<T, Allocator>::
-        merge_two(Node *la, Node *lb)
+    inline typename forward_list<T, Allocator>::Node *
+    forward_list<T, Allocator>::merge_two(Node *la, Node *lb)
     {
         std::less<> comp;
         return merge_two(la, lb, comp);
@@ -1330,8 +1371,8 @@ namespace demo
 
     template <typename T, typename Allocator>
     template <typename Compare>
-    inline typename forward_list<T, Allocator>::Node *forward_list<T, Allocator>::
-        merge_two(Node *la, Node *lb, Compare comp)
+    inline typename forward_list<T, Allocator>::Node *
+    forward_list<T, Allocator>::merge_two(Node *la, Node *lb, Compare comp)
     {
         if (la == nullptr)
             return lb;
