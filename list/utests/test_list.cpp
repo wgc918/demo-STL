@@ -941,7 +941,7 @@ TEST_SUITE("List Operations")
         demo::list<int> lst{1, 2, 3, 4, 5};
 
         auto count = lst.remove_if([](int n)
-                                   { return false; });
+                                   { (void)n;return false; });
 
         CHECK(count == 0);
         std::vector<int> expected{1, 2, 3, 4, 5};

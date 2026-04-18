@@ -158,7 +158,7 @@ namespace demo
         void assign(size_type count, const_reference value);
         void assign(std::initializer_list<value_type> ilist);
         template <typename InputIt,
-                  std::enable_if_t<!std::is_integral<T>::value, int> = 0>
+                  std::enable_if_t<!std::is_integral<InputIt>::value, int> = 0>
         void assign(InputIt first, InputIt last);
 
         allocator_type get_allocator() const;
@@ -195,7 +195,7 @@ namespace demo
         iterator insert(const_iterator pos,
                         size_type count, const_reference value);
         template <typename InputIt,
-                  std::enable_if_t<!std::is_integral<T>::value, int> = 0>
+                  std::enable_if_t<!std::is_integral<InputIt>::value, int> = 0>
         iterator insert(const_iterator pos, InputIt first, InputIt last);
         iterator insert(const_iterator pos,
                         std::initializer_list<value_type> ilist);
@@ -691,7 +691,7 @@ namespace demo
 
     template <typename T, typename Allocator>
     template <typename InputIt,
-              std::enable_if_t<!std::is_integral<T>::value, int>>
+              std::enable_if_t<!std::is_integral<InputIt>::value, int>>
     void list<T, Allocator>::assign(InputIt first, InputIt last)
     {
         clear();
@@ -962,7 +962,7 @@ namespace demo
 
     template <typename T, typename Allocator>
     template <typename InputIt,
-              std::enable_if_t<!std::is_integral<T>::value, int>>
+              std::enable_if_t<!std::is_integral<InputIt>::value, int>>
     typename list<T, Allocator>::iterator list<T, Allocator>::
         insert(const_iterator pos, InputIt first, InputIt last)
     {
