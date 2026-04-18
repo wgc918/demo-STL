@@ -4,11 +4,11 @@
 #include <iterator>
 #include <memory>
 #include <initializer_list>
-#include <iostream>
 
 namespace demo
 {
-    template <typename T, typename Allocator = std::allocator<T>>
+    template <typename T,
+              typename Allocator = std::allocator<T>>
     class list;
 
     template <typename T, typename Allocator>
@@ -21,10 +21,12 @@ namespace demo
     template <typename T, typename Allocator>
     class list
     {
-        friend bool operator== <>(const list<T, Allocator> &lhs,
-                                  const list<T, Allocator> &rhs);
-        friend bool operator!= <>(const list<T, Allocator> &lhs,
-                                  const list<T, Allocator> &rhs);
+        friend bool operator== <>(
+            const list<T, Allocator> &lhs,
+            const list<T, Allocator> &rhs);
+        friend bool operator!= <>(
+            const list<T, Allocator> &lhs,
+            const list<T, Allocator> &rhs);
 
     public:
         using value_type = T;
@@ -44,8 +46,9 @@ namespace demo
             Node *next;
 
             template <typename... Args>
-            Node(Args &&...args) : val(std::forward<Args>(args)...),
-                                   prev(nullptr), next(nullptr) {}
+            Node(Args &&...args)
+                : val(std::forward<Args>(args)...),
+                  prev(nullptr), next(nullptr) {}
         };
 
     public:
@@ -55,7 +58,8 @@ namespace demo
             friend class list;
 
         public:
-            using iterator_category = std::bidirectional_iterator_tag;
+            using iterator_category =
+                std::bidirectional_iterator_tag;
             using value_type = T;
             using pointer = T *;
             using reference = T &;
@@ -76,10 +80,14 @@ namespace demo
             iterator operator--(int) noexcept;
 
             // 比较
-            bool operator==(const iterator other) const noexcept;
-            bool operator!=(const iterator other) const noexcept;
-            bool operator==(const const_iterator other) const noexcept;
-            bool operator!=(const const_iterator other) const noexcept;
+            bool operator==(
+                const iterator other) const noexcept;
+            bool operator!=(
+                const iterator other) const noexcept;
+            bool operator==(
+                const const_iterator other) const noexcept;
+            bool operator!=(
+                const const_iterator other) const noexcept;
 
         private:
             Node *m_ptr;
@@ -90,7 +98,8 @@ namespace demo
             friend class list;
 
         public:
-            using iterator_category = std::bidirectional_iterator_tag;
+            using iterator_category =
+                std::bidirectional_iterator_tag;
             using value_type = T;
             using pointer = const T *;
             using reference = const T &;
@@ -112,8 +121,10 @@ namespace demo
             const_iterator operator--(int) noexcept;
 
             // 比较
-            bool operator==(const const_iterator other) const noexcept;
-            bool operator!=(const const_iterator other) const noexcept;
+            bool operator==(
+                const const_iterator other) const noexcept;
+            bool operator!=(
+                const const_iterator other) const noexcept;
             bool operator==(const iterator other) const noexcept;
             bool operator!=(const iterator other) const noexcept;
 
@@ -122,28 +133,33 @@ namespace demo
         };
 
         // 使用标准库的反向迭代器适配器
-        using reverse_iterator = std::reverse_iterator<iterator>;
-        using const_reverse_iterator = std::reverse_iterator<const_iterator>;
+        using reverse_iterator =
+            std::reverse_iterator<iterator>;
+        using const_reverse_iterator =
+            std::reverse_iterator<const_iterator>;
 
     public:
         explicit list();
-        explicit list(size_type count, const_reference value = value_type());
+        explicit list(size_type count,
+                      const_reference value = value_type());
         list(std::initializer_list<value_type> ilist);
         template <typename InputIt>
         list(InputIt first, InputIt last);
         list(const list<T, Allocator> &other);
-        list<T, Allocator> &operator=(const list<T, Allocator> &other);
-        list<T, Allocator> &operator=(std::initializer_list<value_type> ilist);
+        list<T, Allocator> &operator=(
+            const list<T, Allocator> &other);
+        list<T, Allocator> &operator=(
+            std::initializer_list<value_type> ilist);
         list(list<T, Allocator> &&other) noexcept;
-        list<T, Allocator> &operator=(list<T, Allocator> &&other) noexcept;
+        list<T, Allocator> &operator=(
+            list<T, Allocator> &&other) noexcept;
         ~list();
 
         void assign(size_type count, const_reference value);
         void assign(std::initializer_list<value_type> ilist);
-        template <typename InputIt>
-        typename std::enable_if<
-            !std::is_integral<InputIt>::value, void>::type
-        assign(InputIt first, InputIt last);
+        template <typename InputIt,
+                  std::enable_if_t<!std::is_integral<T>::value, int> = 0>
+        void assign(InputIt first, InputIt last);
 
         allocator_type get_allocator() const;
 
@@ -176,12 +192,13 @@ namespace demo
         void clear();
         iterator insert(const_iterator pos, const_reference value);
         iterator insert(const_iterator pos, value_type &&value);
-        iterator insert(const_iterator pos, size_type count, const_reference value);
-        template <typename InputIt>
-        typename std::enable_if<
-            !std::is_integral<InputIt>::value, iterator>::type
-        insert(const_iterator pos, InputIt first, InputIt last);
-        iterator insert(const_iterator pos, std::initializer_list<value_type> ilist);
+        iterator insert(const_iterator pos,
+                        size_type count, const_reference value);
+        template <typename InputIt,
+                  std::enable_if_t<!std::is_integral<T>::value, int> = 0>
+        iterator insert(const_iterator pos, InputIt first, InputIt last);
+        iterator insert(const_iterator pos,
+                        std::initializer_list<value_type> ilist);
         template <typename... Args>
         iterator emplace(const_iterator pos, Args &&...args);
         iterator erase(iterator pos);
@@ -673,16 +690,10 @@ namespace demo
     }
 
     template <typename T, typename Allocator>
-    template <typename InputIt>
-    inline typename std::enable_if<
-        !std::is_integral<InputIt>::value, void>::type
-    list<T, Allocator>::assign(InputIt first, InputIt last)
+    template <typename InputIt,
+              std::enable_if_t<!std::is_integral<T>::value, int>>
+    void list<T, Allocator>::assign(InputIt first, InputIt last)
     {
-        using Check = typename std::enable_if<
-            !std::is_integral<InputIt>::value>::type;
-
-        using value_type = typename std::iterator_traits<InputIt>::value_type;
-
         clear();
 
         Node *pre = m_head;
@@ -950,16 +961,11 @@ namespace demo
     }
 
     template <typename T, typename Allocator>
-    template <typename InputIt>
-    inline typename std::enable_if<
-        !std::is_integral<InputIt>::value, typename list<T, Allocator>::iterator>::type
-    list<T, Allocator>::insert(const_iterator pos,
-                               InputIt first, InputIt last)
+    template <typename InputIt,
+              std::enable_if_t<!std::is_integral<T>::value, int>>
+    typename list<T, Allocator>::iterator list<T, Allocator>::
+        insert(const_iterator pos, InputIt first, InputIt last)
     {
-        using Check = typename std::enable_if<
-            !std::is_integral<InputIt>::value>::type;
-        using value_type = typename std::iterator_traits<InputIt>::value_type;
-
         Node *pre = pos.m_ptr->prev;
         Node *next = pos.m_ptr;
 
@@ -1326,10 +1332,7 @@ namespace demo
             return;
 
         if (other.empty())
-        {
-            std::cout << "other is empty.return" << std::endl;
             return;
-        }
 
         if (this->empty())
         {
@@ -1401,8 +1404,9 @@ namespace demo
     }
 
     template <typename T, typename Allocator>
-    inline void list<T, Allocator>::splice(const_iterator pos,
-                                           list<T, Allocator> &other)
+    inline void list<T, Allocator>::splice(
+        const_iterator pos,
+        list<T, Allocator> &other)
     {
         if (other.empty() || this == &other)
             return;
@@ -1432,15 +1436,17 @@ namespace demo
     }
 
     template <typename T, typename Allocator>
-    inline void list<T, Allocator>::splice(const_iterator pos,
-                                           list<T, Allocator> &&other)
+    inline void list<T, Allocator>::splice(
+        const_iterator pos,
+        list<T, Allocator> &&other)
     {
         splice(pos, other);
     }
 
     template <typename T, typename Allocator>
-    inline void list<T, Allocator>::splice(const_iterator pos,
-                                           list &other, const_iterator it)
+    inline void list<T, Allocator>::splice(
+        const_iterator pos,
+        list &other, const_iterator it)
     {
         if (it == other.end() || this == &other)
             return;
@@ -1462,15 +1468,17 @@ namespace demo
     }
 
     template <typename T, typename Allocator>
-    inline void list<T, Allocator>::splice(const_iterator pos,
-                                           list &&other, const_iterator it)
+    inline void list<T, Allocator>::splice(
+        const_iterator pos,
+        list &&other, const_iterator it)
     {
         splice(pos, other, it);
     }
 
     template <typename T, typename Allocator>
-    inline void list<T, Allocator>::splice(const_iterator pos, list &other,
-                                           const_iterator first, const_iterator last)
+    inline void list<T, Allocator>::splice(
+        const_iterator pos, list &other,
+        const_iterator first, const_iterator last)
     {
         if (other.empty() || this == &other)
             return;
@@ -1499,8 +1507,9 @@ namespace demo
     }
 
     template <typename T, typename Allocator>
-    inline void list<T, Allocator>::splice(const_iterator pos, list &&other,
-                                           const_iterator first, const_iterator last)
+    inline void list<T, Allocator>::splice(
+        const_iterator pos, list &&other,
+        const_iterator first, const_iterator last)
     {
         splice(pos, other, first, last);
     }
@@ -1578,7 +1587,8 @@ namespace demo
     }
 
     template <typename T, typename Allocator>
-    inline typename list<T, Allocator>::size_type list<T, Allocator>::unique()
+    inline typename list<T, Allocator>::size_type
+    list<T, Allocator>::unique()
     {
         return unique(std::equal_to<T>());
     }
@@ -1663,6 +1673,7 @@ namespace demo
 
         // 排序最后，统一修复所有 prev 指针
         Node *p = m_head->next;
+        p->prev = m_head;
         while (p != m_head)
         {
             p->next->prev = p;
@@ -1747,7 +1758,8 @@ namespace demo
     }
 
     template <typename T, typename Allocator>
-    bool operator==(const list<T, Allocator> &lhs, const list<T, Allocator> &rhs)
+    bool operator==(const list<T, Allocator> &lhs,
+                    const list<T, Allocator> &rhs)
     {
         if (lhs.size() != rhs.size())
             return false;
@@ -1766,7 +1778,8 @@ namespace demo
     }
 
     template <typename T, typename Allocator>
-    bool operator!=(const list<T, Allocator> &lhs, const list<T, Allocator> &rhs)
+    bool operator!=(const list<T, Allocator> &lhs,
+                    const list<T, Allocator> &rhs)
     {
         return !(lhs == rhs);
     }
