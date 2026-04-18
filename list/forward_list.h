@@ -46,6 +46,8 @@ namespace demo
         class const_iterator;
         class iterator
         {
+            friend class forward_list;
+
         public:
             using iterator_category =
                 std::forward_iterator_tag;
@@ -78,6 +80,8 @@ namespace demo
 
         class const_iterator
         {
+            friend class forward_list;
+
         public:
             using iterator_category =
                 std::forward_iterator_tag;
@@ -117,7 +121,9 @@ namespace demo
         forward_list();
         explicit forward_list(size_type count);
         forward_list(size_type count, const_reference val);
-        template <typename InputIt>
+        template <typename InputIt,
+                  std::enable_if_t<
+                      !std::is_integral<InputIt>::value, int> = 0>
         forward_list(InputIt first, InputIt last);
         forward_list(std::initializer_list<value_type> ilist);
         forward_list(const forward_list &other);
@@ -128,11 +134,16 @@ namespace demo
         ~forward_list();
 
         void assign(size_type count, const_reference val);
-        template <typename InputIt>
+        template <typename InputIt,
+                  std::enable_if_t<
+                      !std::is_integral<InputIt>::value, int> = 0>
         void assign(InputIt first, InputIt last);
         void assign(std::initializer_list<value_type> ilist);
 
         Allocator get_allocator() const;
+
+        reference front() noexcept;
+        const_reference front() const noexcept;
 
         // 迭代器
         iterator before_begin() noexcept;
@@ -424,7 +435,9 @@ namespace demo
     }
 
     template <typename T, typename Allocator>
-    template <typename InputIt>
+    template <typename InputIt,
+              std::enable_if_t<
+                  !std::is_integral<InputIt>::value, int>>
     inline forward_list<T, Allocator>::forward_list(InputIt first,
                                                     InputIt last)
     {
@@ -569,7 +582,9 @@ namespace demo
     }
 
     template <typename T, typename Allocator>
-    template <typename InputIt>
+    template <typename InputIt,
+              std::enable_if_t<
+                  !std::is_integral<InputIt>::value, int>>
     inline void forward_list<T, Allocator>::assign(
         InputIt first, InputIt last)
     {
@@ -606,6 +621,20 @@ namespace demo
             typename std::allocator_traits<node_allocator>::
                 template rebind_alloc<T>;
         return elem_allocator(m_node_alloc);
+    }
+
+    template <typename T, typename Allocator>
+    inline typename forward_list<T, Allocator>::reference
+    forward_list<T, Allocator>::front() noexcept
+    {
+        return m_head->next->value;
+    }
+
+    template <typename T, typename Allocator>
+    inline typename forward_list<T, Allocator>::const_reference
+    forward_list<T, Allocator>::front() const noexcept
+    {
+        return m_head->next->value;
     }
 
     template <typename T, typename Allocator>
@@ -993,7 +1022,7 @@ namespace demo
         // if (other_curr != nullptr)
         //     prev->next = other_curr;
 
-        merge(other, std::less<>);
+        merge(other, std::less<>());
     }
 
     template <typename T, typename Allocator>
@@ -1169,8 +1198,8 @@ namespace demo
 
         // return count;
 
-        remove_if([&](int val)
-                  { return val == value; });
+        return remove_if([&](const T &val)
+                         { return val == value; });
     }
 
     template <typename T, typename Allocator>
@@ -1256,7 +1285,7 @@ namespace demo
 
         // return count;
 
-        unique(std::equal_to<>());
+        return unique(std::equal_to<>());
     }
 
     template <typename T, typename Allocator>
