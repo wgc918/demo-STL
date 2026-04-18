@@ -264,8 +264,7 @@ namespace demo
     inline typename forward_list<T, Allocator>::iterator &
     forward_list<T, Allocator>::iterator::operator++() noexcept
     {
-        if (m_ptr != nullptr)
-            m_ptr = m_ptr->next;
+        m_ptr = m_ptr->next;
         return *this;
     }
 
@@ -274,9 +273,7 @@ namespace demo
     forward_list<T, Allocator>::iterator::operator++(int) noexcept
     {
         iterator temp(m_ptr);
-        if (m_ptr != nullptr)
-            m_ptr = m_ptr->next;
-
+        m_ptr = m_ptr->next;
         return temp;
     }
 
@@ -340,8 +337,7 @@ namespace demo
     inline typename forward_list<T, Allocator>::const_iterator &
     forward_list<T, Allocator>::const_iterator::operator++() noexcept
     {
-        if (m_ptr != nullptr)
-            m_ptr = m_ptr->next;
+        m_ptr = m_ptr->next;
         return *this;
     }
 
@@ -350,9 +346,7 @@ namespace demo
     forward_list<T, Allocator>::const_iterator::operator++(int) noexcept
     {
         const_iterator temp(m_ptr);
-        if (m_ptr != nullptr)
-            m_ptr = m_ptr->next;
-
+        m_ptr = m_ptr->next;
         return temp;
     }
 
