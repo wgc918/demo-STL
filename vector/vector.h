@@ -796,6 +796,9 @@ namespace demo
     inline void demo::vector<T, Allocator>::
         assign(size_type count, const_reference val)
     {
+        if (count > max_size())
+            throw std::length_error("vector::assign: count exceeds max_size");
+
         clear();
 
         if (count > m_capacity)
@@ -1050,6 +1053,9 @@ namespace demo
     template <typename T, typename Allocator>
     inline void vector<T, Allocator>::reserve(size_type new_capacity)
     {
+        if (new_capacity > max_size())
+            throw std::length_error("vector::reserve: capacity exceeds max_size");
+
         if (new_capacity <= m_capacity)
             return;
 
@@ -1581,14 +1587,17 @@ namespace demo
     {
         if (empty())
             throw std::out_of_range("vector::pop_back: empty vector");
-        alloc_traits::destroy(m_allocator, m_data + m_size - 1);
         m_size--;
+        alloc_traits::destroy(m_allocator, m_data + m_size - 1);
     }
 
     template <typename T, typename Allocator>
     inline void vector<T, Allocator>::resize(size_type size,
                                              const_reference val)
     {
+        if (size > max_size())
+            throw std::length_error("vector::resize: capacity exceeds max_size");
+
         if (m_size == size)
             return;
         else if (m_size < size)
