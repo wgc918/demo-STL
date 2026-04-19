@@ -35,6 +35,8 @@ namespace demo
         class const_iterator;
         class iterator
         {
+            friend class const_iterator;
+
         public:
             using iterator_category =
                 std::random_access_iterator_tag;
@@ -85,6 +87,8 @@ namespace demo
 
         class const_iterator
         {
+            friend class iterator;
+
         public:
             using iterator_category = std::random_access_iterator_tag;
             using value_type = const typename vector::value_type;
@@ -766,7 +770,7 @@ namespace demo
         m_data = other.m_data;
         m_size = other.m_size;
         m_capacity = other.m_capacity;
-        m_allocator == std::move(other.m_allocator);
+        m_allocator = std::move(other.m_allocator);
 
         other.m_data = nullptr;
         other.m_size = 0;
