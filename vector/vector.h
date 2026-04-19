@@ -1,3 +1,40 @@
+//-----------------------------------------------------------------------------
+// 版权所有 (C) 2026 demo-STL 项目
+//
+// 文件: vector.h
+// 作者: wgc
+// 创建日期: 2026年1月
+// 最后修改: 2026年4月
+//
+// 描述:
+//     本文件实现了一个 STL 风格的动态数组容器 (vector)。
+//     该容器支持随机访问、动态扩容、高效的尾部插入/删除操作。
+//
+// 功能特性:
+//     - 随机访问迭代器支持
+//     - 动态内存分配与自动扩容
+//     - 高效的尾部操作（push_back/pop_back）
+//     - 支持移动语义
+//     - 符合 STL 容器规范
+//
+// 许可证:
+//     MIT License
+//
+//     版权所有 (c) 2026 wgc
+//
+//     特此免费授予获得本软件副本和相关文档文件（以下简称"软件"）的任何人以处理软件的权利，
+//     包括但不限于使用、复制、修改、合并、出版、分发、再许可和/或出售软件副本，
+//     以及允许软件适用者这样做，须在下列条件下：
+//
+//     上述版权声明和本许可声明应包含在软件的所有副本或实质性部分中。
+//
+//     软件按"原样"提供，不提供任何形式的明示或暗示的保证，
+//     包括但不限于对适销性、特定用途适用性和非侵权性的保证。
+//     在任何情况下，作者或版权持有人均不对任何索赔、损害或其他责任负责，
+//     无论是在合同诉讼、侵权诉讼或其他诉讼中，
+//     由于软件或软件的使用或其他交易产生的。
+//-----------------------------------------------------------------------------
+
 #pragma once
 
 #include <utility>
@@ -12,227 +49,657 @@ namespace demo
     template <typename T, typename Allocator = std::allocator<T>>
     class vector;
 
+    /// @brief 比较两个vector是否相等
+    /// @tparam T 元素类型
+    /// @tparam Allocator 分配器类型
+    /// @param lhs 左操作数
+    /// @param rhs 右操作数
+    /// @return 如果两个vector相等返回true，否则返回false
     template <typename T, typename Allocator>
     bool operator==(const vector<T, Allocator> &lhs,
                     const vector<T, Allocator> &rhs);
+
+    /// @brief 比较两个vector是否不相等
+    /// @tparam T 元素类型
+    /// @tparam Allocator 分配器类型
+    /// @param lhs 左操作数
+    /// @param rhs 右操作数
+    /// @return 如果两个vector不相等返回true，否则返回false
     template <typename T, typename Allocator>
     bool operator!=(const vector<T, Allocator> &lhs,
                     const vector<T, Allocator> &rhs);
 
+    /// @brief 动态数组容器类
+    /// @tparam T 元素类型
+    /// @tparam Allocator 分配器类型，默认为 std::allocator<T>
+    /// @note vector是一个连续存储的动态数组，支持随机访问，尾部插入/删除效率高
     template <typename T, typename Allocator>
     class vector
     {
     public:
-        using value_type = T;
-        using pointer = T *;
-        using const_pointer = const T *;
-        using reference = value_type &;
-        using const_reference = const value_type &;
-        using allocator_type = Allocator;
-        using size_type = std::size_t;
-        using difference_type = std::ptrdiff_t;
+        using value_type = T;                       ///< 元素类型
+        using pointer = T *;                        ///< 元素指针类型
+        using const_pointer = const T *;            ///< 常量元素指针类型
+        using reference = value_type &;             ///< 元素引用类型
+        using const_reference = const value_type &; ///< 常量元素引用类型
+        using allocator_type = Allocator;           ///< 分配器类型
+        using size_type = std::size_t;              ///< 大小类型
+        using difference_type = std::ptrdiff_t;     ///< 差值类型
 
         class const_iterator;
+
+        /// @brief 非 const 迭代器类，支持随机访问
+        /// @note 迭代器失效：当vector发生扩容、插入或删除操作时，可能导致迭代器失效
         class iterator
         {
             friend class const_iterator;
 
         public:
             using iterator_category =
-                std::random_access_iterator_tag;
-            using value_type = typename vector::value_type;
-            using difference_type =
-                typename vector::difference_type;
-            using pointer = typename vector::pointer;
-            using reference = typename vector::reference;
+                std::random_access_iterator_tag;                      ///< 迭代器类别（随机访问迭代器）
+            using value_type = typename vector::value_type;           ///< 元素类型
+            using difference_type = typename vector::difference_type; ///< 差值类型
+            using pointer = typename vector::pointer;                 ///< 指针类型
+            using reference = typename vector::reference;             ///< 引用类型
 
+            /// @brief 默认构造函数，创建空迭代器
             iterator() noexcept;
+
+            /// @brief 构造函数，从指针创建迭代器
+            /// @param ptr 指向元素的指针
             explicit iterator(pointer ptr) noexcept;
 
-            // 解引用操作
+            /// @brief 解引用操作符，返回当前元素的引用
+            /// @return 当前元素的引用
             reference operator*() const noexcept;
+
+            /// @brief 箭头操作符，返回当前元素的指针
+            /// @return 当前元素的指针
             pointer operator->() const noexcept;
+
+            /// @brief 下标操作符，返回偏移位置元素的引用
+            /// @param offset 相对于当前位置的偏移量
+            /// @return 偏移位置元素的引用
             reference operator[](difference_type offset) const;
 
-            // 递增/递减
+            /// @brief 前置自增，移动到下一个元素
+            /// @return 自增后的迭代器引用
             iterator &operator++() noexcept;
+
+            /// @brief 后置自增，移动到下一个元素
+            /// @return 自增前的迭代器副本
             iterator operator++(int) noexcept;
+
+            /// @brief 前置自减，移动到前一个元素
+            /// @return 自减后的迭代器引用
             iterator &operator--() noexcept;
+
+            /// @brief 后置自减，移动到前一个元素
+            /// @return 自减前的迭代器副本
             iterator operator--(int) noexcept;
 
-            // 算术运算
+            /// @brief 加法操作，移动指定偏移量
+            /// @param offset 要移动的偏移量
+            /// @return 移动后的迭代器
             iterator operator+(difference_type offset) const noexcept;
+
+            /// @brief 减法操作，移动指定偏移量
+            /// @param offset 要移动的偏移量
+            /// @return 移动后的迭代器
             iterator operator-(difference_type offset) const noexcept;
+
+            /// @brief 复合赋值加法，移动指定偏移量
+            /// @param offset 要移动的偏移量
+            /// @return 移动后的迭代器引用
             iterator &operator+=(difference_type offset) noexcept;
+
+            /// @brief 复合赋值减法，移动指定偏移量
+            /// @param offset 要移动的偏移量
+            /// @return 移动后的迭代器引用
             iterator &operator-=(difference_type offset) noexcept;
 
-            // 差值
+            /// @brief 计算两个迭代器之间的差值
+            /// @param other 另一个迭代器
+            /// @return 两个迭代器之间的元素个数
             difference_type operator-(
                 const iterator &other) const noexcept;
 
-            // 比较运算符
+            /// @brief 比较两个迭代器是否相等
+            /// @param other 要比较的另一个迭代器
+            /// @return 如果相等返回true，否则返回false
             bool operator==(const iterator &other) const noexcept;
+
+            /// @brief 比较两个迭代器是否不相等
+            /// @param other 要比较的另一个迭代器
+            /// @return 如果不相等返回true，否则返回false
             bool operator!=(const iterator &other) const noexcept;
+
+            /// @brief 比较迭代器是否大于另一个迭代器
+            /// @param other 要比较的另一个迭代器
+            /// @return 如果大于返回true，否则返回false
             bool operator>(const iterator &other) const noexcept;
+
+            /// @brief 比较迭代器是否小于另一个迭代器
+            /// @param other 要比较的另一个迭代器
+            /// @return 如果小于返回true，否则返回false
             bool operator<(const iterator &other) const noexcept;
+
+            /// @brief 比较迭代器是否大于等于另一个迭代器
+            /// @param other 要比较的另一个迭代器
+            /// @return 如果大于等于返回true，否则返回false
             bool operator>=(const iterator &other) const noexcept;
+
+            /// @brief 比较迭代器是否小于等于另一个迭代器
+            /// @param other 要比较的另一个迭代器
+            /// @return 如果小于等于返回true，否则返回false
             bool operator<=(const iterator &other) const noexcept;
 
-            // 获取底层指针（供reverse_iterator使用）
+            /// @brief 获取底层指针（供reverse_iterator使用）
+            /// @return 底层指针
             pointer base() const noexcept;
 
         private:
-            pointer m_ptr;
+            pointer m_ptr; ///< 指向当前元素的指针
         };
 
+        /// @brief const 迭代器类，支持随机访问，不能修改元素
+        /// @note 迭代器失效：当vector发生扩容、插入或删除操作时，可能导致迭代器失效
         class const_iterator
         {
             friend class iterator;
 
         public:
-            using iterator_category = std::random_access_iterator_tag;
-            using value_type = const typename vector::value_type;
-            using reference = const typename vector::value_type &;
-            using pointer = const typename vector::value_type *;
-            using difference_type = typename vector::difference_type;
+            using iterator_category = std::random_access_iterator_tag; ///< 迭代器类别（随机访问迭代器）
+            using value_type = const typename vector::value_type;      ///< 常量元素类型
+            using reference = const typename vector::value_type &;     ///< 常量引用类型
+            using pointer = const typename vector::value_type *;       ///< 常量指针类型
+            using difference_type = typename vector::difference_type;  ///< 差值类型
 
+            /// @brief 默认构造函数，创建空迭代器
             const_iterator() noexcept;
+
+            /// @brief 构造函数，从指针创建迭代器
+            /// @param ptr 指向元素的指针
             explicit const_iterator(typename vector::pointer ptr) noexcept;
+
+            /// @brief 从非 const 迭代器构造
+            /// @param other 非 const 迭代器
             const_iterator(const iterator &other) noexcept;
 
-            // 解引用操作
+            /// @brief 解引用操作符，返回当前元素的常量引用
+            /// @return 当前元素的常量引用
             reference operator*() const noexcept;
+
+            /// @brief 箭头操作符，返回当前元素的常量指针
+            /// @return 当前元素的常量指针
             pointer operator->() const noexcept;
+
+            /// @brief 下标操作符，返回偏移位置元素的常量引用
+            /// @param offset 相对于当前位置的偏移量
+            /// @return 偏移位置元素的常量引用
             reference operator[](difference_type offset) const;
 
-            // 递增/递减
+            /// @brief 前置自增，移动到下一个元素
+            /// @return 自增后的迭代器引用
             const_iterator &operator++() noexcept;
+
+            /// @brief 后置自增，移动到下一个元素
+            /// @return 自增前的迭代器副本
             const_iterator operator++(int) noexcept;
+
+            /// @brief 前置自减，移动到前一个元素
+            /// @return 自减后的迭代器引用
             const_iterator &operator--() noexcept;
+
+            /// @brief 后置自减，移动到前一个元素
+            /// @return 自减前的迭代器副本
             const_iterator operator--(int) noexcept;
 
-            // 算术运算
+            /// @brief 加法操作，移动指定偏移量
+            /// @param offset 要移动的偏移量
+            /// @return 移动后的迭代器
             const_iterator operator+(difference_type offset) const noexcept;
+
+            /// @brief 减法操作，移动指定偏移量
+            /// @param offset 要移动的偏移量
+            /// @return 移动后的迭代器
             const_iterator operator-(difference_type offset) const noexcept;
+
+            /// @brief 复合赋值加法，移动指定偏移量
+            /// @param offset 要移动的偏移量
+            /// @return 移动后的迭代器引用
             const_iterator &operator+=(difference_type offset) noexcept;
+
+            /// @brief 复合赋值减法，移动指定偏移量
+            /// @param offset 要移动的偏移量
+            /// @return 移动后的迭代器引用
             const_iterator &operator-=(difference_type offset) noexcept;
 
-            // 差值
+            /// @brief 计算两个迭代器之间的差值
+            /// @param other 另一个迭代器
+            /// @return 两个迭代器之间的元素个数
             difference_type operator-(
                 const const_iterator &other) const noexcept;
 
-            // 比较运算符
+            /// @brief 比较两个 const_iterator 是否相等
+            /// @param other 要比较的另一个迭代器
+            /// @return 如果相等返回true，否则返回false
             bool operator==(const const_iterator &other) const noexcept;
+
+            /// @brief 比较两个 const_iterator 是否不相等
+            /// @param other 要比较的另一个迭代器
+            /// @return 如果不相等返回true，否则返回false
             bool operator!=(const const_iterator &other) const noexcept;
+
+            /// @brief 比较迭代器是否小于另一个迭代器
+            /// @param other 要比较的另一个迭代器
+            /// @return 如果小于返回true，否则返回false
             bool operator<(const const_iterator &other) const noexcept;
+
+            /// @brief 比较迭代器是否大于另一个迭代器
+            /// @param other 要比较的另一个迭代器
+            /// @return 如果大于返回true，否则返回false
             bool operator>(const const_iterator &other) const noexcept;
+
+            /// @brief 比较迭代器是否大于等于另一个迭代器
+            /// @param other 要比较的另一个迭代器
+            /// @return 如果大于等于返回true，否则返回false
             bool operator>=(const const_iterator &other) const noexcept;
+
+            /// @brief 比较迭代器是否小于等于另一个迭代器
+            /// @param other 要比较的另一个迭代器
+            /// @return 如果小于等于返回true，否则返回false
             bool operator<=(const const_iterator &other) const noexcept;
 
-            // 与 iterator 比较
+            /// @brief 与 iterator 比较是否相等
+            /// @param other 要比较的 iterator
+            /// @return 如果相等返回true，否则返回false
             bool operator==(const iterator &other) const noexcept;
+
+            /// @brief 与 iterator 比较是否不相等
+            /// @param other 要比较的 iterator
+            /// @return 如果不相等返回true，否则返回false
             bool operator!=(const iterator &other) const noexcept;
 
+            /// @brief 获取底层指针（供reverse_iterator使用）
+            /// @return 底层指针
             typename vector::pointer base() const noexcept;
 
         private:
-            typename vector::pointer m_ptr;
+            typename vector::pointer m_ptr; ///< 指向当前元素的指针
         };
 
-        // 使用标准库的反向迭代器适配器
+        /// @brief 反向迭代器类型，使用标准库适配器
         using reverse_iterator = std::reverse_iterator<iterator>;
+
+        /// @brief 常量反向迭代器类型，使用标准库适配器
         using const_reverse_iterator =
             std::reverse_iterator<const_iterator>;
 
-        // 构造
+        // ============================================
+        // 构造函数与析构函数
+        // ============================================
+
+        /// @brief 默认构造函数，创建空vector
+        /// @post size() == 0, capacity() == 0, data() == nullptr
         vector();
-        explicit vector(size_type size);
+
+        /// @brief 填充构造函数，创建包含count个默认值元素的vector
+        /// @param count 元素数量
+        /// @throw std::length_error 如果count超过max_size()
+        /// @post size() == count, capacity() == count
+        explicit vector(size_type count);
+
+        /// @brief 填充构造函数，创建包含count个指定值元素的vector
+        /// @param count 元素数量
+        /// @param val 元素值
+        /// @throw std::length_error 如果count超过max_size()
+        /// @post size() == count, capacity() == count
         explicit vector(size_type size, const_reference val);
+
+        /// @brief 范围构造函数，复制[first, last)范围内的元素
+        /// @tparam InputIt 输入迭代器类型
+        /// @param first 范围起始迭代器
+        /// @param last 范围结束迭代器
+        /// @post size() == std::distance(first, last)
         template <typename InputIt,
                   std::enable_if_t<
                       !std::is_integral<InputIt>::value, int> = 0>
         vector(InputIt first, InputIt last);
+
+        /// @brief 初始化列表构造函数
+        /// @param ilist 初始化列表
+        /// @post size() == ilist.size(), capacity() == ilist.size()
         vector(std::initializer_list<value_type> ilist);
+
+        /// @brief 拷贝构造函数
+        /// @param other 要拷贝的vector
+        /// @post *this 是 other 的深拷贝
         vector(const vector &other);
+
+        /// @brief 拷贝赋值运算符
+        /// @param other 要拷贝的vector
+        /// @return vector引用
+        /// @post *this 是 other 的深拷贝
         vector &operator=(const vector &other);
+
+        /// @brief 初始化列表赋值运算符
+        /// @param ilist 初始化列表
+        /// @return vector引用
+        /// @post size() == ilist.size()
         vector &operator=(std::initializer_list<value_type> ilist);
+
+        /// @brief 移动构造函数
+        /// @param other 要移动的vector
+        /// @post other 变为空vector
         vector(vector &&other) noexcept;
+
+        /// @brief 移动赋值运算符
+        /// @param other 要移动的vector
+        /// @return vector引用
+        /// @post other 变为空vector
         vector &operator=(vector &&other) noexcept;
+
+        /// @brief 析构函数，释放所有资源
         ~vector();
+
+        // ============================================
+        // 赋值操作
+        // ============================================
+
+        /// @brief 用count个val替换当前vector内容
+        /// @param count 元素数量
+        /// @param val 元素值
+        /// @throw std::length_error 如果count超过max_size()
+        /// @post size() == count
         void assign(size_type count, const_reference val);
+
+        /// @brief 用[first, last)范围内的元素替换当前vector内容
+        /// @tparam InputIt 输入迭代器类型
+        /// @param first 范围起始迭代器
+        /// @param last 范围结束迭代器
+        /// @post size() == std::distance(first, last)
         template <typename InputIt,
                   std::enable_if_t<
                       !std::is_integral<InputIt>::value, int> = 0>
         void assign(InputIt first, InputIt last);
+
+        /// @brief 用初始化列表替换当前vector内容
+        /// @param ilist 初始化列表
+        /// @post size() == ilist.size()
         void assign(std::initializer_list<value_type> ilist);
+
+        /// @brief 获取分配器
+        /// @return 分配器对象
         Allocator get_allocator() const;
 
+        // ============================================
         // 元素访问
+        // ============================================
+
+        /// @brief 访问指定位置的元素（带边界检查）
+        /// @param index 元素索引（从0开始）
+        /// @return 指定位置元素的引用
+        /// @throw std::out_of_range 如果index >= size()
         reference at(size_type index);
+
+        /// @brief 访问指定位置的元素（带边界检查，const版本）
+        /// @param index 元素索引（从0开始）
+        /// @return 指定位置元素的常量引用
+        /// @throw std::out_of_range 如果index >= size()
         const_reference at(size_type index) const;
+
+        /// @brief 下标访问（无边界检查）
+        /// @param index 元素索引（从0开始）
+        /// @return 指定位置元素的引用
+        /// @note 不进行边界检查，访问越界行为未定义
         reference operator[](size_type index);
+
+        /// @brief 下标访问（无边界检查，const版本）
+        /// @param index 元素索引（从0开始）
+        /// @return 指定位置元素的常量引用
+        /// @note 不进行边界检查，访问越界行为未定义
         const_reference operator[](size_type index) const;
+
+        /// @brief 获取第一个元素的引用
+        /// @return 第一个元素的引用
+        /// @throw std::out_of_range 如果vector为空
         reference front();
+
+        /// @brief 获取第一个元素的常量引用
+        /// @return 第一个元素的常量引用
+        /// @throw std::out_of_range 如果vector为空
         const_reference front() const;
+
+        /// @brief 获取最后一个元素的引用
+        /// @return 最后一个元素的引用
+        /// @throw std::out_of_range 如果vector为空
         reference back();
+
+        /// @brief 获取最后一个元素的常量引用
+        /// @return 最后一个元素的常量引用
+        /// @throw std::out_of_range 如果vector为空
         const_reference back() const;
+
+        /// @brief 获取指向底层数组的指针
+        /// @return 指向第一个元素的指针
         pointer data();
+
+        /// @brief 获取指向底层数组的常量指针
+        /// @return 指向第一个元素的常量指针
         const_pointer data() const;
 
+        // ============================================
         // 迭代器
+        // ============================================
+
+        /// @brief 返回指向第一个元素的迭代器
+        /// @return 指向第一个元素的迭代器
         iterator begin();
+
+        /// @brief 返回指向第一个元素的 const 迭代器
+        /// @return 指向第一个元素的 const 迭代器
         const_iterator begin() const;
+
+        /// @brief 返回指向第一个元素的 const 迭代器（const版本）
+        /// @return 指向第一个元素的 const 迭代器
         const_iterator cbegin() const;
+
+        /// @brief 返回指向末尾的迭代器
+        /// @return 指向末尾的迭代器（不指向任何元素）
         iterator end();
+
+        /// @brief 返回指向末尾的 const 迭代器
+        /// @return 指向末尾的 const 迭代器（不指向任何元素）
         const_iterator end() const;
+
+        /// @brief 返回指向末尾的 const 迭代器（const版本）
+        /// @return 指向末尾的 const 迭代器（不指向任何元素）
         const_iterator cend() const;
+
+        /// @brief 返回指向最后一个元素的反向迭代器
+        /// @return 指向最后一个元素的反向迭代器
         reverse_iterator rbegin();
+
+        /// @brief 返回指向最后一个元素的 const 反向迭代器
+        /// @return 指向最后一个元素的 const 反向迭代器
         const_reverse_iterator rbegin() const;
+
+        /// @brief 返回指向最后一个元素的 const 反向迭代器（const版本）
+        /// @return 指向最后一个元素的 const 反向迭代器
         const_reverse_iterator crbegin() const;
+
+        /// @brief 返回指向第一个元素之前位置的反向迭代器
+        /// @return 指向第一个元素之前位置的反向迭代器
         reverse_iterator rend();
+
+        /// @brief 返回指向第一个元素之前位置的 const 反向迭代器
+        /// @return 指向第一个元素之前位置的 const 反向迭代器
         const_reverse_iterator rend() const;
+
+        /// @brief 返回指向第一个元素之前位置的 const 反向迭代器（const版本）
+        /// @return 指向第一个元素之前位置的 const 反向迭代器
         const_reverse_iterator crend() const;
 
+        // ============================================
         // 容量
+        // ============================================
+
+        /// @brief 检查vector是否为空
+        /// @return 如果vector为空返回true，否则返回false
         bool empty() const;
+
+        /// @brief 返回vector中的元素数量
+        /// @return 当前元素数量
         size_type size() const;
+
+        /// @brief 返回vector的最大可能大小
+        /// @return 最大可能的元素数量
         size_type max_size() const;
+
+        /// @brief 预留存储空间
+        /// @param new_capacity 新的容量
+        /// @throw std::length_error 如果new_capacity超过max_size()
+        /// @post capacity() >= new_capacity
+        /// @note 该操作不会改变size()，仅预分配内存
+        /// @complexity O(n)，可能需要复制所有元素
         void reserve(size_type new_capacity);
+
+        /// @brief 返回当前分配的存储空间大小
+        /// @return 当前容量
         size_type capacity() const;
+
+        /// @brief 释放未使用的存储空间
+        /// @post capacity() == size()
+        /// @note 该操作是提示性的，实现可能选择不释放内存
+        /// @complexity O(n)，需要复制所有元素
         void shrink_to_fit();
 
+        // ============================================
         // 修改器
+        // ============================================
+
+        /// @brief 清空vector，移除所有元素
+        /// @post size() == 0
+        /// @note capacity()保持不变
         void clear();
+
+        /// @brief 在指定位置插入一个元素的拷贝
+        /// @param iter 插入位置之前的迭代器
+        /// @param val 要插入的值
+        /// @return 指向新插入元素的迭代器
+        /// @throw std::out_of_range 如果iter无效
+        /// @complexity O(n)，可能需要移动元素
         iterator insert(const_iterator iter, const_reference val);
+
+        /// @brief 在指定位置插入一个元素（移动语义）
+        /// @param iter 插入位置之前的迭代器
+        /// @param val 要插入的值（右值引用）
+        /// @return 指向新插入元素的迭代器
+        /// @throw std::out_of_range 如果iter无效
+        /// @complexity O(n)，可能需要移动元素
         iterator insert(const_iterator iter, value_type &&val);
+
+        /// @brief 在指定位置插入count个相同元素
+        /// @param iter 插入位置之前的迭代器
+        /// @param count 要插入的元素数量
+        /// @param val 要插入的值
+        /// @return 指向第一个插入元素的迭代器
+        /// @throw std::out_of_range 如果iter无效
+        /// @complexity O(n + count)
         iterator insert(const_iterator iter,
                         size_type count, const_reference val);
+
+        /// @brief 在指定位置插入[first, last)范围内的元素
+        /// @tparam InputIt 输入迭代器类型
+        /// @param iter 插入位置之前的迭代器
+        /// @param first 范围起始迭代器
+        /// @param last 范围结束迭代器
+        /// @return 指向第一个插入元素的迭代器
+        /// @throw std::out_of_range 如果iter无效
+        /// @complexity O(n + count)
         template <typename InputIt,
                   std::enable_if_t<
                       !std::is_integral<InputIt>::value, int> = 0>
         iterator insert(const_iterator iter,
                         InputIt first, InputIt last);
+
+        /// @brief 在指定位置插入初始化列表中的元素
+        /// @param iter 插入位置之前的迭代器
+        /// @param ilist 初始化列表
+        /// @return 指向第一个插入元素的迭代器
+        /// @throw std::out_of_range 如果iter无效
+        /// @complexity O(n + ilist.size())
         iterator insert(const_iterator iter,
                         std::initializer_list<value_type> ilist);
+
+        /// @brief 在指定位置原地构造一个元素
+        /// @tparam Args 构造参数类型
+        /// @param iter 插入位置之前的迭代器
+        /// @param args 构造参数
+        /// @throw std::out_of_range 如果iter无效
+        /// @complexity O(n)，可能需要移动元素
         template <typename... Args>
         void emplace(const_iterator iter, Args &&...args);
+
+        /// @brief 删除指定位置的元素
+        /// @param iter 指向要删除元素的迭代器
+        /// @return 指向被删除元素之后元素的迭代器
+        /// @throw std::out_of_range 如果iter无效
+        /// @complexity O(n)，需要移动元素
         iterator erase(const_iterator iter);
+
+        /// @brief 删除[first, last)范围内的元素
+        /// @param first 要删除范围的起始迭代器
+        /// @param last 要删除范围的结束迭代器
+        /// @return 指向最后一个被删除元素之后元素的迭代器
+        /// @throw std::out_of_range 如果范围无效
+        /// @complexity O(n)，需要移动元素
         iterator erase(const_iterator first, const_iterator last);
+
+        /// @brief 在vector尾部插入一个元素的拷贝
+        /// @param val 要插入的值
+        /// @complexity 均摊O(1)，可能需要扩容
         void push_back(const_reference val);
+
+        /// @brief 在vector尾部插入一个元素（移动语义）
+        /// @param val 要插入的值（右值引用）
+        /// @complexity 均摊O(1)，可能需要扩容
         void push_back(value_type &&val);
+
+        /// @brief 在vector尾部原地构造一个元素
+        /// @tparam Args 构造参数类型
+        /// @param args 构造参数
+        /// @return 新构造元素的引用
+        /// @complexity 均摊O(1)，可能需要扩容
         template <typename... Args>
         reference emplace_back(Args &&...args);
+
+        /// @brief 删除vector尾部的元素
+        /// @throw std::out_of_range 如果vector为空
+        /// @complexity O(1)
         void pop_back();
+
+        /// @brief 调整vector大小
+        /// @param size 新的元素数量
+        /// @param val 用于填充新元素的值（默认值初始化）
+        /// @throw std::length_error 如果size超过max_size()
+        /// @complexity O(n)
         void resize(size_type size, const_reference val = value_type());
+
+        /// @brief 交换两个vector的内容
+        /// @param other 要交换的另一个vector
+        /// @complexity O(1)，仅交换内部指针
         void swap(vector &other);
 
     private:
-        pointer m_data;
-        size_type m_size;
-        size_type m_capacity;
-        Allocator m_allocator;
+        pointer m_data;        ///< 指向底层数组的指针
+        size_type m_size;      ///< 当前元素数量
+        size_type m_capacity;  ///< 当前分配的存储空间大小
+        Allocator m_allocator; ///< 分配器实例
 
-        using alloc_traits = std::allocator_traits<allocator_type>;
+        using alloc_traits = std::allocator_traits<allocator_type>; ///< 分配器特性类型
+
         friend bool operator!= <>(const vector<T, Allocator> &lhs,
                                   const vector<T, Allocator> &rhs);
         friend bool operator== <>(const vector<T, Allocator> &lhs,
