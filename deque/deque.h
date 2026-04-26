@@ -56,6 +56,28 @@ namespace demo
             using difference_type = std::ptrdiff_t;
             using size_type = std::size_t;
 
+            iterator();
+            iterator(pointer cur, pointer first, pointer last, value_type **map_node);
+            reference operator*() const;
+            pointer operator->() const;
+            difference_type operator-(const iterator &other) const;
+            iterator operator+(difference_type n) const;
+            iterator operator-(difference_type n) const;
+            iterator &operator+=(difference_type n);
+            iterator &operator-=(difference_type n);
+            iterator &operator++();
+            iterator &operator--();
+            iterator operator++(int);
+            iterator operator--(int);
+            iterator operator[](difference_type n) const;
+            iterator operator[](difference_type n);
+            bool operator==(const iterator &other) const;
+            bool operator!=(const iterator &other) const;
+            bool operator<(const iterator &other) const;
+            bool operator>(const iterator &other) const;
+            bool operator<=(const iterator &other) const;
+            bool operator>=(const iterator &other) const;
+
         private:
             pointer m_cur;           // 当前元素指针
             pointer m_first;         // 当前槽的第一个元素指针
@@ -74,8 +96,32 @@ namespace demo
             using difference_type = std::ptrdiff_t;
             using size_type = std::size_t;
 
+            const_iterator();
+            const_iterator(pointer ptr, pointer first, pointer last, value_type **map_node);
+            const_iterator(const iterator &other);
+
+            reference operator*() const;
+            pointer operator->() const;
+            difference_type operator-(const const_iterator &other) const;
+            const_iterator operator+(difference_type n) const;
+            const_iterator operator-(difference_type n) const;
+            const_iterator &operator+=(difference_type n);
+            const_iterator &operator-=(difference_type n);
+            const_iterator &operator++();
+            const_iterator &operator--();
+            const_iterator operator++(int);
+            const_iterator operator--(int);
+            const_iterator operator[](difference_type n) const;
+            const_iterator operator[](difference_type n);
+            bool operator==(const const_iterator &other) const;
+            bool operator!=(const const_iterator &other) const;
+            bool operator<(const const_iterator &other) const;
+            bool operator>(const const_iterator &other) const;
+            bool operator<=(const const_iterator &other) const;
+            bool operator>=(const const_iterator &other) const;
+
         private:
-            pointer m_ptr;           // 当前元素指针
+            pointer m_cur;           // 当前元素指针
             pointer m_first;         // 当前槽的第一个元素指针
             pointer m_last;          // 当前槽的最后一个元素指针
             value_type **m_map_node; // 当前槽的指针
@@ -186,6 +232,328 @@ namespace demo
         static const size_type m_buffer_size =
             512 / sizeof(value_type);
     };
+
+    // ----------------------- iterator 实现 ---------------------------
+    template <typename T, typename Allocator>
+    inline deque<T, Allocator>::iterator::iterator()
+        : m_cur(nullptr), m_first(nullptr),
+          m_last(nullptr), m_map_node(nullptr)
+    {
+    }
+
+    template <typename T, typename Allocator>
+    inline deque<T, Allocator>::iterator::
+        iterator(pointer cur, pointer first, pointer last, value_type **map_node)
+        : m_cur(cur), m_first(first), m_last(last), m_map_node(map_node)
+    {
+    }
+
+    template <typename T, typename Allocator>
+    inline typename deque<T, Allocator>::reference
+    deque<T, Allocator>::iterator::operator*() const
+    {
+        return *m_cur;
+    }
+    template <typename T, typename Allocator>
+    inline typename deque<T, Allocator>::pointer
+    deque<T, Allocator>::iterator::operator->() const
+    {
+        return m_cur;
+    }
+
+    template <typename T, typename Allocator>
+    inline typename deque<T, Allocator>::difference_type
+    deque<T, Allocator>::iterator::operator-(const iterator &other) const
+    {
+        return m_cur - other.m_cur;
+    }
+
+    template <typename T, typename Allocator>
+    inline typename deque<T, Allocator>::iterator
+    deque<T, Allocator>::iterator::operator+(difference_type n) const
+    {
+        return iterator(m_cur + n, m_first, m_last, m_map_node);
+    }
+
+    template <typename T, typename Allocator>
+    inline typename deque<T, Allocator>::iterator
+    deque<T, Allocator>::iterator::operator-(difference_type n) const
+    {
+        return iterator(m_cur - n, m_first, m_last, m_map_node);
+    }
+
+    template <typename T, typename Allocator>
+    inline typename deque<T, Allocator>::iterator &
+    deque<T, Allocator>::iterator::operator+=(difference_type n)
+    {
+        m_cur += n;
+        return *this;
+    }
+
+    template <typename T, typename Allocator>
+    inline typename deque<T, Allocator>::iterator &
+    deque<T, Allocator>::iterator::operator-=(difference_type n)
+    {
+        m_cur -= n;
+        return *this;
+    }
+
+    template <typename T, typename Allocator>
+    inline typename deque<T, Allocator>::iterator &
+    deque<T, Allocator>::iterator::operator++()
+    {
+        m_cur++;
+        return *this;
+    }
+
+    template <typename T, typename Allocator>
+    inline typename deque<T, Allocator>::iterator &
+    deque<T, Allocator>::iterator::operator--()
+    {
+        m_cur--;
+        return *this;
+    }
+
+    template <typename T, typename Allocator>
+    inline typename deque<T, Allocator>::iterator
+    deque<T, Allocator>::iterator::operator++(int)
+    {
+        iterator temp(*this);
+        m_cur++;
+        return temp;
+    }
+
+    template <typename T, typename Allocator>
+    inline typename deque<T, Allocator>::iterator
+    deque<T, Allocator>::iterator::operator--(int)
+    {
+        iterator temp(*this);
+        m_cur--;
+        return temp;
+    }
+
+    template <typename T, typename Allocator>
+    inline typename deque<T, Allocator>::iterator
+    deque<T, Allocator>::iterator::operator[](difference_type n) const
+    {
+        return iterator(m_cur + n, m_first, m_last, m_map_node);
+    }
+    template <typename T, typename Allocator>
+    inline typename deque<T, Allocator>::iterator
+    deque<T, Allocator>::iterator::operator[](difference_type n)
+    {
+        return iterator(m_cur + n, m_first, m_last, m_map_node);
+    }
+
+    template <typename T, typename Allocator>
+    inline bool deque<T, Allocator>::iterator::
+    operator==(const iterator &other) const
+    {
+        return (m_cur == other.m_cur) && (m_first == other.m_first) &&
+               (m_last == other.m_last) && (m_map_node == other.m_map_node);
+    }
+
+    template <typename T, typename Allocator>
+    inline bool deque<T, Allocator>::iterator::
+    operator!=(const iterator &other) const
+    {
+        return !(*this == other);
+    }
+
+    template <typename T, typename Allocator>
+    inline bool deque<T, Allocator>::iterator::
+    operator<(const iterator &other) const
+    {
+        return (m_cur < other.m_cur) && (m_first < other.m_first) &&
+               (m_last < other.m_last) && (m_map_node < other.m_map_node);
+    }
+
+    template <typename T, typename Allocator>
+    inline bool deque<T, Allocator>::iterator::
+    operator>(const iterator &other) const
+    {
+        return !(*this < other) && *this != other;
+    }
+
+    template <typename T, typename Allocator>
+    inline bool deque<T, Allocator>::iterator::
+    operator<=(const iterator &other) const
+    {
+        return !(*this > other);
+    }
+
+    template <typename T, typename Allocator>
+    inline bool deque<T, Allocator>::iterator::
+    operator>=(const iterator &other) const
+    {
+        return !(*this < other);
+    }
+
+    // ---------------------- const_iterator 实现 -------------------
+    template <typename T, typename Allocator>
+    inline deque<T, Allocator>::const_iterator::const_iterator()
+        : m_cur(nullptr), m_first(nullptr),
+          m_last(nullptr), m_map_node(nullptr)
+    {
+    }
+
+    template <typename T, typename Allocator>
+    inline deque<T, Allocator>::const_iterator::
+        const_iterator(pointer ptr, pointer first,
+                       pointer last, value_type **map_node)
+        : m_cur(ptr), m_first(first), m_last(last), m_map_node(map_node)
+    {
+    }
+
+    template <typename T, typename Allocator>
+    inline deque<T, Allocator>::const_iterator::
+        const_iterator(const iterator &other)
+        : m_cur(other.m_cur), m_first(other.m_first),
+          m_last(other.m_last), m_map_node(other.m_map_node)
+    {
+    }
+
+    template <typename T, typename Allocator>
+    inline typename deque<T, Allocator>::const_iterator::reference
+    deque<T, Allocator>::const_iterator::operator*() const
+    {
+        return *m_cur;
+    }
+    template <typename T, typename Allocator>
+    inline typename deque<T, Allocator>::const_iterator::pointer
+    deque<T, Allocator>::const_iterator::operator->() const
+    {
+        return m_cur;
+    }
+
+    template <typename T, typename Allocator>
+    inline typename deque<T, Allocator>::difference_type
+    deque<T, Allocator>::const_iterator::operator-(const const_iterator &other) const
+    {
+        return m_cur - other.m_cur;
+    }
+
+    template <typename T, typename Allocator>
+    inline typename deque<T, Allocator>::const_iterator
+    deque<T, Allocator>::const_iterator::operator+(difference_type n) const
+    {
+        return const_iterator(m_cur + n, m_first, m_last, m_map_node);
+    }
+
+    template <typename T, typename Allocator>
+    inline typename deque<T, Allocator>::const_iterator
+    deque<T, Allocator>::const_iterator::operator-(difference_type n) const
+    {
+        return const_iterator(m_cur - n, m_first, m_last, m_map_node);
+    }
+
+    template <typename T, typename Allocator>
+    inline typename deque<T, Allocator>::const_iterator &
+    deque<T, Allocator>::const_iterator::operator+=(difference_type n)
+    {
+        m_cur += n;
+        return *this;
+    }
+
+    template <typename T, typename Allocator>
+    inline typename deque<T, Allocator>::const_iterator &
+    deque<T, Allocator>::const_iterator::operator-=(difference_type n)
+    {
+        m_cur -= n;
+        return *this;
+    }
+
+    template <typename T, typename Allocator>
+    inline typename deque<T, Allocator>::const_iterator &
+    deque<T, Allocator>::const_iterator::operator++()
+    {
+        m_cur++;
+        return *this;
+    }
+
+    template <typename T, typename Allocator>
+    inline typename deque<T, Allocator>::const_iterator &
+    deque<T, Allocator>::const_iterator::operator--()
+    {
+        m_cur--;
+        return *this;
+    }
+
+    template <typename T, typename Allocator>
+    inline typename deque<T, Allocator>::const_iterator
+    deque<T, Allocator>::const_iterator::operator++(int)
+    {
+        const_iterator temp(*this);
+        m_cur++;
+        return temp;
+    }
+
+    template <typename T, typename Allocator>
+    inline typename deque<T, Allocator>::const_iterator
+    deque<T, Allocator>::const_iterator::operator--(int)
+    {
+        const_iterator temp(*this);
+        m_cur--;
+        return temp;
+    }
+
+    template <typename T, typename Allocator>
+    inline typename deque<T, Allocator>::const_iterator
+    deque<T, Allocator>::const_iterator::operator[](difference_type n) const
+    {
+        return const_iterator(m_cur + n, m_first, m_last, m_map_node);
+    }
+
+    template <typename T, typename Allocator>
+    inline typename deque<T, Allocator>::const_iterator
+    deque<T, Allocator>::const_iterator::operator[](difference_type n)
+    {
+        return const_iterator(m_cur + n, m_first, m_last, m_map_node);
+    }
+
+    template <typename T, typename Allocator>
+    inline bool deque<T, Allocator>::const_iterator::
+    operator==(const const_iterator &other) const
+    {
+        return (m_cur == other.m_cur) && (m_first == other.m_first) &&
+               (m_last == other.m_last) && (m_map_node == other.m_map_node);
+    }
+
+    template <typename T, typename Allocator>
+    inline bool deque<T, Allocator>::const_iterator::
+    operator!=(const const_iterator &other) const
+    {
+        return !(*this == other);
+    }
+
+    template <typename T, typename Allocator>
+    inline bool deque<T, Allocator>::const_iterator::
+    operator<(const const_iterator &other) const
+    {
+        return (m_cur < other.m_cur) && (m_first < other.m_first) &&
+               (m_last < other.m_last) && (m_map_node < other.m_map_node);
+    }
+
+    template <typename T, typename Allocator>
+    inline bool deque<T, Allocator>::const_iterator::
+    operator>(const const_iterator &other) const
+    {
+        return !(*this < other) && *this != other;
+    }
+
+    template <typename T, typename Allocator>
+    inline bool deque<T, Allocator>::const_iterator::
+    operator<=(const const_iterator &other) const
+    {
+        return !(*this > other);
+    }
+
+    template <typename T, typename Allocator>
+    inline bool deque<T, Allocator>::const_iterator::
+    operator>=(const const_iterator &other) const
+    {
+        return !(*this < other);
+    }
 
     // ----------------------- deque 实现 ---------------------------
     template <typename T, typename Allocator>
@@ -433,7 +801,7 @@ namespace demo
     {
         clear();
 
-        if(first == last)
+        if (first == last)
             return;
 
         size_type count = std::distance(first, last);
@@ -481,43 +849,43 @@ namespace demo
         return m_allocator;
     }
 
-    template<typename T, typename Allocator>
+    template <typename T, typename Allocator>
     inline typename deque<T, Allocator>::reference
     deque<T, Allocator>::at(size_type pos)
     {
         size_type slot = pos / m_map_size;
-        if(slot >= m_map_size)
+        if (slot >= m_map_size)
             throw std::out_of_range("deque::at: pos out of range");
 
         size_type offset = pos % m_map_size;
-        if(offset >= m_buffer_size)
+        if (offset >= m_buffer_size)
             throw std::out_of_range("deque::at: pos out of range");
 
         return m_map[slot][offset];
     }
 
-    template<typename T, typename Allocator>
+    template <typename T, typename Allocator>
     inline typename deque<T, Allocator>::const_reference
     deque<T, Allocator>::at(size_type pos) const
     {
         size_type slot = pos / m_map_size;
-        if(slot >= m_map_size)
+        if (slot >= m_map_size)
             throw std::out_of_range("deque::at: pos out of range");
 
         size_type offset = pos % m_map_size;
-        if(offset >= m_buffer_size)
+        if (offset >= m_buffer_size)
             throw std::out_of_range("deque::at: pos out of range");
 
         return m_map[slot][offset];
     }
-   
+
     template <typename T, typename Allocator>
     inline typename deque<T, Allocator>::reference
     deque<T, Allocator>::operator[](size_type pos)
     {
         size_type slot = pos / m_map_size;
         size_type offset = pos % m_map_size;
-        
+
         return m_map[slot][offset];
     }
     template <typename T, typename Allocator>
@@ -533,7 +901,7 @@ namespace demo
     inline typename deque<T, Allocator>::reference
     deque<T, Allocator>::front()
     {
-        if(empty())
+        if (empty())
             throw std::out_of_range("deque::front: deque is empty");
         return *m_begin.m_cur;
     }
@@ -541,7 +909,7 @@ namespace demo
     inline typename deque<T, Allocator>::const_reference
     deque<T, Allocator>::front() const
     {
-        if(empty())
+        if (empty())
             throw std::out_of_range("deque::front: deque is empty");
         return *m_begin.m_cur;
     }
@@ -549,16 +917,16 @@ namespace demo
     inline typename deque<T, Allocator>::reference
     deque<T, Allocator>::back()
     {
-        if(empty())
+        if (empty())
             throw std::out_of_range("deque::back: deque is empty");
-        return *(m_end.m_cur-1);
+        return *(m_end.m_cur - 1);
     }
     template <typename T, typename Allocator>
     inline typename deque<T, Allocator>::const_reference
     deque<T, Allocator>::back() const
     {
-        if(empty())
+        if (empty())
             throw std::out_of_range("deque::back: deque is empty");
-        return *(m_end.m_cur-1);
+        return *(m_end.m_cur - 1);
     }
 }
