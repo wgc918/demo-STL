@@ -480,5 +480,85 @@ namespace demo
     {
         return m_allocator;
     }
-    
+
+    template<typename T, typename Allocator>
+    inline typename deque<T, Allocator>::reference
+    deque<T, Allocator>::at(size_type pos)
+    {
+        size_type slot = pos / m_map_size;
+        if(slot >= m_map_size)
+            throw std::out_of_range("deque::at: pos out of range");
+
+        size_type offset = pos % m_map_size;
+        if(offset >= m_buffer_size)
+            throw std::out_of_range("deque::at: pos out of range");
+
+        return m_map[slot][offset];
+    }
+
+    template<typename T, typename Allocator>
+    inline typename deque<T, Allocator>::const_reference
+    deque<T, Allocator>::at(size_type pos) const
+    {
+        size_type slot = pos / m_map_size;
+        if(slot >= m_map_size)
+            throw std::out_of_range("deque::at: pos out of range");
+
+        size_type offset = pos % m_map_size;
+        if(offset >= m_buffer_size)
+            throw std::out_of_range("deque::at: pos out of range");
+
+        return m_map[slot][offset];
+    }
+   
+    template <typename T, typename Allocator>
+    inline typename deque<T, Allocator>::reference
+    deque<T, Allocator>::operator[](size_type pos)
+    {
+        size_type slot = pos / m_map_size;
+        size_type offset = pos % m_map_size;
+        
+        return m_map[slot][offset];
+    }
+    template <typename T, typename Allocator>
+    inline typename deque<T, Allocator>::const_reference
+    deque<T, Allocator>::operator[](size_type pos) const
+    {
+        size_type slot = pos / m_map_size;
+        size_type offset = pos % m_map_size;
+
+        return m_map[slot][offset];
+    }
+    template <typename T, typename Allocator>
+    inline typename deque<T, Allocator>::reference
+    deque<T, Allocator>::front()
+    {
+        if(empty())
+            throw std::out_of_range("deque::front: deque is empty");
+        return *m_begin.m_cur;
+    }
+    template <typename T, typename Allocator>
+    inline typename deque<T, Allocator>::const_reference
+    deque<T, Allocator>::front() const
+    {
+        if(empty())
+            throw std::out_of_range("deque::front: deque is empty");
+        return *m_begin.m_cur;
+    }
+    template <typename T, typename Allocator>
+    inline typename deque<T, Allocator>::reference
+    deque<T, Allocator>::back()
+    {
+        if(empty())
+            throw std::out_of_range("deque::back: deque is empty");
+        return *(m_end.m_cur-1);
+    }
+    template <typename T, typename Allocator>
+    inline typename deque<T, Allocator>::const_reference
+    deque<T, Allocator>::back() const
+    {
+        if(empty())
+            throw std::out_of_range("deque::back: deque is empty");
+        return *(m_end.m_cur-1);
+    }
 }
