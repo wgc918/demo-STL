@@ -388,4 +388,97 @@ namespace demo
         clear();
         map_alloc_traits::deallocate(m_map_allocator, m_map, m_map_size);
     }
+
+    template <typename T, typename Allocator>
+    void deque<T, Allocator>::assign(size_type count,
+                                     const value_type &value)
+    {
+        clear();
+
+        size_type slots = (count + m_buffer_size - 1) / m_buffer_size;
+        m_map_size = std::max(slots, m_map_size);
+        m_map = map_alloc_traits::allocate(m_map_allocator, m_map_size);
+        for (size_type i = 0; i < m_map_size; i++)
+            m_map[i] = nullptr;
+
+        size_type first_slot = (m_map_size - slots) / 2;
+        size_type remaining = count;
+        for (size_type i = first_slot; i < first_slot + slots; i++)
+        {
+            m_map[i] = alloc_traits::allocate(m_allocator, m_buffer_size);
+            for (size_type j = 0; j < std::min(m_buffer_size, remaining); j++)
+                alloc_traits::construct(m_allocator, m_map[i] + j, value);
+            remaining -= m_buffer_size;
+        }
+
+        m_begin.m_cur = m_map[first_slot];
+        m_begin.m_first = m_map[first_slot];
+        m_begin.m_last = m_map[first_slot] + m_buffer_size;
+        m_begin.m_map_node = m_map + first_slot;
+
+        size_type last_slot = first_slot + slots - 1;
+        m_end.m_cur = m_map[last_slot] + (count % m_buffer_size == 0
+                                              ? m_buffer_size
+                                              : count % m_buffer_size);
+        m_end.m_first = m_map[last_slot];
+        m_end.m_last = m_map[last_slot] + m_buffer_size;
+        m_end.m_map_node = m_map + last_slot;
+    }
+
+    template <typename T, typename Allocator>
+    template <typename InputIt,
+              std::enable_if_t<
+                  !std::is_integral<InputIt>::value, int>>
+    void deque<T, Allocator>::assign(InputIt first, InputIt last)
+    {
+        clear();
+
+        if(first == last)
+            return;
+
+        size_type count = std::distance(first, last);
+        size_type slots = (count + m_buffer_size - 1) / m_buffer_size;
+        m_map_size = std::max(slots, m_map_size);
+        m_map = map_alloc_traits::allocate(m_map_allocator, m_map_size);
+        for (size_type i = 0; i < m_map_size; i++)
+            m_map[i] = nullptr;
+
+        size_type first_slot = (m_map_size - slots) / 2;
+        size_type remaining = count;
+
+        for (size_type i = first_slot; i < first_slot + slots; i++)
+        {
+            m_map[i] = alloc_traits::allocate(m_allocator, m_buffer_size);
+            for (size_type j = 0;
+                 j < std::min(m_buffer_size, remaining) && first != last; j++)
+                alloc_traits::construct(m_allocator, m_map[i] + j, *first++);
+            remaining -= m_buffer_size;
+        }
+
+        m_begin.m_cur = m_map[first_slot];
+        m_begin.m_first = m_map[first_slot];
+        m_begin.m_last = m_map[first_slot] + m_buffer_size;
+        m_begin.m_map_node = m_map + first_slot;
+
+        size_type last_slot = first_slot + slots - 1;
+        m_end.m_cur = m_map[last_slot] + (count % m_buffer_size == 0
+                                              ? m_buffer_size
+                                              : count % m_buffer_size);
+        m_end.m_first = m_map[last_slot];
+        m_end.m_last = m_map[last_slot] + m_buffer_size;
+        m_end.m_map_node = m_map + last_slot;
+    }
+    template <typename T, typename Allocator>
+    void deque<T, Allocator>::assign(std::initializer_list<T> ilist)
+    {
+        assign(ilist.begin(), ilist.end());
+    }
+
+    template <typename T, typename Allocator>
+    inline typename deque<T, Allocator>::allocator_type
+    deque<T, Allocator>::get_allocator() const noexcept
+    {
+        return m_allocator;
+    }
+    
 }
