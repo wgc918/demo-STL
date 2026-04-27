@@ -265,28 +265,65 @@ namespace demo
     inline typename deque<T, Allocator>::difference_type
     deque<T, Allocator>::iterator::operator-(const iterator &other) const
     {
-        return m_cur - other.m_cur;
+        // 如果两个迭代器指向同一个槽，直接返回元素之间的距离
+        if (m_map_node == other.m_map_node)
+        {
+            return m_cur - other.m_cur;
+        }
+        // 否则，返回跨槽的距离
+        else
+        {
+            difference_type distance = 0;
+            size_type slot_distance = m_map_node - other.m_map_node - 1;
+            distance += slot_distance * m_buffer_size;
+            distance += m_cur - m_first;
+            distance += other.m_last - other.m_cur;
+
+            return distance;
+        }
     }
 
     template <typename T, typename Allocator>
     inline typename deque<T, Allocator>::iterator
     deque<T, Allocator>::iterator::operator+(difference_type n) const
     {
-        return iterator(m_cur + n, m_first, m_last, m_map_node);
+        if (m_cur + n < m_last)
+        {
+            return iterator(m_cur + n, m_first, m_last, m_map_node);
+        }
+        else
+        {
+            n -= m_last - m_cur - 1;
+            // 计算新的槽指针和元素指针
+            value_type **new_map_node = m_map_node + (n / m_buffer_size + 1);
+            pointer new_cur = *new_map_node + n % m_buffer_size;
+            return iterator(new_cur, *new_map_node, *new_map_node + m_buffer_size, new_map_node);
+        }
     }
 
     template <typename T, typename Allocator>
     inline typename deque<T, Allocator>::iterator
     deque<T, Allocator>::iterator::operator-(difference_type n) const
     {
-        return iterator(m_cur - n, m_first, m_last, m_map_node);
+        if (m_cur - n >= m_first)
+        {
+            return iterator(m_cur - n, m_first, m_last, m_map_node);
+        }
+        else
+        {
+            n -= m_cur - m_first;
+            // 计算新的槽指针和元素指针
+            value_type **new_map_node = m_map_node - (n / m_buffer_size + 1);
+            pointer new_cur = *new_map_node + m_buffer_size - n % m_buffer_size;
+            return iterator(new_cur, *new_map_node, *new_map_node + m_buffer_size, new_map_node);
+        }
     }
 
     template <typename T, typename Allocator>
     inline typename deque<T, Allocator>::iterator &
     deque<T, Allocator>::iterator::operator+=(difference_type n)
     {
-        m_cur += n;
+        *this = *this + n;
         return *this;
     }
 
@@ -294,7 +331,7 @@ namespace demo
     inline typename deque<T, Allocator>::iterator &
     deque<T, Allocator>::iterator::operator-=(difference_type n)
     {
-        m_cur -= n;
+        *this = *this - n;
         return *this;
     }
 
@@ -302,7 +339,13 @@ namespace demo
     inline typename deque<T, Allocator>::iterator &
     deque<T, Allocator>::iterator::operator++()
     {
-        m_cur++;
+        if (m_cur + 1 < m_last)
+            m_cur++;
+        else
+        {
+            m_map_node++;
+            m_cur = *m_map_node;
+        }
         return *this;
     }
 
@@ -310,7 +353,13 @@ namespace demo
     inline typename deque<T, Allocator>::iterator &
     deque<T, Allocator>::iterator::operator--()
     {
-        m_cur--;
+        if (m_cur - 1 >= m_first)
+            m_cur--;
+        else
+        {
+            m_map_node--;
+            m_cur = *m_map_node + m_buffer_size - 1;
+        }
         return *this;
     }
 
@@ -319,7 +368,13 @@ namespace demo
     deque<T, Allocator>::iterator::operator++(int)
     {
         iterator temp(*this);
-        m_cur++;
+        if (m_cur + 1 < m_last)
+            m_cur++;
+        else
+        {
+            m_map_node++;
+            m_cur = *m_map_node;
+        }
         return temp;
     }
 
@@ -328,7 +383,13 @@ namespace demo
     deque<T, Allocator>::iterator::operator--(int)
     {
         iterator temp(*this);
-        m_cur--;
+        if (m_cur - 1 >= m_first)
+            m_cur--;
+        else
+        {
+            m_map_node--;
+            m_cur = *m_map_node + m_buffer_size - 1;
+        }
         return temp;
     }
 
@@ -336,13 +397,13 @@ namespace demo
     inline typename deque<T, Allocator>::iterator
     deque<T, Allocator>::iterator::operator[](difference_type n) const
     {
-        return iterator(m_cur + n, m_first, m_last, m_map_node);
+        return *this + n;
     }
     template <typename T, typename Allocator>
     inline typename deque<T, Allocator>::iterator
     deque<T, Allocator>::iterator::operator[](difference_type n)
     {
-        return iterator(m_cur + n, m_first, m_last, m_map_node);
+        return *this + n;
     }
 
     template <typename T, typename Allocator>
@@ -364,8 +425,14 @@ namespace demo
     inline bool deque<T, Allocator>::iterator::
     operator<(const iterator &other) const
     {
-        return (m_cur < other.m_cur) && (m_first < other.m_first) &&
-               (m_last < other.m_last) && (m_map_node < other.m_map_node);
+        if (m_map_node == other.m_map_node)
+        {
+            return m_cur < other.m_cur;
+        }
+        else
+        {
+            return m_map_node < other.m_map_node;
+        }
     }
 
     template <typename T, typename Allocator>
@@ -430,28 +497,65 @@ namespace demo
     inline typename deque<T, Allocator>::difference_type
     deque<T, Allocator>::const_iterator::operator-(const const_iterator &other) const
     {
-        return m_cur - other.m_cur;
+        // 如果两个迭代器指向同一个槽，直接返回元素之间的距离
+        if (m_map_node == other.m_map_node)
+        {
+            return m_cur - other.m_cur;
+        }
+        // 否则，返回跨槽的距离
+        else
+        {
+            difference_type distance = 0;
+            size_type slot_distance = m_map_node - other.m_map_node - 1;
+            distance += slot_distance * m_buffer_size;
+            distance += m_cur - m_first;
+            distance += other.m_last - other.m_cur;
+
+            return distance;
+        }
     }
 
     template <typename T, typename Allocator>
     inline typename deque<T, Allocator>::const_iterator
     deque<T, Allocator>::const_iterator::operator+(difference_type n) const
     {
-        return const_iterator(m_cur + n, m_first, m_last, m_map_node);
+        if (m_cur + n < m_last)
+        {
+            return const_iterator(m_cur + n, m_first, m_last, m_map_node);
+        }
+        else
+        {
+            n -= m_last - m_cur - 1;
+            // 计算新的槽指针和元素指针
+            value_type **new_map_node = m_map_node + (n / m_buffer_size + 1);
+            pointer new_cur = *new_map_node + n % m_buffer_size;
+            return const_iterator(new_cur, *new_map_node, *new_map_node + m_buffer_size, new_map_node);
+        }
     }
 
     template <typename T, typename Allocator>
     inline typename deque<T, Allocator>::const_iterator
     deque<T, Allocator>::const_iterator::operator-(difference_type n) const
     {
-        return const_iterator(m_cur - n, m_first, m_last, m_map_node);
+        if (m_cur - n >= m_first)
+        {
+            return const_iterator(m_cur - n, m_first, m_last, m_map_node);
+        }
+        else
+        {
+            n -= m_cur - m_first;
+            // 计算新的槽指针和元素指针
+            value_type **new_map_node = m_map_node - (n / m_buffer_size + 1);
+            pointer new_cur = *new_map_node + m_buffer_size - n % m_buffer_size;
+            return const_iterator(new_cur, *new_map_node, *new_map_node + m_buffer_size, new_map_node);
+        }
     }
 
     template <typename T, typename Allocator>
     inline typename deque<T, Allocator>::const_iterator &
     deque<T, Allocator>::const_iterator::operator+=(difference_type n)
     {
-        m_cur += n;
+        *this = *this + n;
         return *this;
     }
 
@@ -459,7 +563,7 @@ namespace demo
     inline typename deque<T, Allocator>::const_iterator &
     deque<T, Allocator>::const_iterator::operator-=(difference_type n)
     {
-        m_cur -= n;
+        *this = *this - n;
         return *this;
     }
 
@@ -467,7 +571,13 @@ namespace demo
     inline typename deque<T, Allocator>::const_iterator &
     deque<T, Allocator>::const_iterator::operator++()
     {
-        m_cur++;
+        if (m_cur + 1 < m_last)
+            m_cur++;
+        else
+        {
+            m_map_node++;
+            m_cur = *m_map_node;
+        }
         return *this;
     }
 
@@ -475,7 +585,13 @@ namespace demo
     inline typename deque<T, Allocator>::const_iterator &
     deque<T, Allocator>::const_iterator::operator--()
     {
-        m_cur--;
+        if (m_cur - 1 >= m_first)
+            m_cur--;
+        else
+        {
+            m_map_node--;
+            m_cur = *m_map_node + m_buffer_size - 1;
+        }
         return *this;
     }
 
@@ -484,7 +600,13 @@ namespace demo
     deque<T, Allocator>::const_iterator::operator++(int)
     {
         const_iterator temp(*this);
-        m_cur++;
+        if (m_cur + 1 < m_last)
+            m_cur++;
+        else
+        {
+            m_map_node++;
+            m_cur = *m_map_node;
+        }
         return temp;
     }
 
@@ -493,7 +615,13 @@ namespace demo
     deque<T, Allocator>::const_iterator::operator--(int)
     {
         const_iterator temp(*this);
-        m_cur--;
+        if (m_cur - 1 >= m_first)
+            m_cur--;
+        else
+        {
+            m_map_node--;
+            m_cur = *m_map_node + m_buffer_size - 1;
+        }
         return temp;
     }
 
@@ -501,14 +629,14 @@ namespace demo
     inline typename deque<T, Allocator>::const_iterator
     deque<T, Allocator>::const_iterator::operator[](difference_type n) const
     {
-        return const_iterator(m_cur + n, m_first, m_last, m_map_node);
+        return *this + n;
     }
 
     template <typename T, typename Allocator>
     inline typename deque<T, Allocator>::const_iterator
     deque<T, Allocator>::const_iterator::operator[](difference_type n)
     {
-        return const_iterator(m_cur + n, m_first, m_last, m_map_node);
+        return *this + n;
     }
 
     template <typename T, typename Allocator>
@@ -530,8 +658,14 @@ namespace demo
     inline bool deque<T, Allocator>::const_iterator::
     operator<(const const_iterator &other) const
     {
-        return (m_cur < other.m_cur) && (m_first < other.m_first) &&
-               (m_last < other.m_last) && (m_map_node < other.m_map_node);
+        if (m_map_node == other.m_map_node)
+        {
+            return m_cur < other.m_cur;
+        }
+        else
+        {
+            return m_map_node < other.m_map_node;
+        }
     }
 
     template <typename T, typename Allocator>
