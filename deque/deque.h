@@ -1134,4 +1134,102 @@ namespace demo
         return const_reverse_iterator(m_begin);
     }
 
+    template <typename T, typename Allocator>
+    inline bool deque<T, Allocator>::empty() const
+    {
+        return m_begin.m_cur == nullptr;
+    }
+    template <typename T, typename Allocator>
+    inline typename deque<T, Allocator>::size_type deque<T, Allocator>::size() const
+    {
+        return static_cast<size_type>(m_end.m_cur - m_begin.m_cur);
+    }
+
+    template <typename T, typename Allocator>
+    inline typename deque<T, Allocator>::size_type deque<T, Allocator>::max_size() const
+    {
+        return alloc_traits::max_size(m_allocator);
+    }
+
+    template <typename T, typename Allocator>
+    inline void deque<T, Allocator>::resize(size_type count)
+    {
+        size_type current_size = size();
+        if (count == current_size)
+            return;
+        else if (count < current_size)
+        {
+            while (current_size > count)
+            {
+                current_size--;
+                pop_back();
+            }
+        }
+        else
+        {
+            while (current_size < count)
+            {
+                emplace_back();
+                current_size++;
+            }
+        }
+    }
+
+    template <typename T, typename Allocator>
+    inline void deque<T, Allocator>::resize(size_type count, const value_type &value)
+    {
+        size_type current_size = size();
+        if (count == current_size)
+            return;
+        else if (count < current_size)
+        {
+            while (current_size > count)
+            {
+                current_size--;
+                pop_back();
+            }
+        }
+        else
+        {
+            while (current_size < count)
+            {
+                emplace_back(value);
+                current_size++;
+            }
+        }
+    }
+
+    template <typename T, typename Allocator>
+    inline void deque<T, Allocator>::shrink_to_fit()
+    {
+        size_type used_slots = m_end.m_map_node - m_begin.m_map_node + 1;
+        if (used_slots == m_map_size || used_slots <= DEQUE_DEFAULT_INIT_SIZE)
+            return;
+
+        pointer *new_map = map_alloc_traits::allocate(m_map_allocator, used_slots);
+        for (size_type i = 0; i < used_slots; i++)
+            new_map[i] = nullptr;
+
+        size_type old_start_idx = m_begin.m_map_node - m_map;
+
+        for (size_type i = 0; i < used_slots; ++i)
+        {
+            new_map[i] = m_map[old_start_idx + i];
+        }
+
+        for (size_type i = 0; i < m_map_size; ++i)
+        {
+            // 检查该槽位是否在使用中
+            bool in_use = (i >= old_start_idx) && (i < old_start_idx + used_slots);
+            if (!in_use && m_map[i] != nullptr)
+                alloc_traits::deallocate(m_allocator, m_map[i], m_buffer_size);
+        }
+
+        map_alloc_traits::deallocate(m_map_allocator, m_map, m_map_size);
+
+        m_map = new_map;
+        m_map_size = used_slots;
+        m_begin.m_map_node = m_map;
+        m_end.m_map_node = m_map + used_slots - 1;
+    }
 }
