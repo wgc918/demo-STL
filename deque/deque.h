@@ -929,4 +929,75 @@ namespace demo
             throw std::out_of_range("deque::back: deque is empty");
         return *(m_end.m_cur - 1);
     }
+
+    template <typename T, typename Allocator>
+    inline typename deque<T, Allocator>::iterator deque<T, Allocator>::begin()
+    {
+        return m_begin;
+    }
+
+    template <typename T, typename Allocator>
+    inline typename deque<T, Allocator>::const_iterator deque<T, Allocator>::begin() const
+    {
+        return m_begin;
+    }
+
+    template <typename T, typename Allocator>
+    inline typename deque<T, Allocator>::const_iterator deque<T, Allocator>::cbegin() const
+    {
+        return m_begin;
+    }
+    template <typename T, typename Allocator>
+    inline typename deque<T, Allocator>::iterator deque<T, Allocator>::end()
+    {
+        return m_end;
+    }
+
+    template <typename T, typename Allocator>
+    inline typename deque<T, Allocator>::const_iterator deque<T, Allocator>::end() const
+    {
+        return m_end;
+    }
+
+    template <typename T, typename Allocator>
+    inline typename deque<T, Allocator>::const_iterator deque<T, Allocator>::cend() const
+    {
+        return m_end;
+    }
+    template <typename T, typename Allocator>
+    inline typename deque<T, Allocator>::reverse_iterator deque<T, Allocator>::rbegin()
+    {
+        return reverse_iterator(m_end);
+    }
+
+    template <typename T, typename Allocator>
+    inline typename deque<T, Allocator>::const_reverse_iterator deque<T, Allocator>::rbegin() const
+    {
+        return const_reverse_iterator(m_end);
+    }
+
+    template <typename T, typename Allocator>
+    inline typename deque<T, Allocator>::const_reverse_iterator deque<T, Allocator>::crbegin() const
+    {
+        return const_reverse_iterator(m_end);
+    }
+
+    template <typename T, typename Allocator>
+    inline typename deque<T, Allocator>::reverse_iterator deque<T, Allocator>::rend()
+    {
+        return reverse_iterator(m_begin);
+    }
+
+    template <typename T, typename Allocator>
+    inline typename deque<T, Allocator>::const_reverse_iterator deque<T, Allocator>::rend() const
+    {
+        return const_reverse_iterator(m_begin);
+    }
+
+    template <typename T, typename Allocator>
+    inline typename deque<T, Allocator>::const_reverse_iterator deque<T, Allocator>::crend() const
+    {
+        return const_reverse_iterator(m_begin);
+    }
+
 }
