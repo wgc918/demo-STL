@@ -106,6 +106,8 @@ namespace demo
         ///          这种设计支持高效的随机访问和跨槽遍历。
         class iterator
         {
+            friend class deque;
+
         public:
             using iterator_category =
                 std::random_access_iterator_tag;    ///< 迭代器类别（随机访问迭代器）
@@ -226,6 +228,8 @@ namespace demo
         ///          采用与 iterator 相同的四级结构设计。
         class const_iterator
         {
+            friend class deque;
+
         public:
             using iterator_category =
                 std::random_access_iterator_tag;    ///< 迭代器类别（随机访问迭代器）
@@ -599,7 +603,7 @@ namespace demo
         /// @param args 构造参数
         /// @return 指向新构造元素的迭代器
         template <typename... Args>
-        reference emplace(const_iterator pos, Args &&...args);
+        iterator emplace(const_iterator pos, Args &&...args);
 
         /// @brief 删除指定位置的元素
         /// @param pos 要删除的元素位置
@@ -1237,20 +1241,20 @@ namespace demo
         // 单独处理第一个槽
         m_map[first_slot] = alloc_traits::allocate(m_allocator, m_buffer_size);
         size_type first_slot_size = std::min(m_buffer_size,
-                                             other.m_begin.m_last - other.m_begin.m_cur);
+                                             static_cast<size_type>(other.m_begin.m_last - other.m_begin.m_cur));
         for (size_type j = (other.m_begin.m_first - other.m_map[first_slot]);
              j < first_slot_size; j++)
             alloc_traits::construct(m_allocator, m_map[first_slot] + j,
-                                    other.m_map[first_slot] + j);
+                                    *(other.m_map[first_slot] + j));
 
         // 单独处理最后一个槽
         size_type last_slot = first_slot + slots - 1;
         m_map[last_slot] = alloc_traits::allocate(m_allocator, m_buffer_size);
         size_type last_slot_size = std::min(m_buffer_size,
-                                            other.m_end.m_cur - other.m_end.m_first);
+                                             static_cast<size_type>(other.m_end.m_cur - other.m_end.m_first));
         for (size_type j = 0; j < last_slot_size; j++)
             alloc_traits::construct(m_allocator, m_map[last_slot] + j,
-                                    other.m_map[last_slot] + j);
+                                    *(other.m_map[last_slot] + j));
 
         // 中间槽位一定都是满的
         for (size_type i = first_slot + 1; i < first_slot + slots - 1; i++)
@@ -1258,7 +1262,7 @@ namespace demo
             m_map[i] = alloc_traits::allocate(m_allocator, m_buffer_size);
             for (size_type j = 0; j < m_buffer_size; j++)
                 alloc_traits::construct(m_allocator, m_map[i] + j,
-                                        other.m_map[i] + j);
+                                        *(other.m_map[i] + j));
         }
 
         // m_begin 指向第一个元素
@@ -1282,7 +1286,7 @@ namespace demo
         if (this != &other)
         {
             clear();
-            assign(other);
+            assign(other.begin(), other.end());
         }
         return *this;
     }
@@ -1305,7 +1309,7 @@ namespace demo
     {
         // other 重置为有效空状态
         other.m_map_size = DEQUE_DEFAULT_INIT_SIZE;
-        other.m_map = m_map_allocator::allocate(m_map_allocator, m_map_size);
+        other.m_map = map_alloc_traits::allocate(other.m_map_allocator, other.m_map_size);
         other.m_begin = iterator();
         other.m_end = iterator();
     }
@@ -1325,7 +1329,7 @@ namespace demo
 
             // other 重置为有效空状态
             other.m_map_size = DEQUE_DEFAULT_INIT_SIZE;
-            other.m_map = m_map_allocator::allocate(m_map_allocator, m_map_size);
+            other.m_map = map_alloc_traits::allocate(other.m_map_allocator, other.m_map_size);
             other.m_begin = iterator();
             other.m_end = iterator();
         }
@@ -1684,17 +1688,20 @@ namespace demo
     template <typename T, typename Allocator>
     inline void deque<T, Allocator>::clear() noexcept
     {
-        // 清空所有元素 并重置迭代器指向中间槽位
         if (empty())
             return;
 
         for (iterator it = m_begin; it != m_end; it++)
             alloc_traits::destroy(m_allocator, it.m_cur);
 
-        m_begin.m_cur = nullptr;
-        m_begin.m_first = m_map + m_map_size / 2;
-        m_begin.m_last = m_map + m_map_size / 2 + m_buffer_size;
-        m_begin.m_map_node = m_map + m_map_size / 2;
+        size_type middle_slot = m_map_size / 2;
+        if (m_map[middle_slot] == nullptr)
+            m_map[middle_slot] = alloc_traits::allocate(m_allocator, m_buffer_size);
+
+        m_begin.m_cur = m_map[middle_slot];
+        m_begin.m_first = m_map[middle_slot];
+        m_begin.m_last = m_map[middle_slot] + m_buffer_size;
+        m_begin.m_map_node = m_map + middle_slot;
         m_end = m_begin;
     }
 
@@ -1946,8 +1953,7 @@ namespace demo
     inline typename deque<T, Allocator>::iterator
     deque<T, Allocator>::insert(const_iterator pos, InputIt first, InputIt last)
     {
-        // 处理 count = 0 的情况
-        if (count == 0)
+        if (first == last)
         {
             return iterator(const_cast<pointer>(pos.m_cur),
                             const_cast<pointer>(pos.m_first),
@@ -1955,71 +1961,62 @@ namespace demo
                             const_cast<value_type **>(pos.m_map_node));
         }
 
-        // 如果是空容器，直接填充
+        size_type count = 0;
+        for (InputIt it = first; it != last; ++it)
+            ++count;
+
         if (empty())
         {
-            resize(count, value);
+            resize(count);
+            iterator it = begin();
+            for (InputIt i = first; i != last; ++i, ++it)
+                alloc_traits::construct(m_allocator, it.m_cur, *i);
             return begin();
         }
 
-        // 计算插入位置
         difference_type insert_pos = pos - cbegin();
         difference_type old_size = size();
 
-        // 计算需要的新槽位数
         size_type new_slots = count / m_buffer_size;
         if (count % m_buffer_size != 0)
             new_slots++;
 
-        // 计算当前使用的槽位数
         size_type used_slots = m_end.m_map_node - m_begin.m_map_node + 1;
 
-        // 检查是否需要扩容 map
         size_type required_map_size = used_slots + new_slots;
         if (required_map_size > m_map_size)
         {
-            // 扩展 map 大小（至少翻倍）
             size_type new_map_size = std::max(m_map_size * 2, required_map_size);
             value_type **new_map = map_alloc_traits::allocate(m_map_allocator, new_map_size);
 
-            // 初始化新 map
             for (size_type i = 0; i < new_map_size; ++i)
                 new_map[i] = nullptr;
 
-            // 计算新的起始位置（保持居中）
             size_type old_start_idx = m_begin.m_map_node - m_map;
             size_type new_start_idx = (new_map_size - required_map_size) / 2;
 
-            // 拷贝旧槽位到新位置
             for (size_type i = 0; i < used_slots; ++i)
                 new_map[new_start_idx + i] = m_map[old_start_idx + i];
 
-            // 释放旧 map
             map_alloc_traits::deallocate(m_map_allocator, m_map, m_map_size);
 
-            // 更新指针
             m_map = new_map;
             m_map_size = new_map_size;
             m_begin.m_map_node = &m_map[new_start_idx];
             m_end.m_map_node = &m_map[new_start_idx + used_slots - 1];
         }
 
-        // 计算插入位置距离两端的距离
         difference_type distance_from_begin = insert_pos;
         difference_type distance_from_end = old_size - insert_pos;
 
-        // 选择移动代价较小的方向
         if (distance_from_begin <= distance_from_end)
         {
-            // 从头部扩展
-            // 在头部添加新槽位
             for (size_type i = 0; i < new_slots; ++i)
             {
                 m_begin.m_map_node--;
                 *m_begin.m_map_node = alloc_traits::allocate(m_allocator, m_buffer_size);
             }
 
-            // 移动头部元素
             iterator src = begin();
             iterator dest = begin() + count;
             for (difference_type i = distance_from_begin - 1; i >= 0; --i)
@@ -2029,18 +2026,14 @@ namespace demo
                 --src;
             }
 
-            // 填充新元素
             iterator it = begin();
-            for (size_type i = 0; i < count; ++i)
+            for (InputIt i = first; i != last; ++i, ++it)
             {
-                alloc_traits::construct(m_allocator, it.m_cur, value);
-                ++it;
+                alloc_traits::construct(m_allocator, it.m_cur, *i);
             }
         }
         else
         {
-            // 从尾部扩展
-            // 在尾部添加新槽位
             iterator old_end = end();
             for (size_type i = 0; i < new_slots; ++i)
             {
@@ -2048,7 +2041,6 @@ namespace demo
                 *m_end.m_map_node = alloc_traits::allocate(m_allocator, m_buffer_size);
             }
 
-            // 移动尾部元素
             iterator src = old_end - 1;
             iterator dest = end() - 1;
             for (difference_type i = distance_from_end - 1; i >= 0; --i)
@@ -2058,16 +2050,13 @@ namespace demo
                 --src;
             }
 
-            // 填充新元素
             iterator it = begin() + insert_pos;
-            for (InputIt i = first; i != last; ++i)
+            for (InputIt i = first; i != last; ++i, ++it)
             {
                 alloc_traits::construct(m_allocator, it.m_cur, *i);
-                ++it;
             }
         }
 
-        // 更新 m_end
         m_end.m_cur += count;
         if (m_end.m_cur >= m_end.m_last)
         {
@@ -2077,7 +2066,6 @@ namespace demo
             m_end.m_cur = m_end.m_first + (m_end.m_cur - (m_end.m_last - m_buffer_size));
         }
 
-        // 返回指向第一个插入元素的迭代器
         return begin() + insert_pos;
     }
 
@@ -2090,27 +2078,22 @@ namespace demo
 
     template <typename T, typename Allocator>
     template <typename... Args>
-    inline typename deque<T, Allocator>::reference
+    inline typename deque<T, Allocator>::iterator
     deque<T, Allocator>::emplace(const_iterator pos, Args &&...args)
     {
-        // 如果是空容器，直接在头部插入
         if (empty())
         {
-            push_front(value);
+            emplace_front(std::forward<Args>(args)...);
             return begin();
         }
 
-        // 计算插入位置距离两端的距离
         difference_type distance_from_begin = pos - cbegin();
         difference_type distance_from_end = size() - distance_from_begin;
 
-        // 选择移动代价较小的方向
         if (distance_from_begin <= distance_from_end)
         {
-            // 从头部插入更优：将头部元素向后移动
             emplace_front(std::forward<Args>(args)...);
 
-            // 将插入位置之前的元素向后移动
             iterator first = begin();
             iterator last = begin() + distance_from_begin;
 
@@ -2122,10 +2105,8 @@ namespace demo
         }
         else
         {
-            // 从尾部插入更优：将尾部元素向前移动
             emplace_back(std::forward<Args>(args)...);
 
-            // 将插入位置之后的元素向前移动
             iterator last = end();
             iterator first = end() - distance_from_end;
 
@@ -2136,7 +2117,6 @@ namespace demo
             }
         }
 
-        // 返回指向插入元素的迭代器
         return begin() + distance_from_begin;
     }
 
@@ -2271,7 +2251,6 @@ namespace demo
     template <typename T, typename Allocator>
     inline void deque<T, Allocator>::push_front(const value_type &value)
     {
-        // 当前buffer有空间
         if (m_begin.m_cur > m_begin.m_first)
         {
             alloc_traits::construct(m_allocator, m_begin.m_cur - 1, value);
@@ -2281,26 +2260,28 @@ namespace demo
         {
             value_type **new_slot = m_begin.m_map_node - 1;
 
-            // 需要扩展槽位
             if (new_slot < m_map)
             {
-                new_map_size = m_map_size * 2;
+                size_type new_map_size = m_map_size * 2;
                 value_type **new_map = map_alloc_traits::allocate(m_map_allocator, new_map_size);
                 size_type first_slot = (new_map_size - m_map_size) / 2;
                 for (size_type i = 0; i < m_map_size; i++)
-                    new_map[first_slot++] = m_map[i];
+                    new_map[first_slot + i] = m_map[i];
 
-                m_map_allocator::deallocate(m_map_allocator, m_map, m_map_size);
+                map_alloc_traits::deallocate(m_map_allocator, m_map, m_map_size);
+
+                size_type old_begin_offset = m_begin.m_map_node - m_map;
+                size_type old_end_offset = m_end.m_map_node - m_map;
+
                 m_map = new_map;
                 m_map_size = new_map_size;
-                m_end.m_map_node = m_map + m_end.m_map_node - m_begin.m_map_node;
-                m_begin.m_map_node = (new_map_size - m_map_size) / 2;
-                new_slot = m_end.m_map_node + 1;
+                m_begin.m_map_node = m_map + first_slot + old_begin_offset;
+                m_end.m_map_node = m_map + first_slot + old_end_offset;
+                new_slot = m_begin.m_map_node - 1;
             }
 
-            // 新槽位为空，需要分配内存
-            if (new_slot == nullptr)
-                new_slot = map_alloc_traits::allocate(m_map_allocator, m_buffer_size);
+            if (*new_slot == nullptr)
+                *new_slot = alloc_traits::allocate(m_allocator, m_buffer_size);
 
             alloc_traits::construct(m_allocator, *new_slot + m_buffer_size - 1, value);
             m_begin.m_cur = *new_slot + m_buffer_size - 1;
@@ -2313,7 +2294,6 @@ namespace demo
     template <typename T, typename Allocator>
     inline void deque<T, Allocator>::push_front(const value_type &&value)
     {
-        // 当前buffer有空间
         if (m_begin.m_cur > m_begin.m_first)
         {
             alloc_traits::construct(m_allocator, m_begin.m_cur - 1, std::move(value));
@@ -2323,26 +2303,28 @@ namespace demo
         {
             value_type **new_slot = m_begin.m_map_node - 1;
 
-            // 需要扩展槽位
             if (new_slot < m_map)
             {
-                new_map_size = m_map_size * 2;
+                size_type new_map_size = m_map_size * 2;
                 value_type **new_map = map_alloc_traits::allocate(m_map_allocator, new_map_size);
                 size_type first_slot = (new_map_size - m_map_size) / 2;
                 for (size_type i = 0; i < m_map_size; i++)
-                    new_map[first_slot++] = m_map[i];
+                    new_map[first_slot + i] = m_map[i];
 
-                m_map_allocator::deallocate(m_map_allocator, m_map, m_map_size);
+                map_alloc_traits::deallocate(m_map_allocator, m_map, m_map_size);
+
+                size_type old_begin_offset = m_begin.m_map_node - m_map;
+                size_type old_end_offset = m_end.m_map_node - m_map;
+
                 m_map = new_map;
                 m_map_size = new_map_size;
-                m_end.m_map_node = m_map + m_end.m_map_node - m_begin.m_map_node;
-                m_begin.m_map_node = (new_map_size - m_map_size) / 2;
-                new_slot = m_end.m_map_node + 1;
+                m_begin.m_map_node = m_map + first_slot + old_begin_offset;
+                m_end.m_map_node = m_map + first_slot + old_end_offset;
+                new_slot = m_begin.m_map_node - 1;
             }
 
-            // 新槽位为空，需要分配内存
-            if (new_slot == nullptr)
-                new_slot = map_alloc_traits::allocate(m_map_allocator, m_buffer_size);
+            if (*new_slot == nullptr)
+                *new_slot = alloc_traits::allocate(m_allocator, m_buffer_size);
 
             alloc_traits::construct(m_allocator, *new_slot + m_buffer_size - 1, std::move(value));
             m_begin.m_cur = *new_slot + m_buffer_size - 1;
@@ -2364,29 +2346,31 @@ namespace demo
         {
             value_type **new_slot = m_end.m_map_node + 1;
 
-            // 需要扩展槽位
             if (new_slot >= m_map + m_map_size)
             {
-                new_map_size = m_map_size * 2;
+                size_type new_map_size = m_map_size * 2;
                 value_type **new_map = map_alloc_traits::allocate(m_map_allocator, new_map_size);
                 size_type first_slot = (new_map_size - m_map_size) / 2;
                 for (size_type i = 0; i < m_map_size; i++)
-                    new_map[first_slot++] = m_map[i];
+                    new_map[first_slot + i] = m_map[i];
 
                 map_alloc_traits::deallocate(m_map_allocator, m_map, m_map_size);
+
+                size_type old_begin_offset = m_begin.m_map_node - m_map;
+                size_type old_end_offset = m_end.m_map_node - m_map;
+
                 m_map = new_map;
                 m_map_size = new_map_size;
-                m_end.m_map_node = m_map + m_end.m_map_node - m_begin.m_map_node;
-                m_begin.m_map_node = (new_map_size - m_map_size) / 2;
+                m_begin.m_map_node = m_map + first_slot + old_begin_offset;
+                m_end.m_map_node = m_map + first_slot + old_end_offset;
                 new_slot = m_end.m_map_node + 1;
             }
 
-            // 新槽位为空，需要分配内存
-            if (new_slot == nullptr)
-                new_slot = map_alloc_traits::allocate(m_map_allocator, m_buffer_size);
+            if (*new_slot == nullptr)
+                *new_slot = alloc_traits::allocate(m_allocator, m_buffer_size);
 
             alloc_traits::construct(m_allocator, *new_slot, value);
-            m_end.m_cur = *new_slot;
+            m_end.m_cur = *new_slot + 1;
             m_end.m_first = *new_slot;
             m_end.m_last = *new_slot + m_buffer_size;
             m_end.m_map_node = new_slot;
@@ -2404,29 +2388,31 @@ namespace demo
         {
             value_type **new_slot = m_end.m_map_node + 1;
 
-            // 需要扩展槽位
             if (new_slot >= m_map + m_map_size)
             {
-                new_map_size = m_map_size * 2;
+                size_type new_map_size = m_map_size * 2;
                 value_type **new_map = map_alloc_traits::allocate(m_map_allocator, new_map_size);
                 size_type first_slot = (new_map_size - m_map_size) / 2;
                 for (size_type i = 0; i < m_map_size; i++)
-                    new_map[first_slot++] = m_map[i];
+                    new_map[first_slot + i] = m_map[i];
 
                 map_alloc_traits::deallocate(m_map_allocator, m_map, m_map_size);
+
+                size_type old_begin_offset = m_begin.m_map_node - m_map;
+                size_type old_end_offset = m_end.m_map_node - m_map;
+
                 m_map = new_map;
                 m_map_size = new_map_size;
-                m_end.m_map_node = m_map + m_end.m_map_node - m_begin.m_map_node;
-                m_begin.m_map_node = (new_map_size - m_map_size) / 2;
+                m_begin.m_map_node = m_map + first_slot + old_begin_offset;
+                m_end.m_map_node = m_map + first_slot + old_end_offset;
                 new_slot = m_end.m_map_node + 1;
             }
 
-            // 新槽位为空，需要分配内存
-            if (new_slot == nullptr)
-                new_slot = map_alloc_traits::allocate(m_map_allocator, m_buffer_size);
+            if (*new_slot == nullptr)
+                *new_slot = alloc_traits::allocate(m_allocator, m_buffer_size);
 
             alloc_traits::construct(m_allocator, *new_slot, std::move(value));
-            m_end.m_cur = *new_slot;
+            m_end.m_cur = *new_slot + 1;
             m_end.m_first = *new_slot;
             m_end.m_last = *new_slot + m_buffer_size;
             m_end.m_map_node = new_slot;
@@ -2440,38 +2426,44 @@ namespace demo
         if (m_end.m_cur < m_end.m_last)
         {
             alloc_traits::construct(m_allocator, m_end.m_cur, std::forward<Args>(args)...);
+            reference result = *m_end.m_cur;
             m_end.m_cur++;
+            return result;
         }
         else
         {
             value_type **new_slot = m_end.m_map_node + 1;
 
-            // 需要扩展槽位
             if (new_slot >= m_map + m_map_size)
             {
-                new_map_size = m_map_size * 2;
+                size_type new_map_size = m_map_size * 2;
                 value_type **new_map = map_alloc_traits::allocate(m_map_allocator, new_map_size);
                 size_type first_slot = (new_map_size - m_map_size) / 2;
                 for (size_type i = 0; i < m_map_size; i++)
-                    new_map[first_slot++] = m_map[i];
+                    new_map[first_slot + i] = m_map[i];
 
                 map_alloc_traits::deallocate(m_map_allocator, m_map, m_map_size);
+
+                size_type old_begin_offset = m_begin.m_map_node - m_map;
+                size_type old_end_offset = m_end.m_map_node - m_map;
+
                 m_map = new_map;
                 m_map_size = new_map_size;
-                m_end.m_map_node = m_map + m_end.m_map_node - m_begin.m_map_node;
-                m_begin.m_map_node = (new_map_size - m_map_size) / 2;
+                m_begin.m_map_node = m_map + first_slot + old_begin_offset;
+                m_end.m_map_node = m_map + first_slot + old_end_offset;
                 new_slot = m_end.m_map_node + 1;
             }
 
-            // 新槽位为空，需要分配内存
-            if (new_slot == nullptr)
-                new_slot = map_alloc_traits::allocate(m_map_allocator, m_buffer_size);
+            if (*new_slot == nullptr)
+                *new_slot = alloc_traits::allocate(m_allocator, m_buffer_size);
 
             alloc_traits::construct(m_allocator, *new_slot, std::forward<Args>(args)...);
-            m_end.m_cur = *new_slot;
+            reference result = **new_slot;
+            m_end.m_cur = *new_slot + 1;
             m_end.m_first = *new_slot;
             m_end.m_last = *new_slot + m_buffer_size;
             m_end.m_map_node = new_slot;
+            return result;
         }
     }
     template <typename T, typename Allocator>
@@ -2479,42 +2471,47 @@ namespace demo
     inline typename deque<T, Allocator>::reference
     deque<T, Allocator>::emplace_front(Args &&...args)
     {
-        // 当前buffer有空间
-        if (m_being.m_cur > m_begin.m_first)
+        if (m_begin.m_cur > m_begin.m_first)
         {
             alloc_traits::construct(m_allocator, m_begin.m_cur - 1, std::forward<Args>(args)...);
+            reference result = *(m_begin.m_cur - 1);
             m_begin.m_cur--;
+            return result;
         }
         else
         {
             value_type **new_slot = m_begin.m_map_node - 1;
 
-            // 需要扩展槽位
             if (new_slot < m_map)
             {
-                new_map_size = m_map_size * 2;
+                size_type new_map_size = m_map_size * 2;
                 value_type **new_map = map_alloc_traits::allocate(m_map_allocator, new_map_size);
                 size_type first_slot = (new_map_size - m_map_size) / 2;
                 for (size_type i = 0; i < m_map_size; i++)
-                    new_map[first_slot++] = m_map[i];
+                    new_map[first_slot + i] = m_map[i];
 
-                m_map_allocator::deallocate(m_map_allocator, m_map, m_map_size);
+                map_alloc_traits::deallocate(m_map_allocator, m_map, m_map_size);
+
+                size_type old_begin_offset = m_begin.m_map_node - m_map;
+                size_type old_end_offset = m_end.m_map_node - m_map;
+
                 m_map = new_map;
                 m_map_size = new_map_size;
-                m_end.m_map_node = m_map + m_end.m_map_node - m_begin.m_map_node;
-                m_begin.m_map_node = (new_map_size - m_map_size) / 2;
-                new_slot = m_end.m_map_node + 1;
+                m_begin.m_map_node = m_map + first_slot + old_begin_offset;
+                m_end.m_map_node = m_map + first_slot + old_end_offset;
+                new_slot = m_begin.m_map_node - 1;
             }
 
-            // 新槽位为空，需要分配内存
-            if (new_slot == nullptr)
-                new_slot = map_alloc_traits::allocate(m_map_allocator, m_buffer_size);
+            if (*new_slot == nullptr)
+                *new_slot = alloc_traits::allocate(m_allocator, m_buffer_size);
 
             alloc_traits::construct(m_allocator, *new_slot + m_buffer_size - 1, std::forward<Args>(args)...);
+            reference result = *(*new_slot + m_buffer_size - 1);
             m_begin.m_cur = *new_slot + m_buffer_size - 1;
             m_begin.m_first = *new_slot;
             m_begin.m_last = *new_slot + m_buffer_size;
             m_begin.m_map_node = new_slot;
+            return result;
         }
     }
 
@@ -2553,9 +2550,9 @@ namespace demo
         if (lhs.size() != rhs.size())
             return false;
 
-        iterator lhs_it = lhs.begin();
-        iterator rhs_it = rhs.begin();
-        while (lhs_it != lhs.end() && rhs_it != rhs.end())
+        typename deque<T, Allocator>::const_iterator lhs_it = lhs.cbegin();
+        typename deque<T, Allocator>::const_iterator rhs_it = rhs.cbegin();
+        while (lhs_it != lhs.cend() && rhs_it != rhs.cend())
         {
             if (*lhs_it != *rhs_it)
                 return false;
