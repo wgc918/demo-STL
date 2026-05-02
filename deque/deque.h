@@ -1368,7 +1368,7 @@ namespace demo
     deque<T, Allocator>::~deque()
     {
         clear();
-        
+
         for (size_type i = 0; i < m_map_size; i++)
             if (m_map[i] != nullptr)
                 alloc_traits::deallocate(m_allocator, m_map[i], m_buffer_size);
@@ -1472,49 +1472,54 @@ namespace demo
     inline typename deque<T, Allocator>::reference
     deque<T, Allocator>::at(size_type pos)
     {
-        size_type slot = pos / m_map_size;
-        if (slot >= m_map_size)
-            throw std::out_of_range("deque::at: pos out of range");
+        // 不能直接使用pos，因为元素不是从第一个slot开始的
+        //  size_type slot = pos / m_map_size;
+        //  if (slot >= m_map_size)
+        //      throw std::out_of_range("deque::at: pos out of range");
 
-        size_type offset = pos % m_map_size;
-        if (offset >= m_buffer_size)
-            throw std::out_of_range("deque::at: pos out of range");
+        // size_type offset = pos % m_map_size;
+        // if (offset >= m_buffer_size)
+        //     throw std::out_of_range("deque::at: pos out of range");
 
-        return m_map[slot][offset];
+        if (pos >= size())
+            throw std::out_of_range("deque::at: pos out of range");
+        return *(m_begin + pos);
     }
 
     template <typename T, typename Allocator>
     inline typename deque<T, Allocator>::const_reference
     deque<T, Allocator>::at(size_type pos) const
     {
-        size_type slot = pos / m_map_size;
-        if (slot >= m_map_size)
-            throw std::out_of_range("deque::at: pos out of range");
+        // size_type slot = pos / m_map_size;
+        // if (slot >= m_map_size)
+        //     throw std::out_of_range("deque::at: pos out of range");
 
-        size_type offset = pos % m_map_size;
-        if (offset >= m_buffer_size)
-            throw std::out_of_range("deque::at: pos out of range");
+        // size_type offset = pos % m_map_size;
+        // if (offset >= m_buffer_size)
+        //     throw std::out_of_range("deque::at: pos out of range");
 
-        return m_map[slot][offset];
+        if (pos >= size())
+            throw std::out_of_range("deque::at: pos out of range");
+        return *(m_begin + pos);
     }
 
     template <typename T, typename Allocator>
     inline typename deque<T, Allocator>::reference
     deque<T, Allocator>::operator[](size_type pos)
     {
-        size_type slot = pos / m_map_size;
-        size_type offset = pos % m_map_size;
+        // size_type slot = pos / m_map_size;
+        // size_type offset = pos % m_map_size;
 
-        return m_map[slot][offset];
+        return *(m_begin + pos);
     }
     template <typename T, typename Allocator>
     inline typename deque<T, Allocator>::const_reference
     deque<T, Allocator>::operator[](size_type pos) const
     {
-        size_type slot = pos / m_map_size;
-        size_type offset = pos % m_map_size;
+        // size_type slot = pos / m_map_size;
+        // size_type offset = pos % m_map_size;
 
-        return m_map[slot][offset];
+        return *(m_begin + pos);
     }
     template <typename T, typename Allocator>
     inline typename deque<T, Allocator>::reference
