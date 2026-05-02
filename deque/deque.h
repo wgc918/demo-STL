@@ -801,6 +801,8 @@ namespace demo
         {
             m_map_node++;
             m_cur = *m_map_node;
+            m_first = *m_map_node;
+            m_last = *m_map_node + m_buffer_size;
         }
         return *this;
     }
@@ -815,6 +817,8 @@ namespace demo
         {
             m_map_node--;
             m_cur = *m_map_node + m_buffer_size - 1;
+            m_first = *m_map_node;
+            m_last = *m_map_node + m_buffer_size;
         }
         return *this;
     }
@@ -830,6 +834,8 @@ namespace demo
         {
             m_map_node++;
             m_cur = *m_map_node;
+            m_first = *m_map_node;
+            m_last = *m_map_node + m_buffer_size;
         }
         return temp;
     }
@@ -845,6 +851,8 @@ namespace demo
         {
             m_map_node--;
             m_cur = *m_map_node + m_buffer_size - 1;
+            m_first = *m_map_node;
+            m_last = *m_map_node + m_buffer_size;
         }
         return temp;
     }
@@ -1033,6 +1041,8 @@ namespace demo
         {
             m_map_node++;
             m_cur = *m_map_node;
+            m_first = *m_map_node;
+            m_last = *m_map_node + m_buffer_size;
         }
         return *this;
     }
@@ -1047,6 +1057,8 @@ namespace demo
         {
             m_map_node--;
             m_cur = *m_map_node + m_buffer_size - 1;
+            m_first = *m_map_node;
+            m_last = *m_map_node + m_buffer_size;
         }
         return *this;
     }
@@ -1062,6 +1074,8 @@ namespace demo
         {
             m_map_node++;
             m_cur = *m_map_node;
+            m_first = *m_map_node;
+            m_last = *m_map_node + m_buffer_size;
         }
         return temp;
     }
@@ -1077,6 +1091,8 @@ namespace demo
         {
             m_map_node--;
             m_cur = *m_map_node + m_buffer_size - 1;
+            m_first = *m_map_node;
+            m_last = *m_map_node + m_buffer_size;
         }
         return temp;
     }
