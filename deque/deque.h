@@ -53,6 +53,10 @@ namespace demo
 /// @details deque 容器默认初始化时 map 的大小为 8
 #define DEQUE_DEFAULT_INIT_SIZE 8
 
+/// @brief deque 容器默认 buffer 大小
+/// @details deque 容器默认 buffer 大小为 512 字节
+#define DEQUE_DEFAULT_BUFFER_SIZE 512
+
     /// @brief deque 容器类
     /// @details deque（双端队列）是一种高效的序列容器，支持在头尾两端快速插入和删除元素，
     ///          并提供随机访问能力。deque 采用分段存储结构，通过 map 数组管理多个 buffer，
@@ -682,7 +686,7 @@ namespace demo
         /// @brief 每个 buffer 的大小（元素数量）
         /// @details 默认为 512 字节除以元素大小，保证每个 buffer 约 512 字节
         static const size_type m_buffer_size =
-            512 / sizeof(value_type);
+            DEQUE_DEFAULT_BUFFER_SIZE / sizeof(value_type);
     };
 
     // ----------------------- iterator 实现 ---------------------------
