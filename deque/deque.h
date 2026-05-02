@@ -1171,11 +1171,7 @@ namespace demo
         for (size_type i = 0; i < m_map_size; i++)
             m_map[i] = nullptr;
 
-        m_begin.m_cur = nullptr;
-        m_begin.m_first = nullptr;
-        m_begin.m_last = nullptr;
         m_begin.m_map_node = m_map + m_map_size / 2;
-
         m_end = m_begin;
     }
 
@@ -1235,8 +1231,8 @@ namespace demo
               std::enable_if_t<
                   !std::is_integral<InputIt>::value, int>>
     deque<T, Allocator>::deque(InputIt first, InputIt last)
-        : m_map(nullptr), m_map_size(8), m_allocator(),
-          m_map_allocator(), m_begin(), m_end()
+        : m_map(nullptr), m_map_size(DEQUE_DEFAULT_INIT_SIZE),
+          m_allocator(), m_map_allocator(), m_begin(), m_end()
     {
         assign(first, last);
     }
@@ -1255,14 +1251,14 @@ namespace demo
           m_allocator(), m_map_allocator(), m_begin(), m_end()
     {
         m_map = map_alloc_traits::allocate(m_map_allocator, m_map_size);
-        size_type first_slot = other.m_begin.m_map_node - m_map;
+        size_type first_slot = other.m_begin.m_map_node - other.m_map;
         size_type slots = other.m_end.m_map_node - other.m_begin.m_map_node + 1;
 
-        // 单独处理第一个槽
+        // 单独处理第一个槽位
         m_map[first_slot] = alloc_traits::allocate(m_allocator, m_buffer_size);
         size_type first_slot_size = std::min(m_buffer_size,
                                              static_cast<size_type>(other.m_begin.m_last - other.m_begin.m_cur));
-        for (size_type j = (other.m_begin.m_first - other.m_map[first_slot]);
+        for (size_type j = (other.m_begin.m_cur - other.m_begin.m_first);
              j < first_slot_size; j++)
             alloc_traits::construct(m_allocator, m_map[first_slot] + j,
                                     *(other.m_map[first_slot] + j));
@@ -1271,13 +1267,13 @@ namespace demo
         size_type last_slot = first_slot + slots - 1;
         m_map[last_slot] = alloc_traits::allocate(m_allocator, m_buffer_size);
         size_type last_slot_size = std::min(m_buffer_size,
-                                             static_cast<size_type>(other.m_end.m_cur - other.m_end.m_first));
+                                            static_cast<size_type>(other.m_end.m_cur - other.m_end.m_first));
         for (size_type j = 0; j < last_slot_size; j++)
             alloc_traits::construct(m_allocator, m_map[last_slot] + j,
                                     *(other.m_map[last_slot] + j));
 
         // 中间槽位一定都是满的
-        for (size_type i = first_slot + 1; i < first_slot + slots - 1; i++)
+        for (size_type i = first_slot + 1; i < last_slot; i++)
         {
             m_map[i] = alloc_traits::allocate(m_allocator, m_buffer_size);
             for (size_type j = 0; j < m_buffer_size; j++)
@@ -1286,8 +1282,8 @@ namespace demo
         }
 
         // m_begin 指向第一个元素
-        m_begin.m_cur = m_map[first_slot] + (other.m_begin.m_first -
-                                             other.m_map[first_slot]);
+        m_begin.m_cur = m_map[first_slot] + (other.m_begin.m_cur -
+                                             other.m_begin.m_first);
         m_begin.m_first = m_map[first_slot];
         m_begin.m_last = m_map[first_slot] + m_buffer_size;
         m_begin.m_map_node = m_map + first_slot;
@@ -1330,8 +1326,14 @@ namespace demo
         // other 重置为有效空状态
         other.m_map_size = DEQUE_DEFAULT_INIT_SIZE;
         other.m_map = map_alloc_traits::allocate(other.m_map_allocator, other.m_map_size);
-        other.m_begin = iterator();
-        other.m_end = iterator();
+        for (size_type i = 0; i < other.m_map_size; i++)
+            other.m_map[i] = nullptr;
+        other.m_begin = other.m_map + other.m_map_size / 2;
+        other.m_begin.m_cur = nullptr;
+        other.m_begin.m_first = nullptr;
+        other.m_begin.m_last = nullptr;
+        other.m_begin.m_map_node = nullptr;
+        other.m_end = other.m_begin;
     }
 
     template <typename T, typename Allocator>
@@ -1350,8 +1352,14 @@ namespace demo
             // other 重置为有效空状态
             other.m_map_size = DEQUE_DEFAULT_INIT_SIZE;
             other.m_map = map_alloc_traits::allocate(other.m_map_allocator, other.m_map_size);
-            other.m_begin = iterator();
-            other.m_end = iterator();
+            for (size_type i = 0; i < other.m_map_size; i++)
+                other.m_map[i] = nullptr;
+            other.m_begin = other.m_map + other.m_map_size / 2;
+            other.m_begin.m_cur = nullptr;
+            other.m_begin.m_first = nullptr;
+            other.m_begin.m_last = nullptr;
+            other.m_begin.m_map_node = nullptr;
+            other.m_end = other.m_begin;
         }
         return *this;
     }
@@ -1360,6 +1368,11 @@ namespace demo
     deque<T, Allocator>::~deque()
     {
         clear();
+        
+        for (size_type i = 0; i < m_map_size; i++)
+            if (m_map[i] != nullptr)
+                alloc_traits::deallocate(m_allocator, m_map[i], m_buffer_size);
+
         map_alloc_traits::deallocate(m_map_allocator, m_map, m_map_size);
     }
 
