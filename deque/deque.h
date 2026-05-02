@@ -1527,7 +1527,7 @@ namespace demo
     {
         if (empty())
             throw std::out_of_range("deque::front: deque is empty");
-        return *m_begin.m_cur;
+        return *m_begin;
     }
     template <typename T, typename Allocator>
     inline typename deque<T, Allocator>::const_reference
@@ -1535,7 +1535,7 @@ namespace demo
     {
         if (empty())
             throw std::out_of_range("deque::front: deque is empty");
-        return *m_begin.m_cur;
+        return *m_begin;
     }
     template <typename T, typename Allocator>
     inline typename deque<T, Allocator>::reference
@@ -1543,7 +1543,7 @@ namespace demo
     {
         if (empty())
             throw std::out_of_range("deque::back: deque is empty");
-        return *(m_end.m_cur - 1);
+        return *(m_end - 1);
     }
     template <typename T, typename Allocator>
     inline typename deque<T, Allocator>::const_reference
@@ -1551,7 +1551,7 @@ namespace demo
     {
         if (empty())
             throw std::out_of_range("deque::back: deque is empty");
-        return *(m_end.m_cur - 1);
+        return *(m_end - 1);
     }
 
     template <typename T, typename Allocator>
