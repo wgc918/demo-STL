@@ -1627,12 +1627,13 @@ namespace demo
     template <typename T, typename Allocator>
     inline bool deque<T, Allocator>::empty() const
     {
-        return m_begin.m_cur == nullptr;
+        // 初始化时 m_begin.m_cur 为 nullptr，clear后 m_begin == m_end
+        return m_begin.m_cur == nullptr || m_begin == m_end;
     }
     template <typename T, typename Allocator>
     inline typename deque<T, Allocator>::size_type deque<T, Allocator>::size() const
     {
-        return static_cast<size_type>(m_end.m_cur - m_begin.m_cur);
+        return static_cast<size_type>(m_end - m_begin);
     }
 
     template <typename T, typename Allocator>
@@ -1692,27 +1693,18 @@ namespace demo
     template <typename T, typename Allocator>
     inline void deque<T, Allocator>::shrink_to_fit()
     {
-        size_type used_slots = m_end.m_map_node - m_begin.m_map_node + 1;
-        if (used_slots == m_map_size || used_slots <= DEQUE_DEFAULT_INIT_SIZE)
+        if (m_map_size <= DEQUE_DEFAULT_INIT_SIZE)
             return;
 
+        // 计算当前使用的槽位数 新槽位数组每一个槽位都保存buffer,不存在空槽位，如果再插入元素，很可能需要重新分配buffer
+        size_type used_slots = m_end.m_map_node - m_begin.m_map_node + 1;
         pointer *new_map = map_alloc_traits::allocate(m_map_allocator, used_slots);
         for (size_type i = 0; i < used_slots; i++)
             new_map[i] = nullptr;
 
-        size_type old_start_idx = m_begin.m_map_node - m_map;
-
         for (size_type i = 0; i < used_slots; ++i)
         {
-            new_map[i] = m_map[old_start_idx + i];
-        }
-
-        for (size_type i = 0; i < m_map_size; ++i)
-        {
-            // 检查该槽位是否在使用中
-            bool in_use = (i >= old_start_idx) && (i < old_start_idx + used_slots);
-            if (!in_use && m_map[i] != nullptr)
-                alloc_traits::deallocate(m_allocator, m_map[i], m_buffer_size);
+            new_map[i] = m_begin.m_map_node + i;
         }
 
         map_alloc_traits::deallocate(m_map_allocator, m_map, m_map_size);
