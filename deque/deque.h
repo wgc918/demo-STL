@@ -1739,8 +1739,7 @@ namespace demo
     inline typename deque<T, Allocator>::iterator
     deque<T, Allocator>::insert(const_iterator pos, const value_type &value)
     {
-        // 如果是空容器，直接在头部插入
-        if (empty())
+        if (pos == begin())
         {
             push_front(value);
             return begin();
@@ -1756,14 +1755,13 @@ namespace demo
             // 从头部插入更优：将头部元素向后移动
             push_front(value);
 
-            // 将插入位置之前的元素向后移动
             iterator first = begin();
             iterator last = begin() + distance_from_begin;
 
             while (first != last)
             {
                 std::swap(*first, *(first + 1));
-                ++first;
+                first++;
             }
         }
         else
@@ -1777,7 +1775,7 @@ namespace demo
 
             while (last != first)
             {
-                --last;
+                last--;
                 std::swap(*last, *(last - 1));
             }
         }
@@ -1790,10 +1788,9 @@ namespace demo
     inline typename deque<T, Allocator>::iterator
     deque<T, Allocator>::insert(const_iterator pos, const value_type &&value)
     {
-        // 如果是空容器，直接在头部插入
-        if (empty())
+        if (pos == begin())
         {
-            push_front(value);
+            push_front(std::move(value));
             return begin();
         }
 
@@ -1805,7 +1802,7 @@ namespace demo
         if (distance_from_begin <= distance_from_end)
         {
             // 从头部插入更优：将头部元素向后移动
-            push_front(value);
+            push_front(std::move(value));
 
             // 将插入位置之前的元素向后移动
             iterator first = begin();
@@ -1814,7 +1811,7 @@ namespace demo
             while (first != last)
             {
                 std::swap(*first, *(first + 1));
-                ++first;
+                first++;
             }
         }
         else
@@ -1828,7 +1825,7 @@ namespace demo
 
             while (last != first)
             {
-                --last;
+                last--;
                 std::swap(*last, *(last - 1));
             }
         }
@@ -1850,46 +1847,27 @@ namespace demo
                             const_cast<value_type **>(pos.m_map_node));
         }
 
-        // 如果是空容器，直接填充
-        if (empty())
-        {
-            resize(count, value);
-            return begin();
-        }
-
         // 计算插入位置
         difference_type insert_pos = pos - cbegin();
         difference_type old_size = size();
 
-        // 计算需要的新槽位数
-        size_type new_slots = count / m_buffer_size;
-        if (count % m_buffer_size != 0)
-            new_slots++;
-
-        // 计算当前使用的槽位数
+        size_type new_slots = (count + m_buffer_size - 1) / m_buffer_size;
         size_type used_slots = m_end.m_map_node - m_begin.m_map_node + 1;
 
         // 检查是否需要扩容 map
         size_type required_map_size = used_slots + new_slots;
         if (required_map_size > m_map_size)
         {
-            // 扩展 map 大小（至少翻倍）
             size_type new_map_size = std::max(m_map_size * 2, required_map_size);
             value_type **new_map = map_alloc_traits::allocate(m_map_allocator, new_map_size);
-
-            // 初始化新 map
             for (size_type i = 0; i < new_map_size; ++i)
                 new_map[i] = nullptr;
 
-            // 计算新的起始位置（保持居中）
             size_type old_start_idx = m_begin.m_map_node - m_map;
             size_type new_start_idx = (new_map_size - required_map_size) / 2;
-
-            // 拷贝旧槽位到新位置
             for (size_type i = 0; i < used_slots; ++i)
                 new_map[new_start_idx + i] = m_map[old_start_idx + i];
 
-            // 释放旧 map
             map_alloc_traits::deallocate(m_map_allocator, m_map, m_map_size);
 
             // 更新指针
@@ -1907,35 +1885,32 @@ namespace demo
         if (distance_from_begin <= distance_from_end)
         {
             // 从头部扩展
-            // 在头部添加新槽位
             for (size_type i = 0; i < new_slots; ++i)
             {
                 m_begin.m_map_node--;
                 *m_begin.m_map_node = alloc_traits::allocate(m_allocator, m_buffer_size);
             }
 
-            // 移动头部元素
             iterator src = begin();
             iterator dest = begin() + count;
             for (difference_type i = distance_from_begin - 1; i >= 0; --i)
             {
                 *dest = *src;
-                --dest;
-                --src;
+                dest--;
+                src--;
             }
 
             // 填充新元素
             iterator it = begin();
-            for (size_type i = 0; i < count; ++i)
+            for (size_type i = 0; i < count; i++)
             {
                 alloc_traits::construct(m_allocator, it.m_cur, value);
-                ++it;
+                it++;
             }
         }
         else
         {
             // 从尾部扩展
-            // 在尾部添加新槽位
             iterator old_end = end();
             for (size_type i = 0; i < new_slots; ++i)
             {
@@ -1949,16 +1924,16 @@ namespace demo
             for (difference_type i = distance_from_end - 1; i >= 0; --i)
             {
                 *dest = *src;
-                --dest;
-                --src;
+                dest--;
+                src--;
             }
 
             // 填充新元素
             iterator it = begin() + insert_pos;
-            for (size_type i = 0; i < count; ++i)
+            for (size_type i = 0; i < count; i++)
             {
                 alloc_traits::construct(m_allocator, it.m_cur, value);
-                ++it;
+                it++;
             }
         }
 
@@ -1991,25 +1966,12 @@ namespace demo
                             const_cast<value_type **>(pos.m_map_node));
         }
 
-        size_type count = 0;
-        for (InputIt it = first; it != last; ++it)
-            ++count;
-
-        if (empty())
-        {
-            resize(count);
-            iterator it = begin();
-            for (InputIt i = first; i != last; ++i, ++it)
-                alloc_traits::construct(m_allocator, it.m_cur, *i);
-            return begin();
-        }
+        size_type count = std::distance(first, last);
 
         difference_type insert_pos = pos - cbegin();
         difference_type old_size = size();
 
-        size_type new_slots = count / m_buffer_size;
-        if (count % m_buffer_size != 0)
-            new_slots++;
+        size_type new_slots = (count + m_buffer_size - 1) / m_buffer_size;
 
         size_type used_slots = m_end.m_map_node - m_begin.m_map_node + 1;
 
@@ -2041,7 +2003,7 @@ namespace demo
 
         if (distance_from_begin <= distance_from_end)
         {
-            for (size_type i = 0; i < new_slots; ++i)
+            for (size_type i = 0; i < new_slots; i++)
             {
                 m_begin.m_map_node--;
                 *m_begin.m_map_node = alloc_traits::allocate(m_allocator, m_buffer_size);
@@ -2049,23 +2011,24 @@ namespace demo
 
             iterator src = begin();
             iterator dest = begin() + count;
-            for (difference_type i = distance_from_begin - 1; i >= 0; --i)
+            for (difference_type i = distance_from_begin - 1; i >= 0; i--)
             {
                 *dest = *src;
-                --dest;
-                --src;
+                dest--;
+                src--;
             }
 
             iterator it = begin();
-            for (InputIt i = first; i != last; ++i, ++it)
+            for (InputIt i = first; i != last; i++)
             {
                 alloc_traits::construct(m_allocator, it.m_cur, *i);
+                it++;
             }
         }
         else
         {
             iterator old_end = end();
-            for (size_type i = 0; i < new_slots; ++i)
+            for (size_type i = 0; i < new_slots; i++)
             {
                 m_end.m_map_node++;
                 *m_end.m_map_node = alloc_traits::allocate(m_allocator, m_buffer_size);
@@ -2073,17 +2036,18 @@ namespace demo
 
             iterator src = old_end - 1;
             iterator dest = end() - 1;
-            for (difference_type i = distance_from_end - 1; i >= 0; --i)
+            for (difference_type i = distance_from_end - 1; i >= 0; i--)
             {
                 *dest = *src;
-                --dest;
-                --src;
+                dest--;
+                src--;
             }
 
             iterator it = begin() + insert_pos;
-            for (InputIt i = first; i != last; ++i, ++it)
+            for (InputIt i = first; i != last; i++)
             {
                 alloc_traits::construct(m_allocator, it.m_cur, *i);
+                it++;
             }
         }
 
