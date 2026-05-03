@@ -2281,16 +2281,27 @@ namespace demo
     template <typename T, typename Allocator>
     inline void deque<T, Allocator>::push_front(const value_type &value)
     {
-        if (m_begin.m_cur > m_begin.m_first)
+        // 默认构造时，m_begin.m_cur为nullptr，需要先分配内存
+        if (m_begin.m_cur == nullptr)
         {
-            alloc_traits::construct(m_allocator, m_begin.m_cur - 1, value);
-            m_begin.m_cur--;
+            m_map[m_map_size / 2] = alloc_traits::allocate(m_allocator, m_buffer_size);
+            alloc_traits::construct(m_allocator, m_map[m_map_size / 2] + m_buffer_size - 1, value);
+            m_begin.m_cur = m_map[m_map_size / 2] + m_buffer_size - 1;
+            m_begin.m_first = m_map[m_map_size / 2];
+            m_begin.m_last = m_map[m_map_size / 2] + m_buffer_size;
+            m_end = m_begin;
+            m_end.m_cur = m_begin.m_cur + 1;
         }
-        else
+        else if (m_begin.m_cur > m_begin.m_first) // m_begin所在缓冲区还没满
+        {
+            m_begin.m_cur--;
+            alloc_traits::construct(m_allocator, m_begin.m_cur, value);
+        }
+        else // m_begin所在缓冲区已满
         {
             value_type **new_slot = m_begin.m_map_node - 1;
 
-            if (new_slot < m_map)
+            if (new_slot < m_map) // 无法向前扩展，需要开辟新的槽位数组
             {
                 size_type new_map_size = m_map_size * 2;
                 value_type **new_map = map_alloc_traits::allocate(m_map_allocator, new_map_size);
@@ -2298,15 +2309,13 @@ namespace demo
                 for (size_type i = 0; i < m_map_size; i++)
                     new_map[first_slot + i] = m_map[i];
 
+                size_type end_offset = m_end.m_map_node - m_map;
                 map_alloc_traits::deallocate(m_map_allocator, m_map, m_map_size);
-
-                size_type old_begin_offset = m_begin.m_map_node - m_map;
-                size_type old_end_offset = m_end.m_map_node - m_map;
 
                 m_map = new_map;
                 m_map_size = new_map_size;
-                m_begin.m_map_node = m_map + first_slot + old_begin_offset;
-                m_end.m_map_node = m_map + first_slot + old_end_offset;
+                m_begin.m_map_node = m_map + first_slot;
+                m_end.m_map_node = m_map + first_slot + end_offset;
                 new_slot = m_begin.m_map_node - 1;
             }
 
@@ -2324,16 +2333,27 @@ namespace demo
     template <typename T, typename Allocator>
     inline void deque<T, Allocator>::push_front(const value_type &&value)
     {
-        if (m_begin.m_cur > m_begin.m_first)
+        // 默认构造时，m_begin.m_cur为nullptr，需要先分配内存
+        if (m_begin.m_cur == nullptr)
         {
-            alloc_traits::construct(m_allocator, m_begin.m_cur - 1, std::move(value));
-            m_begin.m_cur--;
+            m_map[m_map_size / 2] = alloc_traits::allocate(m_allocator, m_buffer_size);
+            alloc_traits::construct(m_allocator, m_map[m_map_size / 2] + m_buffer_size - 1, std::move(value));
+            m_begin.m_cur = m_map[m_map_size / 2] + m_buffer_size - 1;
+            m_begin.m_first = m_map[m_map_size / 2];
+            m_begin.m_last = m_map[m_map_size / 2] + m_buffer_size;
+            m_end = m_begin;
+            m_end.m_cur = m_begin.m_cur + 1;
         }
-        else
+        else if (m_begin.m_cur > m_begin.m_first) // m_begin所在缓冲区还没满
+        {
+            m_begin.m_cur--;
+            alloc_traits::construct(m_allocator, m_begin.m_cur, std::move(value));
+        }
+        else // m_begin所在缓冲区已满
         {
             value_type **new_slot = m_begin.m_map_node - 1;
 
-            if (new_slot < m_map)
+            if (new_slot < m_map) // 无法向前扩展，需要开辟新的槽位数组
             {
                 size_type new_map_size = m_map_size * 2;
                 value_type **new_map = map_alloc_traits::allocate(m_map_allocator, new_map_size);
@@ -2341,15 +2361,13 @@ namespace demo
                 for (size_type i = 0; i < m_map_size; i++)
                     new_map[first_slot + i] = m_map[i];
 
+                size_type end_offset = m_end.m_map_node - m_map;
                 map_alloc_traits::deallocate(m_map_allocator, m_map, m_map_size);
-
-                size_type old_begin_offset = m_begin.m_map_node - m_map;
-                size_type old_end_offset = m_end.m_map_node - m_map;
 
                 m_map = new_map;
                 m_map_size = new_map_size;
-                m_begin.m_map_node = m_map + first_slot + old_begin_offset;
-                m_end.m_map_node = m_map + first_slot + old_end_offset;
+                m_begin.m_map_node = m_map + first_slot;
+                m_end.m_map_node = m_map + first_slot + end_offset;
                 new_slot = m_begin.m_map_node - 1;
             }
 
@@ -2367,7 +2385,17 @@ namespace demo
     template <typename T, typename Allocator>
     inline void deque<T, Allocator>::push_back(const value_type &value)
     {
-        if (m_end.m_cur < m_end.m_last)
+        if (m_end.m_cur == nullptr)
+        {
+            m_map[m_map_size / 2] = map_alloc_traits::allocate(m_map_allocator, m_buffer_size);
+            alloc_traits::construct(m_allocator, m_map[m_map_size / 2], value);
+            m_end.m_cur = m_map[m_map_size / 2] + 1;
+            m_end.m_first = m_map[m_map_size / 2];
+            m_end.m_last = m_map[m_map_size / 2] + m_buffer_size;
+            m_begin = m_end;
+            m_begin.m_cur = m_map[m_map_size / 2];
+        }
+        else if (m_end.m_cur < m_end.m_last)
         {
             alloc_traits::construct(m_allocator, m_end.m_cur, value);
             m_end.m_cur++;
@@ -2384,14 +2412,12 @@ namespace demo
                 for (size_type i = 0; i < m_map_size; i++)
                     new_map[first_slot + i] = m_map[i];
 
-                map_alloc_traits::deallocate(m_map_allocator, m_map, m_map_size);
-
-                size_type old_begin_offset = m_begin.m_map_node - m_map;
                 size_type old_end_offset = m_end.m_map_node - m_map;
+                map_alloc_traits::deallocate(m_map_allocator, m_map, m_map_size);
 
                 m_map = new_map;
                 m_map_size = new_map_size;
-                m_begin.m_map_node = m_map + first_slot + old_begin_offset;
+                m_begin.m_map_node = m_map + first_slot;
                 m_end.m_map_node = m_map + first_slot + old_end_offset;
                 new_slot = m_end.m_map_node + 1;
             }
@@ -2406,10 +2432,21 @@ namespace demo
             m_end.m_map_node = new_slot;
         }
     }
+
     template <typename T, typename Allocator>
     inline void deque<T, Allocator>::push_back(const value_type &&value)
     {
-        if (m_end.m_cur < m_end.m_last)
+        if (m_end.m_cur == nullptr)
+        {
+            m_map[m_map_size / 2] = map_alloc_traits::allocate(m_map_allocator, m_buffer_size);
+            alloc_traits::construct(m_allocator, m_map[m_map_size / 2], std::move(value));
+            m_end.m_cur = m_map[m_map_size / 2] + 1;
+            m_end.m_first = m_map[m_map_size / 2];
+            m_end.m_last = m_map[m_map_size / 2] + m_buffer_size;
+            m_begin = m_end;
+            m_begin.m_cur = m_map[m_map_size / 2];
+        }
+        else if (m_end.m_cur < m_end.m_last)
         {
             alloc_traits::construct(m_allocator, m_end.m_cur, std::move(value));
             m_end.m_cur++;
@@ -2453,7 +2490,17 @@ namespace demo
     inline typename deque<T, Allocator>::reference
     deque<T, Allocator>::emplace_back(Args &&...args)
     {
-        if (m_end.m_cur < m_end.m_last)
+        if (m_end.m_cur == nullptr)
+        {
+            m_map[m_map_size / 2] = map_alloc_traits::allocate(m_map_allocator, m_buffer_size);
+            alloc_traits::construct(m_allocator, m_map[m_map_size / 2], std::forward<Args>(args)...);
+            m_end.m_cur = m_map[m_map_size / 2] + 1;
+            m_end.m_first = m_map[m_map_size / 2];
+            m_end.m_last = m_map[m_map_size / 2] + m_buffer_size;
+            m_begin = m_end;
+            m_begin.m_cur = m_map[m_map_size / 2];
+        }
+        else if (m_end.m_cur < m_end.m_last)
         {
             alloc_traits::construct(m_allocator, m_end.m_cur, std::forward<Args>(args)...);
             reference result = *m_end.m_cur;
@@ -2472,14 +2519,12 @@ namespace demo
                 for (size_type i = 0; i < m_map_size; i++)
                     new_map[first_slot + i] = m_map[i];
 
-                map_alloc_traits::deallocate(m_map_allocator, m_map, m_map_size);
-
-                size_type old_begin_offset = m_begin.m_map_node - m_map;
                 size_type old_end_offset = m_end.m_map_node - m_map;
+                map_alloc_traits::deallocate(m_map_allocator, m_map, m_map_size);
 
                 m_map = new_map;
                 m_map_size = new_map_size;
-                m_begin.m_map_node = m_map + first_slot + old_begin_offset;
+                m_begin.m_map_node = m_map + first_slot;
                 m_end.m_map_node = m_map + first_slot + old_end_offset;
                 new_slot = m_end.m_map_node + 1;
             }
@@ -2496,12 +2541,23 @@ namespace demo
             return result;
         }
     }
+
     template <typename T, typename Allocator>
     template <typename... Args>
     inline typename deque<T, Allocator>::reference
     deque<T, Allocator>::emplace_front(Args &&...args)
     {
-        if (m_begin.m_cur > m_begin.m_first)
+        if (m_begin.m_cur == nullptr)
+        {
+            m_map[m_map_size / 2] = alloc_traits::allocate(m_allocator, m_buffer_size);
+            alloc_traits::construct(m_allocator, m_map[m_map_size / 2] + m_buffer_size - 1, std::forward<Args>(args)...);
+            m_begin.m_cur = m_map[m_map_size / 2] + m_buffer_size - 1;
+            m_begin.m_first = m_map[m_map_size / 2];
+            m_begin.m_last = m_map[m_map_size / 2] + m_buffer_size;
+            m_end = m_begin;
+            m_end.m_cur = m_begin.m_cur + 1;
+        }
+        else if (m_begin.m_cur > m_begin.m_first)
         {
             alloc_traits::construct(m_allocator, m_begin.m_cur - 1, std::forward<Args>(args)...);
             reference result = *(m_begin.m_cur - 1);
@@ -2520,14 +2576,12 @@ namespace demo
                 for (size_type i = 0; i < m_map_size; i++)
                     new_map[first_slot + i] = m_map[i];
 
-                map_alloc_traits::deallocate(m_map_allocator, m_map, m_map_size);
-
-                size_type old_begin_offset = m_begin.m_map_node - m_map;
                 size_type old_end_offset = m_end.m_map_node - m_map;
+                map_alloc_traits::deallocate(m_map_allocator, m_map, m_map_size);
 
                 m_map = new_map;
                 m_map_size = new_map_size;
-                m_begin.m_map_node = m_map + first_slot + old_begin_offset;
+                m_begin.m_map_node = m_map + first_slot;
                 m_end.m_map_node = m_map + first_slot + old_end_offset;
                 new_slot = m_begin.m_map_node - 1;
             }
@@ -2552,7 +2606,7 @@ namespace demo
             throw std::out_of_range("deque::pop_front: deque is empty");
 
         alloc_traits::destroy(m_allocator, m_begin.m_cur);
-        m_begin.m_cur++;
+        m_begin++;
     }
 
     template <typename T, typename Allocator>
@@ -2561,7 +2615,8 @@ namespace demo
         if (empty())
             throw std::out_of_range("deque::pop_back: deque is empty");
 
-        alloc_traits::destroy(m_allocator, --m_end.m_cur);
+        m_end--;
+        alloc_traits::destroy(m_allocator,m_end.m_cur);
     }
 
     template <typename T, typename Allocator>
