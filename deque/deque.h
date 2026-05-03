@@ -1328,11 +1328,10 @@ namespace demo
         other.m_map = map_alloc_traits::allocate(other.m_map_allocator, other.m_map_size);
         for (size_type i = 0; i < other.m_map_size; i++)
             other.m_map[i] = nullptr;
-        other.m_begin = other.m_map + other.m_map_size / 2;
+        other.m_begin.m_map_node = other.m_map + other.m_map_size / 2;
         other.m_begin.m_cur = nullptr;
         other.m_begin.m_first = nullptr;
         other.m_begin.m_last = nullptr;
-        other.m_begin.m_map_node = nullptr;
         other.m_end = other.m_begin;
     }
 
@@ -1354,11 +1353,10 @@ namespace demo
             other.m_map = map_alloc_traits::allocate(other.m_map_allocator, other.m_map_size);
             for (size_type i = 0; i < other.m_map_size; i++)
                 other.m_map[i] = nullptr;
-            other.m_begin = other.m_map + other.m_map_size / 2;
+            other.m_begin.m_map_node = other.m_map + other.m_map_size / 2;
             other.m_begin.m_cur = nullptr;
             other.m_begin.m_first = nullptr;
             other.m_begin.m_last = nullptr;
-            other.m_begin.m_map_node = nullptr;
             other.m_end = other.m_begin;
         }
         return *this;
@@ -1704,7 +1702,7 @@ namespace demo
 
         for (size_type i = 0; i < used_slots; ++i)
         {
-            new_map[i] = m_begin.m_map_node + i;
+            new_map[i] = *(m_begin.m_map_node + i);
         }
 
         map_alloc_traits::deallocate(m_map_allocator, m_map, m_map_size);
@@ -2351,7 +2349,7 @@ namespace demo
     {
         if (m_end.m_cur == nullptr)
         {
-            m_map[m_map_size / 2] = map_alloc_traits::allocate(m_map_allocator, m_buffer_size);
+            m_map[m_map_size / 2] = alloc_traits::allocate(m_allocator, m_buffer_size);
             alloc_traits::construct(m_allocator, m_map[m_map_size / 2], value);
             m_end.m_cur = m_map[m_map_size / 2] + 1;
             m_end.m_first = m_map[m_map_size / 2];
@@ -2402,7 +2400,7 @@ namespace demo
     {
         if (m_end.m_cur == nullptr)
         {
-            m_map[m_map_size / 2] = map_alloc_traits::allocate(m_map_allocator, m_buffer_size);
+            m_map[m_map_size / 2] = alloc_traits::allocate(m_allocator, m_buffer_size);
             alloc_traits::construct(m_allocator, m_map[m_map_size / 2], std::move(value));
             m_end.m_cur = m_map[m_map_size / 2] + 1;
             m_end.m_first = m_map[m_map_size / 2];
@@ -2456,13 +2454,14 @@ namespace demo
     {
         if (m_end.m_cur == nullptr)
         {
-            m_map[m_map_size / 2] = map_alloc_traits::allocate(m_map_allocator, m_buffer_size);
+            m_map[m_map_size / 2] = alloc_traits::allocate(m_allocator, m_buffer_size);
             alloc_traits::construct(m_allocator, m_map[m_map_size / 2], std::forward<Args>(args)...);
             m_end.m_cur = m_map[m_map_size / 2] + 1;
             m_end.m_first = m_map[m_map_size / 2];
             m_end.m_last = m_map[m_map_size / 2] + m_buffer_size;
             m_begin = m_end;
             m_begin.m_cur = m_map[m_map_size / 2];
+            return *m_begin;
         }
         else if (m_end.m_cur < m_end.m_last)
         {
@@ -2520,6 +2519,8 @@ namespace demo
             m_begin.m_last = m_map[m_map_size / 2] + m_buffer_size;
             m_end = m_begin;
             m_end.m_cur = m_begin.m_cur + 1;
+
+            return *m_begin;
         }
         else if (m_begin.m_cur > m_begin.m_first)
         {
@@ -2580,7 +2581,7 @@ namespace demo
             throw std::out_of_range("deque::pop_back: deque is empty");
 
         m_end--;
-        alloc_traits::destroy(m_allocator,m_end.m_cur);
+        alloc_traits::destroy(m_allocator, m_end.m_cur);
     }
 
     template <typename T, typename Allocator>
