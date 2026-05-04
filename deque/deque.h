@@ -1902,7 +1902,7 @@ namespace demo
     inline typename deque<T, Allocator>::iterator
     deque<T, Allocator>::emplace(const_iterator pos, Args &&...args)
     {
-        if (empty())
+        if (pos == begin())
         {
             emplace_front(std::forward<Args>(args)...);
             return begin();
@@ -1945,7 +1945,7 @@ namespace demo
     inline typename deque<T, Allocator>::iterator
     deque<T, Allocator>::erase(const_iterator pos)
     {
-        if (empty())
+        if (empty() || pos == end())
             return end();
 
         // 获取删除位置
@@ -2062,12 +2062,13 @@ namespace demo
     {
         if (m_begin.m_cur == nullptr)
         {
-            m_map[m_map_size / 2] = alloc_traits::allocate(m_allocator, m_buffer_size);
-            alloc_traits::construct(m_allocator, m_map[m_map_size / 2] + m_buffer_size / 2, value);
-            m_begin.m_cur = m_map[m_map_size / 2] + m_buffer_size / 2;
-            m_begin.m_first = m_map[m_map_size / 2];
-            m_begin.m_last = m_map[m_map_size / 2] + m_buffer_size;
-            m_begin.m_map_node = m_map + m_map_size / 2;
+            size_type mid = m_map_size / 2;
+            m_map[mid] = alloc_traits::allocate(m_allocator, m_buffer_size);
+            alloc_traits::construct(m_allocator, m_map[mid] + m_buffer_size / 2, value);
+            m_begin.m_cur = m_map[mid] + m_buffer_size / 2;
+            m_begin.m_first = m_map[mid];
+            m_begin.m_last = m_map[mid] + m_buffer_size;
+            m_begin.m_map_node = m_map + mid;
             m_end.m_cur = m_begin.m_cur + 1;
             m_end.m_first = m_begin.m_first;
             m_end.m_last = m_begin.m_last;
@@ -2123,12 +2124,13 @@ namespace demo
     {
         if (m_begin.m_cur == nullptr)
         {
-            m_map[m_map_size / 2] = alloc_traits::allocate(m_allocator, m_buffer_size);
-            alloc_traits::construct(m_allocator, m_map[m_map_size / 2] + m_buffer_size / 2, std::move(value));
-            m_begin.m_cur = m_map[m_map_size / 2] + m_buffer_size / 2;
-            m_begin.m_first = m_map[m_map_size / 2];
-            m_begin.m_last = m_map[m_map_size / 2] + m_buffer_size;
-            m_begin.m_map_node = m_map + m_map_size / 2;
+            size_type mid = m_map_size / 2;
+            m_map[mid] = alloc_traits::allocate(m_allocator, m_buffer_size);
+            alloc_traits::construct(m_allocator, m_map[mid] + m_buffer_size / 2, std::move(value));
+            m_begin.m_cur = m_map[mid] + m_buffer_size / 2;
+            m_begin.m_first = m_map[mid];
+            m_begin.m_last = m_map[mid] + m_buffer_size;
+            m_begin.m_map_node = m_map + mid;
             m_end.m_cur = m_begin.m_cur + 1;
             m_end.m_first = m_begin.m_first;
             m_end.m_last = m_begin.m_last;
@@ -2184,14 +2186,15 @@ namespace demo
     {
         if (m_end.m_cur == nullptr)
         {
-            m_map[m_map_size / 2] = alloc_traits::allocate(m_allocator, m_buffer_size);
-            alloc_traits::construct(m_allocator, m_map[m_map_size / 2], value);
-            m_end.m_cur = m_map[m_map_size / 2] + 1;
-            m_end.m_first = m_map[m_map_size / 2];
-            m_end.m_last = m_map[m_map_size / 2] + m_buffer_size;
-            m_end.m_map_node = m_map + m_map_size / 2;
+            size_type mid = m_map_size / 2;
+            m_map[mid] = alloc_traits::allocate(m_allocator, m_buffer_size);
+            alloc_traits::construct(m_allocator, m_map[mid], value);
+            m_end.m_cur = m_map[mid] + 1;
+            m_end.m_first = m_map[mid];
+            m_end.m_last = m_map[mid] + m_buffer_size;
+            m_end.m_map_node = m_map + mid;
             m_begin = m_end;
-            m_begin.m_cur = m_map[m_map_size / 2];
+            m_begin.m_cur = m_map[mid];
         }
         else if (m_end.m_cur < m_end.m_last)
         {
@@ -2243,14 +2246,15 @@ namespace demo
     {
         if (m_end.m_cur == nullptr)
         {
-            m_map[m_map_size / 2] = alloc_traits::allocate(m_allocator, m_buffer_size);
-            alloc_traits::construct(m_allocator, m_map[m_map_size / 2], std::move(value));
-            m_end.m_cur = m_map[m_map_size / 2] + 1;
-            m_end.m_first = m_map[m_map_size / 2];
-            m_end.m_last = m_map[m_map_size / 2] + m_buffer_size;
-            m_end.m_map_node = m_map + m_map_size / 2;
+            size_type mid = m_map_size / 2;
+            m_map[mid] = alloc_traits::allocate(m_allocator, m_buffer_size);
+            alloc_traits::construct(m_allocator, m_map[mid], std::move(value));
+            m_end.m_cur = m_map[mid] + 1;
+            m_end.m_first = m_map[mid];
+            m_end.m_last = m_map[mid] + m_buffer_size;
+            m_end.m_map_node = m_map + mid;
             m_begin = m_end;
-            m_begin.m_cur = m_map[m_map_size / 2];
+            m_begin.m_cur = m_map[mid];
         }
         else if (m_end.m_cur < m_end.m_last)
         {
@@ -2303,13 +2307,14 @@ namespace demo
     {
         if (m_end.m_cur == nullptr)
         {
-            m_map[m_map_size / 2] = alloc_traits::allocate(m_allocator, m_buffer_size);
-            alloc_traits::construct(m_allocator, m_map[m_map_size / 2], std::forward<Args>(args)...);
-            m_end.m_cur = m_map[m_map_size / 2] + 1;
-            m_end.m_first = m_map[m_map_size / 2];
-            m_end.m_last = m_map[m_map_size / 2] + m_buffer_size;
+            size_type mid = m_map_size / 2;
+            m_map[mid] = alloc_traits::allocate(m_allocator, m_buffer_size);
+            alloc_traits::construct(m_allocator, m_map[mid], std::forward<Args>(args)...);
+            m_end.m_cur = m_map[mid] + 1;
+            m_end.m_first = m_map[mid];
+            m_end.m_last = m_map[mid] + m_buffer_size;
             m_begin = m_end;
-            m_begin.m_cur = m_map[m_map_size / 2];
+            m_begin.m_cur = m_map[mid];
             return *m_begin;
         }
         else if (m_end.m_cur < m_end.m_last)
@@ -2363,11 +2368,12 @@ namespace demo
     {
         if (m_begin.m_cur == nullptr)
         {
-            m_map[m_map_size / 2] = alloc_traits::allocate(m_allocator, m_buffer_size);
-            alloc_traits::construct(m_allocator, m_map[m_map_size / 2] + m_buffer_size / 2, std::forward<Args>(args)...);
-            m_begin.m_cur = m_map[m_map_size / 2] + m_buffer_size / 2;
-            m_begin.m_first = m_map[m_map_size / 2];
-            m_begin.m_last = m_map[m_map_size / 2] + m_buffer_size;
+            size_type mid = m_map_size / 2;
+            m_map[mid] = alloc_traits::allocate(m_allocator, m_buffer_size);
+            alloc_traits::construct(m_allocator, m_map[mid] + m_buffer_size / 2, std::forward<Args>(args)...);
+            m_begin.m_cur = m_map[mid] + m_buffer_size / 2;
+            m_begin.m_first = m_map[mid];
+            m_begin.m_last = m_map[mid] + m_buffer_size;
             m_end.m_cur = m_begin.m_cur + 1;
             m_end.m_first = m_begin.m_first;
             m_end.m_last = m_begin.m_last;
