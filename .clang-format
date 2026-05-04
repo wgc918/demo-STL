@@ -34,7 +34,7 @@ AlignAfterOpenBracket: true
 # 取值：整数（负值表示减少缩进，正值表示增加缩进）
 # 默认值：0
 # 用途：设置为 0 使访问修饰符与类内其他内容同级别缩进。
-AccessModifierOffset: 0
+AccessModifierOffset: -4
 
 # 控制结构体数组的对齐方式。
 # 取值：Left（每行首元素对齐）, Right（每行末元素对齐）
@@ -688,7 +688,7 @@ IncludeIsMainSourceRegex: ""
 # 如果为 true，缩进访问修饰符。
 # 默认值：false
 # 用途：启用此选项使访问修饰符与类内其他内容一起缩进。
-IndentAccessModifiers: true
+IndentAccessModifiers: false
 
 # 如果为 true，缩进 switch 语句中的 case 块。
 # 默认值：false
