@@ -685,9 +685,12 @@ namespace demo
 
         /// @brief 每个 buffer 的大小（元素数量）
         /// @details 默认为 512 字节除以元素大小，保证每个 buffer 约 512 字节
-        static const size_type m_buffer_size =
-            DEQUE_DEFAULT_BUFFER_SIZE / sizeof(value_type);
+        static const size_type m_buffer_size;
     };
+
+    template <typename T, typename Allocator>
+    const typename deque<T, Allocator>::size_type deque<T, Allocator>::m_buffer_size =
+        DEQUE_DEFAULT_BUFFER_SIZE / sizeof(value_type);
 
     // ----------------------- iterator 实现 ---------------------------
     template <typename T, typename Allocator>
@@ -795,9 +798,8 @@ namespace demo
     inline typename deque<T, Allocator>::iterator &
     deque<T, Allocator>::iterator::operator++()
     {
-        if (m_cur + 1 < m_last)
-            m_cur++;
-        else
+        m_cur++;
+        if (m_cur == m_last)
         {
             m_map_node++;
             m_cur = *m_map_node;
@@ -828,9 +830,9 @@ namespace demo
     deque<T, Allocator>::iterator::operator++(int)
     {
         iterator temp(*this);
-        if (m_cur + 1 < m_last)
-            m_cur++;
-        else
+
+        m_cur++;
+        if (m_cur == m_last)
         {
             m_map_node++;
             m_cur = *m_map_node;
@@ -874,8 +876,7 @@ namespace demo
     inline bool deque<T, Allocator>::iterator::
     operator==(const iterator &other) const
     {
-        return (m_cur == other.m_cur) && (m_first == other.m_first) &&
-               (m_last == other.m_last) && (m_map_node == other.m_map_node);
+        return (m_cur == other.m_cur);
     }
 
     template <typename T, typename Allocator>
@@ -1115,8 +1116,7 @@ namespace demo
     inline bool deque<T, Allocator>::const_iterator::
     operator==(const const_iterator &other) const
     {
-        return (m_cur == other.m_cur) && (m_first == other.m_first) &&
-               (m_last == other.m_last) && (m_map_node == other.m_map_node);
+        return (m_cur == other.m_cur);
     }
 
     template <typename T, typename Allocator>
@@ -1251,6 +1251,8 @@ namespace demo
           m_allocator(), m_map_allocator(), m_begin(), m_end()
     {
         m_map = map_alloc_traits::allocate(m_map_allocator, m_map_size);
+        for (size_type i = 0; i < m_map_size; i++)
+            m_map[i] = nullptr;
         size_type first_slot = other.m_begin.m_map_node - other.m_map;
         size_type slots = other.m_end.m_map_node - other.m_begin.m_map_node + 1;
 
@@ -1265,12 +1267,15 @@ namespace demo
 
         // 单独处理最后一个槽
         size_type last_slot = first_slot + slots - 1;
-        m_map[last_slot] = alloc_traits::allocate(m_allocator, m_buffer_size);
-        size_type last_slot_size = std::min(m_buffer_size,
-                                            static_cast<size_type>(other.m_end.m_cur - other.m_end.m_first));
-        for (size_type j = 0; j < last_slot_size; j++)
-            alloc_traits::construct(m_allocator, m_map[last_slot] + j,
-                                    *(other.m_map[last_slot] + j));
+        if (last_slot != first_slot)
+        {
+            m_map[last_slot] = alloc_traits::allocate(m_allocator, m_buffer_size);
+            size_type last_slot_size = std::min(m_buffer_size,
+                                                static_cast<size_type>(other.m_end.m_cur - other.m_end.m_first));
+            for (size_type j = 0; j < last_slot_size; j++)
+                alloc_traits::construct(m_allocator, m_map[last_slot] + j,
+                                        *(other.m_map[last_slot] + j));
+        }
 
         // 中间槽位一定都是满的
         for (size_type i = first_slot + 1; i < last_slot; i++)
@@ -1302,6 +1307,12 @@ namespace demo
         if (this != &other)
         {
             clear();
+            // 释放所有buffer，避免内存泄漏
+            for (size_type i = 0; i < m_map_size; i++)
+                if (m_map[i] != nullptr)
+                    alloc_traits::deallocate(m_allocator, m_map[i], m_buffer_size);
+            map_alloc_traits::deallocate(m_map_allocator, m_map, m_map_size);
+
             assign(other.begin(), other.end());
         }
         return *this;
@@ -1312,6 +1323,10 @@ namespace demo
     operator=(std::initializer_list<T> ilist)
     {
         clear();
+        // 释放所有buffer，避免内存泄漏
+        for (size_type i = 0; i < m_map_size; i++)
+            if (m_map[i] != nullptr)
+                alloc_traits::deallocate(m_allocator, m_map[i], m_buffer_size);
         assign(ilist);
         return *this;
     }
@@ -1341,6 +1356,12 @@ namespace demo
         if (this != &other)
         {
             clear();
+            // 释放所有buffer，避免内存泄漏
+            for (size_type i = 0; i < m_map_size; i++)
+                if (m_map[i] != nullptr)
+                    alloc_traits::deallocate(m_allocator, m_map[i], m_buffer_size);
+            map_alloc_traits::deallocate(m_map_allocator, m_map, m_map_size);
+
             m_map = other.m_map;
             m_map_size = other.m_map_size;
             m_allocator = std::move(other.m_allocator);
@@ -1978,7 +1999,6 @@ namespace demo
         {
             size_type new_map_size = std::max(m_map_size * 2, required_map_size);
             value_type **new_map = map_alloc_traits::allocate(m_map_allocator, new_map_size);
-
             for (size_type i = 0; i < new_map_size; ++i)
                 new_map[i] = nullptr;
 
@@ -2267,6 +2287,8 @@ namespace demo
             {
                 size_type new_map_size = m_map_size * 2;
                 value_type **new_map = map_alloc_traits::allocate(m_map_allocator, new_map_size);
+                for (size_type i = 0; i < new_map_size; i++)
+                    new_map[i] = nullptr;
                 size_type first_slot = (new_map_size - m_map_size) / 2;
                 for (size_type i = 0; i < m_map_size; i++)
                     new_map[first_slot + i] = m_map[i];
@@ -2319,6 +2341,8 @@ namespace demo
             {
                 size_type new_map_size = m_map_size * 2;
                 value_type **new_map = map_alloc_traits::allocate(m_map_allocator, new_map_size);
+                for (size_type i = 0; i < new_map_size; i++)
+                    new_map[i] = nullptr;
                 size_type first_slot = (new_map_size - m_map_size) / 2;
                 for (size_type i = 0; i < m_map_size; i++)
                     new_map[first_slot + i] = m_map[i];
@@ -2370,6 +2394,8 @@ namespace demo
             {
                 size_type new_map_size = m_map_size * 2;
                 value_type **new_map = map_alloc_traits::allocate(m_map_allocator, new_map_size);
+                for (size_type i = 0; i < new_map_size; i++)
+                    new_map[i] = nullptr;
                 size_type first_slot = (new_map_size - m_map_size) / 2;
                 for (size_type i = 0; i < m_map_size; i++)
                     new_map[first_slot + i] = m_map[i];
@@ -2421,6 +2447,8 @@ namespace demo
             {
                 size_type new_map_size = m_map_size * 2;
                 value_type **new_map = map_alloc_traits::allocate(m_map_allocator, new_map_size);
+                for (size_type i = 0; i < new_map_size; i++)
+                    new_map[i] = nullptr;
                 size_type first_slot = (new_map_size - m_map_size) / 2;
                 for (size_type i = 0; i < m_map_size; i++)
                     new_map[first_slot + i] = m_map[i];
@@ -2478,6 +2506,8 @@ namespace demo
             {
                 size_type new_map_size = m_map_size * 2;
                 value_type **new_map = map_alloc_traits::allocate(m_map_allocator, new_map_size);
+                for (size_type i = 0; i < new_map_size; i++)
+                    new_map[i] = nullptr;
                 size_type first_slot = (new_map_size - m_map_size) / 2;
                 for (size_type i = 0; i < m_map_size; i++)
                     new_map[first_slot + i] = m_map[i];
@@ -2537,6 +2567,8 @@ namespace demo
             {
                 size_type new_map_size = m_map_size * 2;
                 value_type **new_map = map_alloc_traits::allocate(m_map_allocator, new_map_size);
+                for (size_type i = 0; i < new_map_size; i++)
+                    new_map[i] = nullptr;
                 size_type first_slot = (new_map_size - m_map_size) / 2;
                 for (size_type i = 0; i < m_map_size; i++)
                     new_map[first_slot + i] = m_map[i];
