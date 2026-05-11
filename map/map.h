@@ -4,6 +4,7 @@
 #include <iterator>
 #include <memory>
 #include <type_traits>
+#include <vector>
 
 namespace demo
 {
@@ -36,6 +37,10 @@ public:
     using const_pointer    = const T*;
     using reference        = T&;
     using const_reference  = const T&;
+
+public:
+    struct sorted_tag;
+    struct unsorted_tag;
 
 private:
     struct Node
@@ -124,6 +129,9 @@ public:
     map(InputIt first, InputIt last, const Compare& comp = Compare());
     map(std::initializer_list<value_type> ilist,
         const Compare&                    comp = Compare());
+    //新增接口
+    explicit map(const std::vector<value_type>& vec, sorted_tag);
+    explicit map(const std::vector<value_type>& vec, unsorted_tag);
     map(const map& other);
     map(map&& other) noexcept;
     ~map();
@@ -189,6 +197,7 @@ private:
 
 private:
     Node*           m_root;
+    size_type       m_size;
     Compare         m_comp;
     Allocator       m_alloc;
     node_alloc_type m_node_alloc;
