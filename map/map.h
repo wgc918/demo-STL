@@ -6,6 +6,14 @@
 #include <type_traits>
 #include <vector>
 
+#ifdef NDEBUG
+#define DEBUG_ONLY(func) (void)0
+#define DEBUG_FUNCTION   inline void
+#else
+#define DEBUG_ONLY(func) func
+#define DEBUG_FUNCTION
+#endif
+
 namespace demo
 {
 template <typename K, typename T, typename Compare = std::less<K>,
@@ -58,20 +66,38 @@ private:
         Node*       parent;
         Color       color;
 
-        template<typename... Args>
-        Node(Args&&... args):key(std::forward<Args>(args)...),value(),
-        left(nullptr),right(nullptr),parent(nullptr),color(Color::BLACK){}
+        template <typename... Args>
+        Node(Args&&... args)
+            : key(std::forward<Args>(args)...),
+              value(),
+              left(nullptr),
+              right(nullptr),
+              parent(nullptr),
+              color(Color::BLACK)
+        {
+        }
 
-        template<typename... KeyArgs, typename... ValueArgs>
-        Node(std::piecewise_construct_t, std::tuple<KeyArgs...> key_args,  std::tuple<ValueArgs...> value_args)
+        template <typename... KeyArgs, typename... ValueArgs>
+        Node(std::piecewise_construct_t, std::tuple<KeyArgs...> key_args,
+             std::tuple<ValueArgs...> value_args)
             : key(std::make_from_tuple<key_type>(std::move(key_args))),
-            value(std::make_from_tuple<mapped_type>(std::move(value_args))),
-            left(nullptr), right(nullptr), parent(nullptr), color(Color::BLACK)
-        {}
+              value(std::make_from_tuple<mapped_type>(std::move(value_args))),
+              left(nullptr),
+              right(nullptr),
+              parent(nullptr),
+              color(Color::BLACK)
+        {
+        }
 
-        Node(key_type k, value_type v):key(std::move(k)),value(std::move(v)),
-        left(nullptr),right(nullptr),parent(nullptr),color(Color::BLACK){}
-
+        Node(key_type k, value_type v)
+            : key(std::move(k)),
+              value(std::move(v)),
+              left(nullptr),
+              right(nullptr),
+              parent(nullptr),
+              color(Color::BLACK)
+        {
+        }
     };
 
 public:
@@ -151,7 +177,7 @@ public:
     map(InputIt first, InputIt last, const Compare& comp = Compare());
     map(std::initializer_list<value_type> ilist,
         const Compare&                    comp = Compare());
-    //新增接口
+    // 非标准接口
     explicit map(const std::vector<value_type>& vec, sorted_tag);
     explicit map(const std::vector<value_type>& vec, unsorted_tag);
     map(const map& other);
@@ -212,10 +238,18 @@ public:
     template <typename Compare2>
     void merge(map<K, T, Compare2, Allocator>& other);
 
+#ifndef NDEBUG
+    bool validate_tree() const;
+#endif
+
 private:
-    Node* build_tree(std::vector<value_type>& vec, size_type left, size_type right,  size_type depth);
+    Node* build_tree(std::vector<value_type>& vec, size_type left,
+                     size_type right, size_type depth);
     Node* copy_node(Node* cur, const map& other);
-    void destory(Node* node);
+    void destroy(Node* node);
+#ifndef NDEBUG
+    bool validate_properties(Node* node, size_type& black_height) const;
+#endif
 
 private:
     using node_alloc_type = typename std::allocator_traits<
@@ -227,184 +261,239 @@ private:
     Node*           m_nil;
     size_type       m_size;
     Compare         m_comp;
-    Allocator       m_alloc;
     node_alloc_type m_node_alloc;
 };
 
-
-
-template<typename K, typename T, typename Compare, typename Allocator>
-map():m_root(nullptr),m_nil(nullptr),m_size(0),m_comp(),m_alloc(),m_node_alloc()
+template <typename K, typename T, typename Compare, typename Allocator>
+map<K, T, Compare, Allocator>::map()
+    : m_root(nullptr), m_nil(nullptr), m_size(0), m_comp(), m_node_alloc()
 {
-    m_nil = alloc_traits::allocate(m_node_alloc,1);
-    alloc_traits::construct(m_node_alloc,m_nil);
-    m_nil->color = Color::BLACK;
+    m_nil = alloc_traits::allocate(m_node_alloc, 1);
+    alloc_traits::construct(m_node_alloc, m_nil);
 
-    m_root = m_nil;
+    m_root         = m_nil;
     m_root->parent = m_nil;
 }
 
-template<typename K, typename T, typename Compare, typename Allocator>
-map(const Compare& comp):m_root(nullptr),m_nil(nullptr),m_size(0),m_comp(comp),m_alloc(),m_node_alloc()
+template <typename K, typename T, typename Compare, typename Allocator>
+map<K, T, Compare, Allocator>::map(const Compare& comp)
+    : m_root(nullptr), m_nil(nullptr), m_size(0), m_comp(comp), m_node_alloc()
 {
-    m_nil = alloc_traits::allocate(m_node_alloc,1);
-    alloc_traits::construct(m_node_alloc,m_nil);
-    m_nil->color = Color::BLACK;
+    m_nil = alloc_traits::allocate(m_node_alloc, 1);
+    alloc_traits::construct(m_node_alloc, m_nil);
 
-    m_root = m_nil;
+    m_root         = m_nil;
     m_root->parent = m_nil;
 }
 
-template<typename K, typename T, typename Compare, typename Allocator>
+template <typename K, typename T, typename Compare, typename Allocator>
 template <typename InputIt>
-map(InputIt first, InputIt last, const Compare& comp = Compare()):m_root(nullptr),m_nil(nullptr),m_size(0),m_comp(comp),m_alloc(),m_node_alloc()
+map<K, T, Compare, Allocator>::map(InputIt first, InputIt last,
+                                   const Compare& comp)
+    : m_root(nullptr), m_nil(nullptr), m_size(0), m_comp(comp), m_node_alloc()
 {
-    m_nil = alloc_traits::allocate(m_node_alloc,1);
-    alloc_traits::construct(m_node_alloc,m_nil);
-    m_nil->color = Color::BLACK;
+    m_nil = alloc_traits::allocate(m_node_alloc, 1);
+    alloc_traits::construct(m_node_alloc, m_nil);
 
-    m_root = m_nil;
+    m_root         = m_nil;
     m_root->parent = m_nil;
 
-    for(;first!=last;first++)
+    for (; first != last; first++)
         insert(*first);
 }
 
-template<typename K, typename T, typename Compare, typename Allocator>
-map(std::initializer_list<value_type> ilist,
-    const Compare&                    comp = Compare()):m_root(nullptr),m_nil(nullptr),m_size(0),m_comp(comp),m_alloc(),m_node_alloc()
+template <typename K, typename T, typename Compare, typename Allocator>
+map<K, T, Compare, Allocator>::map(std::initializer_list<value_type> ilist,
+                                   const Compare&                    comp)
+    : m_root(nullptr), m_nil(nullptr), m_size(0), m_comp(comp), m_node_alloc()
 {
-    m_nil = alloc_traits::allocate(m_node_alloc,1);
-    alloc_traits::construct(m_node_alloc,m_nil);
-    m_nil->color = Color::BLACK;
+    m_nil = alloc_traits::allocate(m_node_alloc, 1);
+    alloc_traits::construct(m_node_alloc, m_nil);
 
-    m_root = m_nil;
+    m_root         = m_nil;
     m_root->parent = m_nil;
 
-    for(const value_type& val : ilist)
+    for (const value_type& val : ilist)
         insert(val);
 }
 
-
-template<typename K, typename T, typename Compare, typename Allocator>
-map(const std::vector<value_type>& vec, unsorted_tag):m_root(nullptr),m_nil(nullptr),m_size(0),m_comp(),m_alloc(),m_node_alloc()
+template <typename K, typename T, typename Compare, typename Allocator>
+map<K, T, Compare, Allocator>::map(const std::vector<value_type>& vec,
+                                   unsorted_tag)
+    : m_root(nullptr), m_nil(nullptr), m_size(0), m_comp(), m_node_alloc()
 {
-    m_nil = alloc_traits::allocate(m_node_alloc,1);
-    alloc_traits::construct(m_node_alloc,m_nil);
-    m_nil->color = Color::BLACK;
+    m_nil = alloc_traits::allocate(m_node_alloc, 1);
+    alloc_traits::construct(m_node_alloc, m_nil);
 
-    m_root = m_nil;
+    m_root         = m_nil;
     m_root->parent = m_nil;
 
-    for(const value_type& val : vec)
+    for (const value_type& val : vec)
         insert(val);
 }
 
-template<typename K, typename T, typename Compare, typename Allocator>
-map(const std::vector<value_type>& vec, sorted_tag):m_root(nullptr),m_nil(nullptr),m_size(0),m_comp(),m_alloc(),m_node_alloc()
+template <typename K, typename T, typename Compare, typename Allocator>
+map<K, T, Compare, Allocator>::map(const std::vector<value_type>& vec,
+                                   sorted_tag)
+    : m_root(nullptr), m_nil(nullptr), m_size(0), m_comp(), m_node_alloc()
 {
-    m_nil = alloc_traits::allocate(m_node_alloc,1);
-    alloc_traits::construct(m_node_alloc,m_nil);
-    m_nil->color = Color::BLACK;
+    m_nil = alloc_traits::allocate(m_node_alloc, 1);
+    alloc_traits::construct(m_node_alloc, m_nil);
 
-    m_root = build_tree(vec,0,vec.size()-1,0);
+    m_root         = build_tree(vec, 0, vec.size() - 1, 0);
     m_root->parent = m_nil;
 }
 
-template<typename K, typename T, typename Compare, typename Allocator>
-map(const map& other):m_root(nullptr),m_nil(nullptr),m_size(other.m_size),m_comp(other.m_comp),m_alloc(other.m_alloc),m_node_alloc(other.m_node_alloc)
+template <typename K, typename T, typename Compare, typename Allocator>
+map<K, T, Compare, Allocator>::map(const map& other)
+    : m_root(nullptr),
+      m_nil(nullptr),
+      m_size(other.m_size),
+      m_comp(other.m_comp),
+      m_node_alloc(other.m_node_alloc)
 {
-    m_nil = alloc_traits::allocate(m_node_alloc,1);
-    alloc_traits::construct(m_node_alloc,m_nil);
-    m_nil->color = Color::BLACK;
+    m_nil = alloc_traits::allocate(m_node_alloc, 1);
+    alloc_traits::construct(m_node_alloc, m_nil);
 
-    m_root = copy_node(other.m_root,m_nil);
+    m_root         = copy_node(other.m_root, m_nil);
+    m_root->parent = m_nil;
 }
 
-template<typename K, typename T, typename Compare, typename Allocator>
-map(map&& other) noexcept
-: m_root(other.m_nil),m_nil(other.m_root),m_size(other.m_size),m_comp(std::move(other.m_comp)),m_alloc(std::move(other.m_alloc)),m_node_alloc(std::move(other.m_node_alloc))
+template <typename K, typename T, typename Compare, typename Allocator>
+map<K, T, Compare, Allocator>::map(map&& other) noexcept
+    : m_root(other.m_nil),
+      m_nil(other.m_root),
+      m_size(other.m_size),
+      m_comp(std::move(other.m_comp)),
+      m_node_alloc(std::move(other.m_node_alloc))
 {
-    other.m_nil = alloc_traits::allocate(other.m_node_alloc,1);
-    alloc_traits::construct(other.m_node_alloc,other.m_nil);
-    other.m_nil->color = Color::BLACK;
-    other.m_root = m_nil;
+    other.m_nil = alloc_traits::allocate(other.m_node_alloc, 1);
+    alloc_traits::construct(other.m_node_alloc, other.m_nil);
+    other.m_root         = m_nil;
     other.m_root->parent = m_nil;
-    other.m_size = 0;
+    other.m_size         = 0;
 }
 
-template<typename K, typename T, typename Compare, typename Allocator>
-~map()
+template <typename K, typename T, typename Compare, typename Allocator>
+map<K, T, Compare, Allocator>::~map()
 {
-    destory(m_root);
-    alloc_traits::destory(m_node_alloc, m_nil);
-    alloc_traits::deallocate(m_node_alloc,1);
+    destroy(m_root);
+    alloc_traits::destroy(m_node_alloc, m_nil);
+    alloc_traits::deallocate(m_node_alloc, m_nil, 1);
 }
 
-
-
-
-
-template<typename K, typename T, typename Compare, typename Allocator>
-Node* build_tree(std::vector<value_type>& vec, size_type left, size_type right,  size_type depth)
+template <typename K, typename T, typename Compare, typename Allocator>
+inline typename map<K, T, Compare, Allocator>::Node*
+map<K, T, Compare, Allocator>::build_tree(std::vector<value_type>& vec,
+                                          size_type left, size_type right,
+                                          size_type depth)
 {
-   if(vec.empty())
-    return m_nil;
-    
-    if(left>right)
+    if (vec.empty())
         return m_nil;
 
-    size_type mid = left + (right - left)/2;
-    value_type val =vec[mid];
+    if (left > right)
+        return m_nil;
 
-    Node* root =  alloc_traits::allocate(m_node_alloc,1);
-    alloc_traits::construct(m_node_alloc,root, val.first,val.second);
-    root->color = depth&1 == 0 ? Color::BLACK : Color::RED;
+    size_type         mid = left + (right - left) / 2;
+    const value_type& val = vec[mid];
 
-    root->left = build_tree(vec,left, mid-1,depth+1);
-    root->right= build_tree(vec,mic+1,right,depth+1);
+    Node* root = alloc_traits::allocate(m_node_alloc, 1);
+    alloc_traits::construct(m_node_alloc, root, val.first, val.second);
+    root->color = (depth & 1) == 0 ? Color::BLACK : Color::RED;
 
-    if(root->left!=m_nil)
-        root->left->parent=root;
-    if(root->right!=m_nil)
-        root->right->parent=root;
+    root->left  = build_tree(vec, left, mid - 1, depth + 1);
+    root->right = build_tree(vec, mid + 1, right, depth + 1);
+
+    if (root->left != m_nil)
+        root->left->parent = root;
+    if (root->right != m_nil)
+        root->right->parent = root;
 
     return root;
 }
 
-template<typename K, typename T, typename Compare, typename Allocator>
-Node* copy_node(Node* cur, const map& other)
+template <typename K, typename T, typename Compare, typename Allocator>
+inline typename map<K, T, Compare, Allocator>::Node*
+map<K, T, Compare, Allocator>::copy_node(Node* cur, const map& other)
 {
-    if(cur==other.m_nil)
+    if (cur == other.m_nil)
         return m_nil;
 
-    Node* root=alloc_traits::allocate(m_node_alloc,1);
-    alloc_traits::construct(m_node_alloc,root,cur->key,cur->value);
-    root->color=cur->color;
+    Node* root = alloc_traits::allocate(m_node_alloc, 1);
+    alloc_traits::construct(m_node_alloc, root, cur->key, cur->value);
+    root->color = cur->color;
 
-    root->left=copy_node(cur->left,other);
-    root->right=copy_node(cur->right,other);
+    root->left  = copy_node(cur->left, other);
+    root->right = copy_node(cur->right, other);
 
-    if(root->left!=m_nil)
-        root->left->parent=root;
-    if(root->right!=m_nil)
-        root->right->parent=root;
+    if (root->left != m_nil)
+        root->left->parent = root;
+    if (root->right != m_nil)
+        root->right->parent = root;
 
     return root;
 }
 
-template<typename K, typename T, typename Compare, typename Allocator>
-void destory(Node* node)
+template <typename K, typename T, typename Compare, typename Allocator>
+inline void map<K, T, Compare, Allocator>::destroy(Node* node)
 {
-    if(node==m_nil)
+    if (node == m_nil)
         return;
 
-    destory(node->left);
-    destory(node->right);
+    destroy(node->left);
+    destroy(node->right);
 
-    alloc_traits::destroy(m_node_alloc,node);
-    alloc_traits::deallocate(m_node_alloc,1);
+    alloc_traits::destroy(m_node_alloc, node);
+    alloc_traits::deallocate(m_node_alloc, node, 1);
 }
 
+#ifndef NDEBUG
+template <typename K, typename T, typename Compare, typename Allocator>
+inline bool map<K, T, Compare, Allocator>::validate_tree() const
+{
+    if (m_root == m_nil)
+        return true;
+
+    if (m_root->color == Color::RED)
+        return false;
+
+    int black_height = 0;
+    return validate_properties(m_root, black_height);
+}
+#endif
+
+#ifndef NDEBUG
+template <typename K, typename T, typename Compare, typename Allocator>
+inline bool map<K, T, Compare, Allocator>::validate_properties(
+    Node* node, size_type& black_height) const
+{
+    if (node == m_nil)
+    {
+        black_height = 1;
+        return true;
+    }
+
+    if (node->color == Color::RED)
+    {
+        if (node->left != m_nil && node->left->color == Color::RED)
+            return false;
+        if (node->right != m_nil && node->right->color == Color::RED)
+            return false;
+    }
+
+    size_type left_black_height  = 0;
+    size_type right_black_height = 0;
+    if (!validate_properties(node->left, left_black_height))
+        return false;
+    if (!validate_properties(node->right, right_black_height))
+        return false;
+    if (left_black_height != right_black_height)
+        return false;
+
+    black_height = left_black_height + (node->color == Color::BLACK ? 1 : 0);
+
+    return true;
+}
+#endif
 
 }  // namespace demo
