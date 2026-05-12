@@ -610,6 +610,51 @@ map<K, T, Compare, Allocator>::~map()
     alloc_traits::destroy(m_node_alloc, m_nil);
     alloc_traits::deallocate(m_node_alloc, m_nil, 1);
 }
+template <typename K, typename T, typename Compare, typename Allocator>
+inline  map<K, T, Compare, Allocator>&
+ map<K, T, Compare, Allocator>::operator=(const map& other)
+{
+    if (this == &other)
+        return *this;
+    clear();
+    insert(other.begin(), other.end());
+    return *this;
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+inline  map<K, T, Compare, Allocator>&
+ map<K, T, Compare, Allocator>::operator=(map&& other) noexcept
+{
+    if (this == &other)
+        return *this;
+
+    clear();
+    m_root         = other.m_root;
+    m_nil          = other.m_nil;
+    m_size         = other.m_size;
+    m_comp         = std::move(other.m_comp);
+    m_node_alloc   = std::move(other.m_node_alloc);
+    m_root->parent = m_nil;
+
+
+  
+    other.m_nil          = alloc_traits::allocate(other.m_node_alloc, 1);
+    alloc_traits::construct(other.m_node_alloc, other.m_nil);
+    other.m_root         = other.m_nil;
+    other.m_root->parent = other.m_nil;
+    other.m_size         = 0;
+
+    return *this;
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+inline  map<K, T, Compare, Allocator>&
+ map<K, T, Compare, Allocator>::operator=(std::initializer_list<value_type> ilist)
+{
+    clear();
+    insert(ilist.begin(), ilist.end());
+    return *this;
+}
 
 template <typename K, typename T, typename Compare, typename Allocator>
 inline typename map<K, T, Compare, Allocator>::iterator
