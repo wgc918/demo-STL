@@ -1,6 +1,7 @@
 #pragma once
 
 #include <pthread.h>
+
 #include <initializer_list>
 #include <iterator>
 #include <memory>
@@ -48,8 +49,13 @@ public:
     using const_reference  = const value_type&;
 
 public:
-    struct sorted_tag{};
-    struct unsorted_tag{};
+    struct sorted_tag
+    {
+    };
+
+    struct unsorted_tag
+    {
+    };
 
 private:
     enum class Color : uint8_t
@@ -60,11 +66,11 @@ private:
 
     struct Node
     {
-        value_type  value;
-        Node*       left;
-        Node*       right;
-        Node*       parent;
-        Color       color;
+        value_type value;
+        Node*      left;
+        Node*      right;
+        Node*      parent;
+        Color      color;
 
         Node()
             : left(nullptr),
@@ -86,9 +92,8 @@ private:
         template <typename... KeyArgs, typename... ValueArgs>
         Node(std::piecewise_construct_t, std::tuple<KeyArgs...> key_args,
              std::tuple<ValueArgs...> value_args)
-            : value(std::piecewise_construct, 
-              std::move(key_args), 
-              std::move(value_args)),
+            : value(std::piecewise_construct, std::move(key_args),
+                    std::move(value_args)),
               left(nullptr),
               right(nullptr),
               parent(nullptr),
@@ -138,7 +143,7 @@ public:
 
     private:
         Node* m_node;
-        map* m_container;
+        map*  m_container;
     };
 
     class const_iterator
@@ -171,7 +176,7 @@ public:
 
     private:
         Node* m_node;
-        map* m_container;
+        map*  m_container;
     };
 
     using reverse_iterator       = std::reverse_iterator<iterator>;
@@ -246,34 +251,35 @@ public:
     void merge(map<K, T, Compare2, Allocator>& other);
 
     size_type count(const key_type& key) const;
-    template<typename Key>
+    template <typename Key>
     size_type count(const Key& key) const;
     iterator find(const key_type& key);
     const_iterator find(const key_type& key) const;
-    template<typename Key>
+    template <typename Key>
     iterator find(const Key& key);
-    template<typename Key>
+    template <typename Key>
     const_iterator find(const Key& key) const;
     std::pair<iterator, iterator> equal_range(const key_type& key);
-    std::pair<const_iterator, const_iterator> equal_range(const key_type& key) const;
-    template<typename Key>
+    std::pair<const_iterator, const_iterator> equal_range(
+        const key_type& key) const;
+    template <typename Key>
     std::pair<iterator, iterator> equal_range(const Key& key);
-    template<typename Key>
+    template <typename Key>
     std::pair<const_iterator, const_iterator> equal_range(const Key& key) const;
     iterator lower_bound(const key_type& key);
     const_iterator lower_bound(const key_type& key) const;
-    template<typename Key>
+    template <typename Key>
     iterator lower_bound(const Key& key);
-    template<typename Key>
+    template <typename Key>
     const_iterator lower_bound(const Key& key) const;
-    template<typename Key>
+    template <typename Key>
     iterator upper_bound(const Key& key);
-    template<typename Key>
+    template <typename Key>
     const_iterator upper_bound(const Key& key) const;
     iterator upper_bound(const key_type& key);
     const_iterator upper_bound(const key_type& key) const;
 
-    key_compare_type key_comp() const;  
+    key_compare_type key_comp() const;
 
 #ifndef NDEBUG
     bool validate_tree() const;
@@ -284,6 +290,9 @@ private:
                      size_type right, size_type depth);
     Node* copy_node(Node* cur, const map& other);
     void destroy(Node* node);
+    void insert_balance(Node* node);
+    void erase_balance(Node* node);
+    Node* find_node(const key_type& key);
 #ifndef NDEBUG
     bool validate_properties(Node* node, size_type& black_height) const;
 #endif
@@ -301,42 +310,42 @@ private:
     node_alloc_type m_node_alloc;
 };
 
-
-//--------------------------------- iterator 实现 --------------------------------------
+//------------------------- iterator 实现 -----------------------------
 template <typename K, typename T, typename Compare, typename Allocator>
-map<K,T,Compare,Allocator>::iterator:: iterator():m_node(nullptr), m_container(nullptr)
+map<K, T, Compare, Allocator>::iterator::iterator()
+    : m_node(nullptr), m_container(nullptr)
 {
-
-}
-template <typename K, typename T, typename Compare, typename Allocator>
-map<K,T,Compare,Allocator>::iterator:: iterator(Node* node, map* container):m_node(node), m_container(container)
-{
-
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
-map<K,T,Compare,Allocator>::iterator::iterator(const iterator& other):m_node(other.m_node), m_container(other.m_container)
+map<K, T, Compare, Allocator>::iterator::iterator(Node* node, map* container)
+    : m_node(node), m_container(container)
 {
-
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
-inline typename map<K,T,Compare,Allocator>::iterator::pointer 
-map<K,T,Compare,Allocator>::iterator:: operator->() const
+map<K, T, Compare, Allocator>::iterator::iterator(const iterator& other)
+    : m_node(other.m_node), m_container(other.m_container)
+{
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+inline typename map<K, T, Compare, Allocator>::iterator::pointer
+map<K, T, Compare, Allocator>::iterator::operator->() const
 {
     return &m_node->value;
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
-inline typename map<K,T,Compare,Allocator>::iterator::reference 
-map<K,T,Compare,Allocator>::iterator:: operator*() const
+inline typename map<K, T, Compare, Allocator>::iterator::reference
+map<K, T, Compare, Allocator>::iterator::operator*() const
 {
     return m_node->value;
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
-inline typename map<K,T,Compare,Allocator>::iterator& 
-map<K,T,Compare,Allocator>::iterator:: operator++()
+inline typename map<K, T, Compare, Allocator>::iterator&
+map<K, T, Compare, Allocator>::iterator::operator++()
 {
     if (m_node->right != m_container->m_nil)
     {
@@ -344,7 +353,7 @@ map<K,T,Compare,Allocator>::iterator:: operator++()
         while (m_node->left != m_container->m_nil)
             m_node = m_node->left;
     }
-    else //当前子树中没有右子树，需要向上查找父节点
+    else  // 当前子树中没有右子树，需要向上查找父节点
     {
         Node* parent = m_node->parent;
         while (parent != m_container->m_nil && m_node == parent->right)
@@ -358,8 +367,8 @@ map<K,T,Compare,Allocator>::iterator:: operator++()
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
-inline typename map<K,T,Compare,Allocator>::iterator& 
-map<K,T,Compare,Allocator>::iterator:: operator--()
+inline typename map<K, T, Compare, Allocator>::iterator&
+map<K, T, Compare, Allocator>::iterator::operator--()
 {
     if (m_node->left != m_container->m_nil)
     {
@@ -367,7 +376,7 @@ map<K,T,Compare,Allocator>::iterator:: operator--()
         while (m_node->right != m_container->m_nil)
             m_node = m_node->right;
     }
-    else //当前子树中没有左子树，需要向上查找父节点
+    else  // 当前子树中没有左子树，需要向上查找父节点
     {
         Node* parent = m_node->parent;
         while (parent != m_container->m_nil && m_node == parent->left)
@@ -381,8 +390,8 @@ map<K,T,Compare,Allocator>::iterator:: operator--()
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
-inline typename map<K,T,Compare,Allocator>::iterator 
-map<K,T,Compare,Allocator>::iterator:: operator++(int)
+inline typename map<K, T, Compare, Allocator>::iterator
+map<K, T, Compare, Allocator>::iterator::operator++(int)
 {
     iterator temp(*this);
     ++(*this);
@@ -390,8 +399,8 @@ map<K,T,Compare,Allocator>::iterator:: operator++(int)
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
-inline typename map<K,T,Compare,Allocator>::iterator 
-map<K,T,Compare,Allocator>::iterator:: operator--(int)
+inline typename map<K, T, Compare, Allocator>::iterator
+map<K, T, Compare, Allocator>::iterator::operator--(int)
 {
     iterator temp(*this);
     --(*this);
@@ -399,56 +408,64 @@ map<K,T,Compare,Allocator>::iterator:: operator--(int)
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
-inline bool map<K,T,Compare,Allocator>::iterator:: operator==(const iterator& other) const
+inline bool map<K, T, Compare, Allocator>::iterator::operator==(
+    const iterator& other) const
 {
     return m_node == other.m_node;
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
-inline bool map<K,T,Compare,Allocator>::iterator:: operator!=(const iterator& other) const
+inline bool map<K, T, Compare, Allocator>::iterator::operator!=(
+    const iterator& other) const
 {
     return m_node != other.m_node;
 }
 
-
-//--------------------------------- const_iterator 实现 --------------------------------------
+//---------------- const_iterator 实现 --------------------------------
 template <typename K, typename T, typename Compare, typename Allocator>
-map<K,T,Compare,Allocator>::const_iterator::const_iterator():m_node(nullptr), m_container(nullptr)
+map<K, T, Compare, Allocator>::const_iterator::const_iterator()
+    : m_node(nullptr), m_container(nullptr)
 {
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
-map<K,T,Compare,Allocator>::const_iterator::const_iterator(Node* node, map* container):m_node(node), m_container(container)
+map<K, T, Compare, Allocator>::const_iterator::const_iterator(Node* node,
+                                                              map*  container)
+    : m_node(node), m_container(container)
 {
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
-map<K,T,Compare,Allocator>::const_iterator::const_iterator(const const_iterator& other):m_node(other.m_node), m_container(other.m_container)
+map<K, T, Compare, Allocator>::const_iterator::const_iterator(
+    const const_iterator& other)
+    : m_node(other.m_node), m_container(other.m_container)
 {
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
-map<K,T,Compare,Allocator>::const_iterator::const_iterator(const iterator& other):m_node(other.m_node), m_container(other.m_container)
+map<K, T, Compare, Allocator>::const_iterator::const_iterator(
+    const iterator& other)
+    : m_node(other.m_node), m_container(other.m_container)
 {
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
-inline typename map<K,T,Compare,Allocator>::const_iterator::pointer 
-map<K,T,Compare,Allocator>::const_iterator:: operator->() const
+inline typename map<K, T, Compare, Allocator>::const_iterator::pointer
+map<K, T, Compare, Allocator>::const_iterator::operator->() const
 {
     return &m_node->value;
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
-inline typename map<K,T,Compare,Allocator>::const_iterator::reference 
-map<K,T,Compare,Allocator>::const_iterator:: operator*() const
+inline typename map<K, T, Compare, Allocator>::const_iterator::reference
+map<K, T, Compare, Allocator>::const_iterator::operator*() const
 {
     return m_node->value;
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
-inline typename map<K,T,Compare,Allocator>::const_iterator& 
-map<K,T,Compare,Allocator>::const_iterator:: operator++()
+inline typename map<K, T, Compare, Allocator>::const_iterator&
+map<K, T, Compare, Allocator>::const_iterator::operator++()
 {
     if (m_node->right != m_container->m_nil)
     {
@@ -456,7 +473,7 @@ map<K,T,Compare,Allocator>::const_iterator:: operator++()
         while (m_node->left != m_container->m_nil)
             m_node = m_node->left;
     }
-    else //当前子树中没有右子树，需要向上查找父节点
+    else  // 当前子树中没有右子树，需要向上查找父节点
     {
         Node* parent = m_node->parent;
         while (parent != m_container->m_nil && m_node == parent->right)
@@ -470,8 +487,8 @@ map<K,T,Compare,Allocator>::const_iterator:: operator++()
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
-inline typename map<K,T,Compare,Allocator>::const_iterator& 
-map<K,T,Compare,Allocator>::const_iterator:: operator--()
+inline typename map<K, T, Compare, Allocator>::const_iterator&
+map<K, T, Compare, Allocator>::const_iterator::operator--()
 {
     if (m_node->left != m_container->m_nil)
     {
@@ -479,7 +496,7 @@ map<K,T,Compare,Allocator>::const_iterator:: operator--()
         while (m_node->right != m_container->m_nil)
             m_node = m_node->right;
     }
-    else //当前子树中没有左子树，需要向上查找父节点
+    else  // 当前子树中没有左子树，需要向上查找父节点
     {
         Node* parent = m_node->parent;
         while (parent != m_container->m_nil && m_node == parent->left)
@@ -493,8 +510,8 @@ map<K,T,Compare,Allocator>::const_iterator:: operator--()
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
-inline typename map<K,T,Compare,Allocator>::const_iterator 
-map<K,T,Compare,Allocator>::const_iterator:: operator++(int)
+inline typename map<K, T, Compare, Allocator>::const_iterator
+map<K, T, Compare, Allocator>::const_iterator::operator++(int)
 {
     const_iterator temp(*this);
     ++(*this);
@@ -502,8 +519,8 @@ map<K,T,Compare,Allocator>::const_iterator:: operator++(int)
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
-inline typename map<K,T,Compare,Allocator>::const_iterator 
-map<K,T,Compare,Allocator>::const_iterator:: operator--(int)
+inline typename map<K, T, Compare, Allocator>::const_iterator
+map<K, T, Compare, Allocator>::const_iterator::operator--(int)
 {
     const_iterator temp(*this);
     --(*this);
@@ -511,19 +528,20 @@ map<K,T,Compare,Allocator>::const_iterator:: operator--(int)
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
-inline bool map<K,T,Compare,Allocator>::const_iterator:: operator==(const const_iterator& other) const
+inline bool map<K, T, Compare, Allocator>::const_iterator::operator==(
+    const const_iterator& other) const
 {
     return m_node == other.m_node;
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
-inline bool map<K,T,Compare,Allocator>::const_iterator:: operator!=(const const_iterator& other) const
+inline bool map<K, T, Compare, Allocator>::const_iterator::operator!=(
+    const const_iterator& other) const
 {
     return m_node != other.m_node;
 }
 
-
-//--------------------------------- map 实现 --------------------------------------------
+//--------------------------------- map 实现 --------------------------------
 template <typename K, typename T, typename Compare, typename Allocator>
 map<K, T, Compare, Allocator>::map()
     : m_root(nullptr), m_nil(nullptr), m_size(0), m_comp(), m_node_alloc()
@@ -641,9 +659,10 @@ map<K, T, Compare, Allocator>::~map()
     alloc_traits::destroy(m_node_alloc, m_nil);
     alloc_traits::deallocate(m_node_alloc, m_nil, 1);
 }
+
 template <typename K, typename T, typename Compare, typename Allocator>
-inline  map<K, T, Compare, Allocator>&
- map<K, T, Compare, Allocator>::operator=(const map& other)
+inline map<K, T, Compare, Allocator>& map<K, T, Compare, Allocator>::operator=(
+    const map& other)
 {
     if (this == &other)
         return *this;
@@ -653,8 +672,8 @@ inline  map<K, T, Compare, Allocator>&
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
-inline  map<K, T, Compare, Allocator>&
- map<K, T, Compare, Allocator>::operator=(map&& other) noexcept
+inline map<K, T, Compare, Allocator>& map<K, T, Compare, Allocator>::operator=(
+    map&& other) noexcept
 {
     if (this == &other)
         return *this;
@@ -667,9 +686,7 @@ inline  map<K, T, Compare, Allocator>&
     m_node_alloc   = std::move(other.m_node_alloc);
     m_root->parent = m_nil;
 
-
-  
-    other.m_nil          = alloc_traits::allocate(other.m_node_alloc, 1);
+    other.m_nil = alloc_traits::allocate(other.m_node_alloc, 1);
     alloc_traits::construct(other.m_node_alloc, other.m_nil);
     other.m_root         = other.m_nil;
     other.m_root->parent = other.m_nil;
@@ -679,8 +696,8 @@ inline  map<K, T, Compare, Allocator>&
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
-inline  map<K, T, Compare, Allocator>&
- map<K, T, Compare, Allocator>::operator=(std::initializer_list<value_type> ilist)
+inline map<K, T, Compare, Allocator>& map<K, T, Compare, Allocator>::operator=(
+    std::initializer_list<value_type> ilist)
 {
     clear();
     insert(ilist.begin(), ilist.end());
@@ -688,44 +705,48 @@ inline  map<K, T, Compare, Allocator>&
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
-inline typename map<K, T, Compare, Allocator>::allocator_type 
+inline typename map<K, T, Compare, Allocator>::allocator_type
 map<K, T, Compare, Allocator>::get_allocator() const
 {
     return typename map<K, T, Compare, Allocator>::allocator_type();
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
- inline typename map<K, T, Compare, Allocator>::mapped_type& map<K, T, Compare, Allocator>::at(const key_type& key)
- {
-    iterator it= find(key);
+inline typename map<K, T, Compare, Allocator>::mapped_type&
+map<K, T, Compare, Allocator>::at(const key_type& key)
+{
+    iterator it = find(key);
     if (it == end())
         throw std::out_of_range("map::at: key not found");
     return it->second;
- }
+}
+
 template <typename K, typename T, typename Compare, typename Allocator>
-inline  const typename map<K, T, Compare, Allocator>::mapped_type& map<K, T, Compare, Allocator>::at(const key_type& key) const
+inline const typename map<K, T, Compare, Allocator>::mapped_type&
+map<K, T, Compare, Allocator>::at(const key_type& key) const
 {
     return at(key);
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
- inline typename map<K, T, Compare, Allocator>::mapped_type& map<K, T, Compare, Allocator>::operator[](const key_type& key)
+inline typename map<K, T, Compare, Allocator>::mapped_type&
+map<K, T, Compare, Allocator>::operator[](const key_type& key)
 {
-    iterator it= find(key);
+    iterator it = find(key);
     if (it == end())
-        it= try_emplace(key);
+        it = try_emplace(key);
     return it->second;
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
- inline typename map<K, T, Compare, Allocator>::mapped_type& map<K, T, Compare, Allocator>::operator[](key_type&& key)
+inline typename map<K, T, Compare, Allocator>::mapped_type&
+map<K, T, Compare, Allocator>::operator[](key_type&& key)
 {
-    iterator it= find(key);
+    iterator it = find(key);
     if (it == end())
-        it= try_emplace(std::move(key));
+        it = try_emplace(std::move(key));
     return it->second;
 }
-
 
 template <typename K, typename T, typename Compare, typename Allocator>
 inline typename map<K, T, Compare, Allocator>::iterator
@@ -733,66 +754,77 @@ map<K, T, Compare, Allocator>::begin()
 {
     return iterator(m_root, this);
 }
+
 template <typename K, typename T, typename Compare, typename Allocator>
 inline typename map<K, T, Compare, Allocator>::const_iterator
 map<K, T, Compare, Allocator>::begin() const
 {
     return const_iterator(m_root, this);
 }
+
 template <typename K, typename T, typename Compare, typename Allocator>
 inline typename map<K, T, Compare, Allocator>::const_iterator
 map<K, T, Compare, Allocator>::cbegin() const noexcept
 {
     return const_iterator(m_root, this);
 }
+
 template <typename K, typename T, typename Compare, typename Allocator>
 inline typename map<K, T, Compare, Allocator>::iterator
 map<K, T, Compare, Allocator>::end()
 {
     return iterator(m_nil, this);
 }
+
 template <typename K, typename T, typename Compare, typename Allocator>
 inline typename map<K, T, Compare, Allocator>::const_iterator
 map<K, T, Compare, Allocator>::end() const
 {
     return const_iterator(m_nil, this);
 }
+
 template <typename K, typename T, typename Compare, typename Allocator>
 inline typename map<K, T, Compare, Allocator>::const_iterator
 map<K, T, Compare, Allocator>::cend() const noexcept
 {
     return const_iterator(m_nil, this);
 }
+
 template <typename K, typename T, typename Compare, typename Allocator>
 inline typename map<K, T, Compare, Allocator>::reverse_iterator
 map<K, T, Compare, Allocator>::rbegin()
 {
     return reverse_iterator(end());
 }
+
 template <typename K, typename T, typename Compare, typename Allocator>
 inline typename map<K, T, Compare, Allocator>::reverse_iterator
 map<K, T, Compare, Allocator>::rbegin() const
 {
     return reverse_iterator(cend());
 }
+
 template <typename K, typename T, typename Compare, typename Allocator>
 inline typename map<K, T, Compare, Allocator>::const_reverse_iterator
 map<K, T, Compare, Allocator>::crbegin() const noexcept
 {
     return const_reverse_iterator(cend());
 }
+
 template <typename K, typename T, typename Compare, typename Allocator>
 inline typename map<K, T, Compare, Allocator>::reverse_iterator
 map<K, T, Compare, Allocator>::rend()
 {
     return reverse_iterator(begin());
 }
+
 template <typename K, typename T, typename Compare, typename Allocator>
 inline typename map<K, T, Compare, Allocator>::reverse_iterator
 map<K, T, Compare, Allocator>::rend() const
 {
     return reverse_iterator(cbegin());
 }
+
 template <typename K, typename T, typename Compare, typename Allocator>
 inline typename map<K, T, Compare, Allocator>::const_reverse_iterator
 map<K, T, Compare, Allocator>::crend() const noexcept
@@ -801,20 +833,25 @@ map<K, T, Compare, Allocator>::crend() const noexcept
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
-inline typename map<K, T, Compare, Allocator>::size_type map<K, T, Compare, Allocator>::size() const
+inline typename map<K, T, Compare, Allocator>::size_type
+map<K, T, Compare, Allocator>::size() const
 {
     return m_size;
 }
+
 template <typename K, typename T, typename Compare, typename Allocator>
 inline bool map<K, T, Compare, Allocator>::empty() const
 {
     return m_root == m_nil;
 }
+
 template <typename K, typename T, typename Compare, typename Allocator>
-inline typename map<K, T, Compare, Allocator>::size_type map<K, T, Compare, Allocator>::max_size() const
+inline typename map<K, T, Compare, Allocator>::size_type
+map<K, T, Compare, Allocator>::max_size() const
 {
     return alloc_traits::max_size(m_node_alloc);
 }
+
 template <typename K, typename T, typename Compare, typename Allocator>
 inline void map<K, T, Compare, Allocator>::clear()
 {
@@ -824,6 +861,123 @@ inline void map<K, T, Compare, Allocator>::clear()
     destroy(m_root);
     m_root = m_nil;
     m_size = 0;
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+inline std::pair<typename map<K, T, Compare, Allocator>::iterator, bool>
+map<K, T, Compare, Allocator>::insert(const value_type& value)
+{
+    value_type val = value;
+    return insert(std::move(val));
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+inline std::pair<typename map<K, T, Compare, Allocator>::iterator, bool>
+map<K, T, Compare, Allocator>::insert(value_type&& value)
+{
+    Node* parent = m_nil;
+    Node* cur    = m_root;
+    while (cur != m_nil)
+    {
+        parent = cur;
+        if (m_comp(value.first, cur->value.first))
+            cur = cur->left;
+        else if (m_comp(cur->value.first, value.first))
+            cur = cur->right;
+        else
+            return std::make_pair(iterator(cur, this), false);
+    }
+
+    Node* new_node = alloc_traits::allocate(m_node_alloc, 1);
+    alloc_traits::construct(m_node_alloc, new_node, std::move(value));
+    new_node->color  = Color::RED;
+    new_node->left   = m_nil;
+    new_node->right  = m_nil;
+    new_node->parent = parent;
+
+    if (parent == m_nil)
+        m_root = new_node;
+    else if (m_comp(value.first, parent->value.first))
+        parent->left = new_node;
+    else
+        parent->right = new_node;
+
+    m_size++;
+    insert_balnce(new_node);
+
+    return std::make_pair(iterator(new_node, this), true);
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+template <typename InputIt>
+inline void map<K, T, Compare, Allocator>::insert(InputIt first, InputIt last)
+{
+    for (; first != last; ++first)
+        insert(*first);
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+template <typename InputIt>
+inline void map<K, T, Compare, Allocator>::insert(
+    std::initializer_list<value_type> ilist)
+{
+    for (const value_type& val : ilist)
+        insert(std::move(val));
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+inline std::pair<typename map<K, T, Compare, Allocator>::iterator, bool>
+map<K, T, Compare, Allocator>::insert_or_assign(const key_type&    key,
+                                                const mapped_type& value)
+{
+    Node* cur = find_node(key);
+    if (cur != m_nil)
+    {
+        cur->value.second = value;
+        return std::make_pair(iterator(cur, this),
+                              false);
+    }
+    return insert(value_type(key, value));
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+inline std::pair<typename map<K, T, Compare, Allocator>::iterator, bool>
+map<K, T, Compare, Allocator>::insert_or_assign(const key_type&& key,
+                                                mapped_type&&    value)
+{
+    Node* cur = find_node(key);
+    if (cur != m_nil)
+    {
+        cur->value.second = std::move(value);
+        return std::make_pair(iterator(cur, this), false);
+    }
+    return insert(value_type(std::move(key), std::move(value)));
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+template <typename... Args>
+inline std::pair<typename map<K, T, Compare, Allocator>::iterator, bool>
+map<K, T, Compare, Allocator>::try_emplace(const key_type& key, Args&&... args)
+{
+    Node* cur = find_node(key);
+    if (cur != m_nil)
+    {
+        return std::make_pair(iterator(cur, this), false);
+    }
+    return insert(value_type(key, std::forward<Args>(args)...));
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+template <typename... Args>
+inline std::pair<typename map<K, T, Compare, Allocator>::iterator, bool>
+map<K, T, Compare, Allocator>::try_emplace(key_type&& key, Args&&... args)
+{
+    Node* cur = find_node(key);
+    if (cur != m_nil)
+    {
+        return std::make_pair(iterator(cur, this), false);
+    }
+    return insert(value_type(std::move(key), std::forward<Args>(args)...));
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
