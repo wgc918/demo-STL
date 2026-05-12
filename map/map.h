@@ -1,5 +1,6 @@
 #pragma once
 
+#include <pthread.h>
 #include <initializer_list>
 #include <iterator>
 #include <memory>
@@ -196,10 +197,10 @@ public:
 
     allocator_type get_allocator() const;
 
-    reference at(const key_type& key);
-    const_reference at(const key_type& key) const;
-    reference operator[](const key_type& key);
-    reference operator[](const key_type&& key);
+    mapped_type& at(const key_type& key);
+    const mapped_type& at(const key_type& key) const;
+    mapped_type& operator[](const key_type& key);
+    mapped_type& operator[](key_type&& key);
 
     iterator begin();
     const_iterator begin() const;
@@ -693,6 +694,38 @@ map<K, T, Compare, Allocator>::get_allocator() const
     return typename map<K, T, Compare, Allocator>::allocator_type();
 }
 
+template <typename K, typename T, typename Compare, typename Allocator>
+ inline typename map<K, T, Compare, Allocator>::mapped_type& map<K, T, Compare, Allocator>::at(const key_type& key)
+ {
+    iterator it= find(key);
+    if (it == end())
+        throw std::out_of_range("map::at: key not found");
+    return it->second;
+ }
+template <typename K, typename T, typename Compare, typename Allocator>
+inline  const typename map<K, T, Compare, Allocator>::mapped_type& map<K, T, Compare, Allocator>::at(const key_type& key) const
+{
+    return at(key);
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+ inline typename map<K, T, Compare, Allocator>::mapped_type& map<K, T, Compare, Allocator>::operator[](const key_type& key)
+{
+    iterator it= find(key);
+    if (it == end())
+        it= try_emplace(key);
+    return it->second;
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+ inline typename map<K, T, Compare, Allocator>::mapped_type& map<K, T, Compare, Allocator>::operator[](key_type&& key)
+{
+    iterator it= find(key);
+    if (it == end())
+        it= try_emplace(std::move(key));
+    return it->second;
+}
+
 
 template <typename K, typename T, typename Compare, typename Allocator>
 inline typename map<K, T, Compare, Allocator>::iterator
@@ -765,6 +798,32 @@ inline typename map<K, T, Compare, Allocator>::const_reverse_iterator
 map<K, T, Compare, Allocator>::crend() const noexcept
 {
     return const_reverse_iterator(cbegin());
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+inline typename map<K, T, Compare, Allocator>::size_type map<K, T, Compare, Allocator>::size() const
+{
+    return m_size;
+}
+template <typename K, typename T, typename Compare, typename Allocator>
+inline bool map<K, T, Compare, Allocator>::empty() const
+{
+    return m_root == m_nil;
+}
+template <typename K, typename T, typename Compare, typename Allocator>
+inline typename map<K, T, Compare, Allocator>::size_type map<K, T, Compare, Allocator>::max_size() const
+{
+    return alloc_traits::max_size(m_node_alloc);
+}
+template <typename K, typename T, typename Compare, typename Allocator>
+inline void map<K, T, Compare, Allocator>::clear()
+{
+    if (empty())
+        return;
+
+    destroy(m_root);
+    m_root = m_nil;
+    m_size = 0;
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
