@@ -612,6 +612,79 @@ map<K, T, Compare, Allocator>::~map()
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
+inline typename map<K, T, Compare, Allocator>::iterator
+map<K, T, Compare, Allocator>::begin()
+{
+    return iterator(m_root, this);
+}
+template <typename K, typename T, typename Compare, typename Allocator>
+inline typename map<K, T, Compare, Allocator>::const_iterator
+map<K, T, Compare, Allocator>::begin() const
+{
+    return const_iterator(m_root, this);
+}
+template <typename K, typename T, typename Compare, typename Allocator>
+inline typename map<K, T, Compare, Allocator>::const_iterator
+map<K, T, Compare, Allocator>::cbegin() const noexcept
+{
+    return const_iterator(m_root, this);
+}
+template <typename K, typename T, typename Compare, typename Allocator>
+inline typename map<K, T, Compare, Allocator>::iterator
+map<K, T, Compare, Allocator>::end()
+{
+    return iterator(m_nil, this);
+}
+template <typename K, typename T, typename Compare, typename Allocator>
+inline typename map<K, T, Compare, Allocator>::const_iterator
+map<K, T, Compare, Allocator>::end() const
+{
+    return const_iterator(m_nil, this);
+}
+template <typename K, typename T, typename Compare, typename Allocator>
+inline typename map<K, T, Compare, Allocator>::const_iterator
+map<K, T, Compare, Allocator>::cend() const noexcept
+{
+    return const_iterator(m_nil, this);
+}
+template <typename K, typename T, typename Compare, typename Allocator>
+inline typename map<K, T, Compare, Allocator>::reverse_iterator
+map<K, T, Compare, Allocator>::rbegin()
+{
+    return reverse_iterator(end());
+}
+template <typename K, typename T, typename Compare, typename Allocator>
+inline typename map<K, T, Compare, Allocator>::reverse_iterator
+map<K, T, Compare, Allocator>::rbegin() const
+{
+    return reverse_iterator(cend());
+}
+template <typename K, typename T, typename Compare, typename Allocator>
+inline typename map<K, T, Compare, Allocator>::const_reverse_iterator
+map<K, T, Compare, Allocator>::crbegin() const noexcept
+{
+    return const_reverse_iterator(cend());
+}
+template <typename K, typename T, typename Compare, typename Allocator>
+inline typename map<K, T, Compare, Allocator>::reverse_iterator
+map<K, T, Compare, Allocator>::rend()
+{
+    return reverse_iterator(begin());
+}
+template <typename K, typename T, typename Compare, typename Allocator>
+inline typename map<K, T, Compare, Allocator>::reverse_iterator
+map<K, T, Compare, Allocator>::rend() const
+{
+    return reverse_iterator(cbegin());
+}
+template <typename K, typename T, typename Compare, typename Allocator>
+inline typename map<K, T, Compare, Allocator>::const_reverse_iterator
+map<K, T, Compare, Allocator>::crend() const noexcept
+{
+    return const_reverse_iterator(cbegin());
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
 inline typename map<K, T, Compare, Allocator>::Node*
 map<K, T, Compare, Allocator>::build_tree(std::vector<value_type>& vec,
                                           size_type left, size_type right,
