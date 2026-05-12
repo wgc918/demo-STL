@@ -41,10 +41,10 @@ public:
     using value_type       = std::pair<const K, T>;
     using size_type        = std::size_t;
     using difference_type  = std::ptrdiff_t;
-    using pointer          = T*;
-    using const_pointer    = const T*;
-    using reference        = T&;
-    using const_reference  = const T&;
+    using pointer          = value_type*;
+    using const_pointer    = const value_type*;
+    using reference        = value_type&;
+    using const_reference  = const value_type&;
 
 public:
     struct sorted_tag;
@@ -59,17 +59,22 @@ private:
 
     struct Node
     {
-        key_type    key;
-        mapped_type value;
+        value_type  value;
         Node*       left;
         Node*       right;
         Node*       parent;
         Color       color;
 
-        template <typename... Args>
-        Node(Args&&... args)
-            : key(std::forward<Args>(args)...),
-              value(),
+        Node()
+            : left(nullptr),
+              right(nullptr),
+              parent(nullptr),
+              color(Color::BLACK)
+        {
+        }
+
+        Node(value_type v)
+            : value(std::move(v)),
               left(nullptr),
               right(nullptr),
               parent(nullptr),
@@ -80,8 +85,9 @@ private:
         template <typename... KeyArgs, typename... ValueArgs>
         Node(std::piecewise_construct_t, std::tuple<KeyArgs...> key_args,
              std::tuple<ValueArgs...> value_args)
-            : key(std::make_from_tuple<key_type>(std::move(key_args))),
-              value(std::make_from_tuple<mapped_type>(std::move(value_args))),
+            : value(std::piecewise_construct, 
+              std::move(key_args), 
+              std::move(value_args)),
               left(nullptr),
               right(nullptr),
               parent(nullptr),
@@ -89,9 +95,8 @@ private:
         {
         }
 
-        Node(key_type k, value_type v)
-            : key(std::move(k)),
-              value(std::move(v)),
+        Node(key_type k, mapped_type v)
+            : value(std::move(k), std::move(v)),
               left(nullptr),
               right(nullptr),
               parent(nullptr),
@@ -132,7 +137,7 @@ public:
         bool operator!=(const iterator&) const;
 
     private:
-        Node* node;
+        Node* m_node;
     };
 
     class const_iterator
@@ -164,7 +169,7 @@ public:
         bool operator!=(const const_iterator&) const;
 
     private:
-        Node* node;
+        Node* m_node;
     };
 
     using reverse_iterator       = std::reverse_iterator<iterator>;
@@ -420,7 +425,7 @@ map<K, T, Compare, Allocator>::copy_node(Node* cur, const map& other)
         return m_nil;
 
     Node* root = alloc_traits::allocate(m_node_alloc, 1);
-    alloc_traits::construct(m_node_alloc, root, cur->key, cur->value);
+    alloc_traits::construct(m_node_alloc, root, cur->value);
     root->color = cur->color;
 
     root->left  = copy_node(cur->left, other);
