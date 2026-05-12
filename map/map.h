@@ -121,9 +121,8 @@ public:
 
     public:
         iterator();
-        explicit iterator(Node* node);
-        ~iterator();
-        iterator(const iterator&);
+        iterator(Node* node, map* container);
+        iterator(const iterator& other);
 
         pointer operator->() const;
         reference operator*() const;
@@ -133,11 +132,12 @@ public:
         iterator operator++(int);
         iterator operator--(int);
 
-        bool operator==(const iterator&) const;
-        bool operator!=(const iterator&) const;
+        bool operator==(const iterator& other) const;
+        bool operator!=(const iterator& other) const;
 
     private:
         Node* m_node;
+        map* m_container;
     };
 
     class const_iterator
@@ -153,9 +153,9 @@ public:
 
     public:
         const_iterator();
-        explicit const_iterator(Node* node);
-        ~const_iterator();
-        const_iterator(const const_iterator&);
+        const_iterator(Node* node, map* container);
+        const_iterator(const const_iterator& other);
+        const_iterator(const iterator& other);
 
         pointer operator->() const;
         reference operator*() const;
@@ -165,11 +165,12 @@ public:
         const_iterator operator++(int);
         const_iterator operator--(int);
 
-        bool operator==(const const_iterator&) const;
-        bool operator!=(const const_iterator&) const;
+        bool operator==(const const_iterator& other) const;
+        bool operator!=(const const_iterator& other) const;
 
     private:
         Node* m_node;
+        map* m_container;
     };
 
     using reverse_iterator       = std::reverse_iterator<iterator>;
@@ -269,6 +270,229 @@ private:
     node_alloc_type m_node_alloc;
 };
 
+
+//--------------------------------- iterator 实现 --------------------------------------
+template <typename K, typename T, typename Compare, typename Allocator>
+map<K,T,Compare,Allocator>::iterator:: iterator():m_node(nullptr), m_container(nullptr)
+{
+
+}
+template <typename K, typename T, typename Compare, typename Allocator>
+map<K,T,Compare,Allocator>::iterator:: iterator(Node* node, map* container):m_node(node), m_container(container)
+{
+
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+map<K,T,Compare,Allocator>::iterator::iterator(const iterator& other):m_node(other.m_node), m_container(other.m_container)
+{
+
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+inline typename map<K,T,Compare,Allocator>::iterator::pointer 
+map<K,T,Compare,Allocator>::iterator:: operator->() const
+{
+    return &m_node->value;
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+inline typename map<K,T,Compare,Allocator>::iterator::reference 
+map<K,T,Compare,Allocator>::iterator:: operator*() const
+{
+    return m_node->value;
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+inline typename map<K,T,Compare,Allocator>::iterator& 
+map<K,T,Compare,Allocator>::iterator:: operator++()
+{
+    if (m_node->right != m_container->m_nil)
+    {
+        m_node = m_node->right;
+        while (m_node->left != m_container->m_nil)
+            m_node = m_node->left;
+    }
+    else //当前子树中没有右子树，需要向上查找父节点
+    {
+        Node* parent = m_node->parent;
+        while (parent != m_container->m_nil && m_node == parent->right)
+        {
+            m_node = parent;
+            parent = parent->parent;
+        }
+        m_node = parent;
+    }
+    return *this;
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+inline typename map<K,T,Compare,Allocator>::iterator& 
+map<K,T,Compare,Allocator>::iterator:: operator--()
+{
+    if (m_node->left != m_container->m_nil)
+    {
+        m_node = m_node->left;
+        while (m_node->right != m_container->m_nil)
+            m_node = m_node->right;
+    }
+    else //当前子树中没有左子树，需要向上查找父节点
+    {
+        Node* parent = m_node->parent;
+        while (parent != m_container->m_nil && m_node == parent->left)
+        {
+            m_node = parent;
+            parent = parent->parent;
+        }
+        m_node = parent;
+    }
+    return *this;
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+inline typename map<K,T,Compare,Allocator>::iterator 
+map<K,T,Compare,Allocator>::iterator:: operator++(int)
+{
+    iterator temp(*this);
+    ++(*this);
+    return temp;
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+inline typename map<K,T,Compare,Allocator>::iterator 
+map<K,T,Compare,Allocator>::iterator:: operator--(int)
+{
+    iterator temp(*this);
+    --(*this);
+    return temp;
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+inline bool map<K,T,Compare,Allocator>::iterator:: operator==(const iterator& other) const
+{
+    return m_node == other.m_node;
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+inline bool map<K,T,Compare,Allocator>::iterator:: operator!=(const iterator& other) const
+{
+    return m_node != other.m_node;
+}
+
+
+//--------------------------------- const_iterator 实现 --------------------------------------
+template <typename K, typename T, typename Compare, typename Allocator>
+map<K,T,Compare,Allocator>::const_iterator::const_iterator():m_node(nullptr), m_container(nullptr)
+{
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+map<K,T,Compare,Allocator>::const_iterator::const_iterator(Node* node, map* container):m_node(node), m_container(container)
+{
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+map<K,T,Compare,Allocator>::const_iterator::const_iterator(const const_iterator& other):m_node(other.m_node), m_container(other.m_container)
+{
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+map<K,T,Compare,Allocator>::const_iterator::const_iterator(const iterator& other):m_node(other.m_node), m_container(other.m_container)
+{
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+inline typename map<K,T,Compare,Allocator>::const_iterator::pointer 
+map<K,T,Compare,Allocator>::const_iterator:: operator->() const
+{
+    return &m_node->value;
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+inline typename map<K,T,Compare,Allocator>::const_iterator::reference 
+map<K,T,Compare,Allocator>::const_iterator:: operator*() const
+{
+    return m_node->value;
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+inline typename map<K,T,Compare,Allocator>::const_iterator& 
+map<K,T,Compare,Allocator>::const_iterator:: operator++()
+{
+    if (m_node->right != m_container->m_nil)
+    {
+        m_node = m_node->right;
+        while (m_node->left != m_container->m_nil)
+            m_node = m_node->left;
+    }
+    else //当前子树中没有右子树，需要向上查找父节点
+    {
+        Node* parent = m_node->parent;
+        while (parent != m_container->m_nil && m_node == parent->right)
+        {
+            m_node = parent;
+            parent = parent->parent;
+        }
+        m_node = parent;
+    }
+    return *this;
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+inline typename map<K,T,Compare,Allocator>::const_iterator& 
+map<K,T,Compare,Allocator>::const_iterator:: operator--()
+{
+    if (m_node->left != m_container->m_nil)
+    {
+        m_node = m_node->left;
+        while (m_node->right != m_container->m_nil)
+            m_node = m_node->right;
+    }
+    else //当前子树中没有左子树，需要向上查找父节点
+    {
+        Node* parent = m_node->parent;
+        while (parent != m_container->m_nil && m_node == parent->left)
+        {
+            m_node = parent;
+            parent = parent->parent;
+        }
+        m_node = parent;
+    }
+    return *this;
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+inline typename map<K,T,Compare,Allocator>::const_iterator 
+map<K,T,Compare,Allocator>::const_iterator:: operator++(int)
+{
+    const_iterator temp(*this);
+    ++(*this);
+    return temp;
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+inline typename map<K,T,Compare,Allocator>::const_iterator 
+map<K,T,Compare,Allocator>::const_iterator:: operator--(int)
+{
+    const_iterator temp(*this);
+    --(*this);
+    return temp;
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+inline bool map<K,T,Compare,Allocator>::const_iterator:: operator==(const const_iterator& other) const
+{
+    return m_node == other.m_node;
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+inline bool map<K,T,Compare,Allocator>::const_iterator:: operator!=(const const_iterator& other) const
+{
+    return m_node != other.m_node;
+}
+
+
+//--------------------------------- map 实现 --------------------------------------------
 template <typename K, typename T, typename Compare, typename Allocator>
 map<K, T, Compare, Allocator>::map()
     : m_root(nullptr), m_nil(nullptr), m_size(0), m_comp(), m_node_alloc()
