@@ -47,8 +47,8 @@ public:
     using const_reference  = const value_type&;
 
 public:
-    struct sorted_tag;
-    struct unsorted_tag;
+    struct sorted_tag{};
+    struct unsorted_tag{};
 
 private:
     enum class Color : uint8_t
@@ -243,6 +243,36 @@ public:
     void swap(map& other);
     template <typename Compare2>
     void merge(map<K, T, Compare2, Allocator>& other);
+
+    size_type count(const key_type& key) const;
+    template<typename Key>
+    size_type count(const Key& key) const;
+    iterator find(const key_type& key);
+    const_iterator find(const key_type& key) const;
+    template<typename Key>
+    iterator find(const Key& key);
+    template<typename Key>
+    const_iterator find(const Key& key) const;
+    std::pair<iterator, iterator> equal_range(const key_type& key);
+    std::pair<const_iterator, const_iterator> equal_range(const key_type& key) const;
+    template<typename Key>
+    std::pair<iterator, iterator> equal_range(const Key& key);
+    template<typename Key>
+    std::pair<const_iterator, const_iterator> equal_range(const Key& key) const;
+    iterator lower_bound(const key_type& key);
+    const_iterator lower_bound(const key_type& key) const;
+    template<typename Key>
+    iterator lower_bound(const Key& key);
+    template<typename Key>
+    const_iterator lower_bound(const Key& key) const;
+    template<typename Key>
+    iterator upper_bound(const Key& key);
+    template<typename Key>
+    const_iterator upper_bound(const Key& key) const;
+    iterator upper_bound(const key_type& key);
+    const_iterator upper_bound(const key_type& key) const;
+
+    key_compare_type key_comp() const;  
 
 #ifndef NDEBUG
     bool validate_tree() const;
@@ -655,6 +685,14 @@ inline  map<K, T, Compare, Allocator>&
     insert(ilist.begin(), ilist.end());
     return *this;
 }
+
+template <typename K, typename T, typename Compare, typename Allocator>
+inline typename map<K, T, Compare, Allocator>::allocator_type 
+map<K, T, Compare, Allocator>::get_allocator() const
+{
+    return typename map<K, T, Compare, Allocator>::allocator_type();
+}
+
 
 template <typename K, typename T, typename Compare, typename Allocator>
 inline typename map<K, T, Compare, Allocator>::iterator
