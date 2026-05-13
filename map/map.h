@@ -903,9 +903,69 @@ map<K, T, Compare, Allocator>::insert(value_type&& value)
         parent->right = new_node;
 
     m_size++;
-    insert_balnce(new_node);
+    insert_balance(new_node);
 
     return std::make_pair(iterator(new_node, this), true);
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+inline typename map<K, T, Compare, Allocator>::iterator insert(
+    const_iterator pos, const value_type& value)
+{
+    value_type val = value;
+    return insert(pos, std::move(val));
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+inline typename map<K, T, Compare, Allocator>::iterator
+map<K, T, Compare, Allocator>::insert(const_iterator pos, value_type&& value)
+{
+    // 默认从根节点开始比较
+    Node* parent = m_nil;
+    Node* cur    = m_root;
+
+    if (pos != cend())
+    {
+        cur = pos.m_node;
+        if (m_comp(value.first, cur->value.first))
+        {
+            // 指定的pos有效，从pos的左子节点开始比较
+            parent = cur;
+            cur    = cur->left;
+        }
+        else if (!m_comp(value.first, cur->value.first))
+            return iterator(cur, this);
+    }
+
+    while (cur != m_nil)
+    {
+        parent = cur;
+        if (m_comp(value.first, cur->value.first))
+            cur = cur->left;
+        else if (m_comp(cur->value.first, value.first))
+            cur = cur->right;
+        else
+            return iterator(cur, this);
+    }
+
+    Node* new_node = alloc_traits::allocate(m_node_alloc, 1);
+    alloc_traits::construct(m_node_alloc, new_node, std::move(value));
+    new_node->color  = Color::RED;
+    new_node->left   = m_nil;
+    new_node->right  = m_nil;
+    new_node->parent = parent;
+
+    if (parent == m_nil)
+        m_root = new_node;
+    else if (m_comp(value.first, parent->value.first))
+        parent->left = new_node;
+    else
+        parent->right = new_node;
+
+    m_size++;
+    insert_balance(new_node);
+
+    return iterator(new_node, this);
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
@@ -934,8 +994,7 @@ map<K, T, Compare, Allocator>::insert_or_assign(const key_type&    key,
     if (cur != m_nil)
     {
         cur->value.second = value;
-        return std::make_pair(iterator(cur, this),
-                              false);
+        return std::make_pair(iterator(cur, this), false);
     }
     return insert(value_type(key, value));
 }
