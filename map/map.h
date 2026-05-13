@@ -251,13 +251,22 @@ public:
     void merge(map<K, T, Compare2, Allocator>& other);
 
     size_type count(const key_type& key) const;
-    template <typename Key>
+    template <
+        typename Key,
+        std::enable_if_t<std::is_void<typename Compare::is_transparent>::value,
+                         int> = 0>
     size_type count(const Key& key) const;
     iterator find(const key_type& key);
     const_iterator find(const key_type& key) const;
-    template <typename Key>
+    template <
+        typename Key,
+        std::enable_if_t<std::is_void<typename Compare::is_transparent>::value,
+                         int> = 0>
     iterator find(const Key& key);
-    template <typename Key>
+    template <
+        typename Key,
+        std::enable_if_t<std::is_void<typename Compare::is_transparent>::value,
+                         int> = 0>
     const_iterator find(const Key& key) const;
     std::pair<iterator, iterator> equal_range(const key_type& key);
     std::pair<const_iterator, const_iterator> equal_range(
@@ -909,8 +918,9 @@ map<K, T, Compare, Allocator>::insert(value_type&& value)
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
-inline typename map<K, T, Compare, Allocator>::iterator insert(
-    const_iterator pos, const value_type& value)
+inline typename map<K, T, Compare, Allocator>::iterator
+map<K, T, Compare, Allocator>::insert(const_iterator    pos,
+                                      const value_type& value)
 {
     value_type val = value;
     return insert(pos, std::move(val));
@@ -1040,6 +1050,90 @@ map<K, T, Compare, Allocator>::try_emplace(key_type&& key, Args&&... args)
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
+inline typename map<K, T, Compare, Allocator>::size_type
+map<K, T, Compare, Allocator>::count(const key_type& key) const
+{
+    Node* cur = find_node(key);
+    return cur != m_nil ? 1 : 0;
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+template <typename Key,
+          std::enable_if_t<
+              std::is_void<typename Compare::is_transparent>::value, int>>
+inline typename map<K, T, Compare, Allocator>::size_type
+map<K, T, Compare, Allocator>::count(const Key& key) const
+{
+    Node* cur = m_root;
+    while (cur != m_nil)
+    {
+        if (m_comp(key, cur->value.first))
+            cur = cur->left;
+        else if (m_comp(cur->value.first, key))
+            cur = cur->right;
+        else
+            return 1;
+    }
+    return 0;
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+inline typename map<K, T, Compare, Allocator>::iterator
+map<K, T, Compare, Allocator>::find(const key_type& key)
+{
+    Node* cur = find_node(key);
+    return iterator(cur, this);
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+inline typename map<K, T, Compare, Allocator>::const_iterator
+map<K, T, Compare, Allocator>::find(const key_type& key) const
+{
+    Node* cur = find_node(key);
+    return const_iterator(cur, this);
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+template <typename Key,
+          std::enable_if_t<
+              std::is_void<typename Compare::is_transparent>::value, int>>
+inline typename map<K, T, Compare, Allocator>::iterator
+map<K, T, Compare, Allocator>::find(const Key& key)
+{
+    Node* cur = m_root;
+    while (cur != m_nil)
+    {
+        if (m_comp(key, cur->value.first))
+            cur = cur->left;
+        else if (m_comp(cur->value.first, key))
+            cur = cur->right;
+        else
+            return iterator(cur, this);
+    }
+    return iterator(m_nil, this);
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+template <typename Key,
+          std::enable_if_t<
+              std::is_void<typename Compare::is_transparent>::value, int>>
+inline typename map<K, T, Compare, Allocator>::const_iterator
+map<K, T, Compare, Allocator>::find(const Key& key) const
+{
+    Node* cur = m_root;
+    while (cur != m_nil)
+    {
+        if (m_comp(key, cur->value.first))
+            cur = cur->left;
+        else if (m_comp(cur->value.first, key))
+            cur = cur->right;
+        else
+            return const_iterator(cur, this);
+    }
+    return const_iterator(m_nil, this);
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
 inline typename map<K, T, Compare, Allocator>::Node*
 map<K, T, Compare, Allocator>::build_tree(std::vector<value_type>& vec,
                                           size_type left, size_type right,
@@ -1102,6 +1196,34 @@ inline void map<K, T, Compare, Allocator>::destroy(Node* node)
 
     alloc_traits::destroy(m_node_alloc, node);
     alloc_traits::deallocate(m_node_alloc, node, 1);
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+inline void map<K, T, Compare, Allocator>::insert_balance(Node* node)
+{
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+inline void map<K, T, Compare, Allocator>::erase_balance(Node* node)
+{
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+inline typename map<K, T, Compare, Allocator>::Node*
+map<K, T, Compare, Allocator>::find_node(const key_type& key)
+{
+    Node* cur = m_root;
+    while (cur != m_nil)
+    {
+        if (m_comp(key, cur->value.first))
+            cur = cur->left;
+        else if (m_comp(cur->value.first, key))
+            cur = cur->right;
+        else
+            return cur;
+    }
+
+    return m_nil;
 }
 
 #ifndef NDEBUG
