@@ -1068,6 +1068,257 @@ map<K, T, Compare, Allocator>::try_emplace(key_type&& key, Args&&... args)
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
+inline typename map<K, T, Compare, Allocator>::iterator
+map<K, T, Compare, Allocator>::erase(const_iterator pos)
+{
+    Node* cur = pos.m_node;
+    if (cur == m_nil)
+        return iterator(m_nil, this);
+
+    iterator ret = iterator(cur, this);
+    ret++;
+
+    Node* node_to_replace = cur;
+    Node* fill_node       = m_nil;
+    Color original_color  = node_to_replace->color;
+
+    // 删除的节点最多只有一个子节点时
+    if (cur->left == m_nil)
+    {
+        fill_node = cur->right;
+        if (cur->parent == = m_nil)
+        {
+            m_root = fill_node;
+        }
+        else if (cur == cur->parent->left)
+        {
+            cur->parent->left = fill_node;
+        }
+        else
+        {
+            cur->parent->right = fill_node;
+        }
+        fill_node->parent = cur->parent;
+    }
+    else if (cur->right == m_nil)
+    {
+        fill_node = cur->left;
+        if (cur->parent == m_nil)
+        {
+            m_root = fill_node;
+        }
+        else if (cur->parent->left == cur)
+        {
+            cur->parent->left = fill_node;
+        }
+        else
+        {
+            cur->parent->right = fill_node;
+        }
+
+        fill_node->parent = cur->parent;
+    }
+    else  // 删除的节点有两个孩子
+    {
+        // 找中序遍历中的后面一个节点来进行替换
+        node_to_replace = cur->right;
+        while (node_to_replace->left != m_nil)
+        {
+            node_to_replace = node_to_replace->left;
+        }
+        original_color = node_to_replace->color;
+        fill_node      = node_to_replace->right;
+
+        // 把 node_to_replace 分离出来，并用 fill_node 去代替它
+        if (node_to_replace->parent == cur)
+        {
+            fill_node->parent = node_to_replace;
+        }
+        else
+        {
+            if (node_to_replace->parent->left == node_to_replace)
+            {
+                node_to_replace->left = fill_node;
+            }
+            else
+            {
+                node_to_replace->right = fill_node;
+            }
+            fill_node->parent = node_to_replace->parent;
+
+            node_to_replace->right         = cur->right;
+            node_to_replace->right->parent = node_to_replace;
+        }
+
+        // 把 cur 与 node_to_replace 进行替换
+        if (cur->parent = m_nil)
+        {
+            m_root = node_to_replace;
+        }
+        else if (cur == cur->parent->left)
+        {
+            cur->parent->left = node_to_replace;
+        }
+        else
+        {
+            cur->parent->right = node_to_replace;
+        }
+        node_to_replace->parent       = cur->parent;
+        node_to_replace->color        = cur->color;
+        node_to_replace->left         = cur->left;
+        node_to_replace->left->parent = node_to_replace;
+    }
+
+    alloc_traits::destroy(m_node_alloc, cur);
+    alloc_traits::deallocate(m_node_alloc, cur, 1);
+    m_size--;
+
+    if (original_color == Color::BLACK)
+        erase_balance(fill_node);
+
+    return ret;
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+inline typename map<K, T, Compare, Allocator>::iterator
+map<K, T, Compare, Allocator>::erase(const key_type& key)
+{
+    Node* cur = find_node(key);
+    if (cur == m_nil)
+        return iterator(m_nil, this);
+
+    iterator ret = iterator(cur, this);
+    ret++;
+
+    Node* node_to_replace = cur;
+    Node* fill_node       = m_nil;
+    Color original_color  = node_to_replace->color;
+
+    // 删除的节点最多只有一个子节点时
+    if (cur->left == m_nil)
+    {
+        fill_node = cur->right;
+        if (cur->parent == = m_nil)
+        {
+            m_root = fill_node;
+        }
+        else if (cur == cur->parent->left)
+        {
+            cur->parent->left = fill_node;
+        }
+        else
+        {
+            cur->parent->right = fill_node;
+        }
+        fill_node->parent = cur->parent;
+    }
+    else if (cur->right == m_nil)
+    {
+        fill_node = cur->left;
+        if (cur->parent == m_nil)
+        {
+            m_root = fill_node;
+        }
+        else if (cur->parent->left == cur)
+        {
+            cur->parent->left = fill_node;
+        }
+        else
+        {
+            cur->parent->right = fill_node;
+        }
+
+        fill_node->parent = cur->parent;
+    }
+    else  // 删除的节点有两个孩子
+    {
+        // 找中序遍历中的后面一个节点来进行替换
+        node_to_replace = cur->right;
+        while (node_to_replace->left != m_nil)
+        {
+            node_to_replace = node_to_replace->left;
+        }
+        original_color = node_to_replace->color;
+        fill_node      = node_to_replace->right;
+
+        // 把 node_to_replace 分离出来，并用 fill_node 去代替它
+        if (node_to_replace->parent == cur)
+        {
+            fill_node->parent = node_to_replace;
+        }
+        else
+        {
+            if (node_to_replace->parent->left == node_to_replace)
+            {
+                node_to_replace->left = fill_node;
+            }
+            else
+            {
+                node_to_replace->right = fill_node;
+            }
+            fill_node->parent = node_to_replace->parent;
+
+            node_to_replace->right         = cur->right;
+            node_to_replace->right->parent = node_to_replace;
+        }
+
+        // 把 cur 与 node_to_replace 进行替换
+        if (cur->parent = m_nil)
+        {
+            m_root = node_to_replace;
+        }
+        else if (cur == cur->parent->left)
+        {
+            cur->parent->left = node_to_replace;
+        }
+        else
+        {
+            cur->parent->right = node_to_replace;
+        }
+        node_to_replace->parent       = cur->parent;
+        node_to_replace->color        = cur->color;
+        node_to_replace->left         = cur->left;
+        node_to_replace->left->parent = node_to_replace;
+    }
+
+    alloc_traits::destroy(m_node_alloc, cur);
+    alloc_traits::deallocate(m_node_alloc, cur, 1);
+    m_size--;
+
+    if (original_color == Color::BLACK)
+        erase_balance(fill_node);
+
+    return ret;
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+inline typename map<K, T, Compare, Allocator>::iterator
+map<K, T, Compare, Allocator>::erase(const_iterator first, const_iterator last)
+{
+    for (; first != last; ++first)
+        erase(first);
+    return last;
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+inline void map<K, T, Compare, Allocator>::swap(map& other)
+{
+    std::swap(m_root, other.m_root);
+    std::swap(m_nil, other.m_nil);
+    std::swap(m_size, other.m_size);
+    std::swap(m_comp, other.m_comp);
+    std::swap(m_node_alloc, other.m_node_alloc);
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+template <typename Compare2>
+inline void map<K, T, Compare, Allocator>::merge(
+    map<K, T, Compare2, Allocator>& other)
+{
+    insert(other.begin(), other.end());
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
 inline typename map<K, T, Compare, Allocator>::size_type
 map<K, T, Compare, Allocator>::count(const key_type& key) const
 {
