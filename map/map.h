@@ -271,19 +271,37 @@ public:
     std::pair<iterator, iterator> equal_range(const key_type& key);
     std::pair<const_iterator, const_iterator> equal_range(
         const key_type& key) const;
-    template <typename Key>
+    template <
+        typename Key,
+        std::enable_if_t<std::is_void<typename Compare::is_transparent>::value,
+                         int> = 0>
     std::pair<iterator, iterator> equal_range(const Key& key);
-    template <typename Key>
+    template <
+        typename Key,
+        std::enable_if_t<std::is_void<typename Compare::is_transparent>::value,
+                         int> = 0>
     std::pair<const_iterator, const_iterator> equal_range(const Key& key) const;
     iterator lower_bound(const key_type& key);
     const_iterator lower_bound(const key_type& key) const;
-    template <typename Key>
+    template <
+        typename Key,
+        std::enable_if_t<std::is_void<typename Compare::is_transparent>::value,
+                         int> = 0>
     iterator lower_bound(const Key& key);
-    template <typename Key>
+    template <
+        typename Key,
+        std::enable_if_t<std::is_void<typename Compare::is_transparent>::value,
+                         int> = 0>
     const_iterator lower_bound(const Key& key) const;
-    template <typename Key>
+    template <
+        typename Key,
+        std::enable_if_t<std::is_void<typename Compare::is_transparent>::value,
+                         int> = 0>
     iterator upper_bound(const Key& key);
-    template <typename Key>
+    template <
+        typename Key,
+        std::enable_if_t<std::is_void<typename Compare::is_transparent>::value,
+                         int> = 0>
     const_iterator upper_bound(const Key& key) const;
     iterator upper_bound(const key_type& key);
     const_iterator upper_bound(const key_type& key) const;
@@ -1224,6 +1242,223 @@ map<K, T, Compare, Allocator>::find_node(const key_type& key)
     }
 
     return m_nil;
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+inline std::pair<typename map<K, T, Compare, Allocator>::iterator,
+                 typename map<K, T, Compare, Allocator>::iterator>
+map<K, T, Compare, Allocator>::equal_range(const key_type& key)
+{
+    return std::make_pair(lower_bound(key), upper_bound(key));
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+inline std::pair<typename map<K, T, Compare, Allocator>::const_iterator,
+                 typename map<K, T, Compare, Allocator>::const_iterator>
+map<K, T, Compare, Allocator>::equal_range(const key_type& key) const
+{
+    return std::make_pair(lower_bound(key), upper_bound(key));
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+template <typename Key,
+          std::enable_if_t<
+              std::is_void<typename Compare::is_transparent>::value, int>>
+inline std::pair<typename map<K, T, Compare, Allocator>::iterator,
+                 typename map<K, T, Compare, Allocator>::iterator>
+map<K, T, Compare, Allocator>::equal_range(const Key& key)
+{
+    return std::make_pair(lower_bound(key), upper_bound(key));
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+template <typename Key,
+          std::enable_if_t<
+              std::is_void<typename Compare::is_transparent>::value, int>>
+inline std::pair<typename map<K, T, Compare, Allocator>::const_iterator,
+                 typename map<K, T, Compare, Allocator>::const_iterator>
+map<K, T, Compare, Allocator>::equal_range(const Key& key) const
+{
+    return std::make_pair(lower_bound(key), upper_bound(key));
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+inline typename map<K, T, Compare, Allocator>::iterator
+map<K, T, Compare, Allocator>::lower_bound(const key_type& key)
+{
+    Node* cur    = m_root;
+    Node* result = m_nil;
+    while (cur != m_nil)
+    {
+        // 找到第一个不小于key的节点
+        if (!m_comp(cur->value.first, key))
+        {
+            result = cur;
+            cur    = cur->left;
+        }
+        else
+            cur = cur->right;
+    }
+    return iterator(result, this);
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+inline typename map<K, T, Compare, Allocator>::const_iterator
+map<K, T, Compare, Allocator>::lower_bound(const key_type& key) const
+{
+    Node* cur    = m_root;
+    Node* result = m_nil;
+    while (cur != m_nil)
+    {
+        // 找到第一个不小于key的节点
+        if (!m_comp(cur->value.first, key))
+        {
+            result = cur;
+            cur    = cur->left;
+        }
+        else
+            cur = cur->right;
+    }
+    return const_iterator(result, this);
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+template <typename Key,
+          std::enable_if_t<
+              std::is_void<typename Compare::is_transparent>::value, int>>
+inline typename map<K, T, Compare, Allocator>::iterator
+map<K, T, Compare, Allocator>::lower_bound(const Key& key)
+{
+    Node* cur    = m_root;
+    Node* result = m_nil;
+    while (cur != m_nil)
+    {
+        // 找到第一个不小于key的节点
+        if (!m_comp(cur->value.first, key))
+        {
+            result = cur;
+            cur    = cur->left;
+        }
+        else
+            cur = cur->right;
+    }
+    return iterator(result, this);
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+template <typename Key,
+          std::enable_if_t<
+              std::is_void<typename Compare::is_transparent>::value, int>>
+inline typename map<K, T, Compare, Allocator>::const_iterator
+map<K, T, Compare, Allocator>::lower_bound(const Key& key) const
+{
+    Node* cur    = m_root;
+    Node* result = m_nil;
+    while (cur != m_nil)
+    {
+        // 找到第一个不小于key的节点
+        if (!m_comp(cur->value.first, key))
+        {
+            result = cur;
+            cur    = cur->left;
+        }
+        else
+            cur = cur->right;
+    }
+    return const_iterator(result, this);
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+template <typename Key,
+          std::enable_if_t<
+              std::is_void<typename Compare::is_transparent>::value, int>>
+inline typename map<K, T, Compare, Allocator>::iterator
+map<K, T, Compare, Allocator>::upper_bound(const Key& key)
+{
+    Node* cur    = m_root;
+    Node* result = m_nil;
+    while (cur != m_nil)
+    {
+        // 找到第一个大于key的节点
+        if (m_comp(key, cur->value.first))
+        {
+            result = cur;
+            cur    = cur->left;
+        }
+        else
+            break;
+    }
+    return iterator(result, this);
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+template <typename Key,
+          std::enable_if_t<
+              std::is_void<typename Compare::is_transparent>::value, int>>
+inline typename map<K, T, Compare, Allocator>::const_iterator
+map<K, T, Compare, Allocator>::upper_bound(const Key& key) const
+{
+    Node* cur    = m_root;
+    Node* result = m_nil;
+    while (cur != m_nil)
+    {
+        // 找到第一个大于key的节点
+        if (m_comp(key, cur->value.first))
+        {
+            result = cur;
+            cur    = cur->left;
+        }
+        else
+            break;
+    }
+    return const_iterator(result, this);
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+inline typename map<K, T, Compare, Allocator>::iterator
+map<K, T, Compare, Allocator>::upper_bound(const key_type& key)
+{
+    Node* cur    = m_root;
+    Node* result = m_nil;
+    while (cur != m_nil)
+    {
+        // 找到第一个大于key的节点
+        if (m_comp(key, cur->value.first))
+        {
+            result = cur;
+            cur    = cur->left;
+        }
+        else
+            break;
+    }
+    return iterator(result, this);
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+inline typename map<K, T, Compare, Allocator>::const_iterator
+map<K, T, Compare, Allocator>::upper_bound(const key_type& key) const
+{
+    Node* cur    = m_root;
+    Node* result = m_nil;
+    while (cur != m_nil)
+    {
+        // 找到第一个大于key的节点
+        if (m_comp(key, cur->value.first))
+        {
+            result = cur;
+            cur    = cur->left;
+        }
+        else
+            break;
+    }
+    return const_iterator(result, this);
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+inline typename map<K, T, Compare, Allocator>::key_compare_type
+map<K, T, Compare, Allocator>::key_comp() const
+{
+    return m_comp;
 }
 
 #ifndef NDEBUG
