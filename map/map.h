@@ -319,6 +319,8 @@ private:
     void destroy(Node* node);
     void insert_balance(Node* node);
     void erase_balance(Node* node);
+    Node* rotate_left(Node* node);
+    Node* rotate_right(Node* node);
     Node* find_node(const key_type& key);
 #ifndef NDEBUG
     bool validate_properties(Node* node, size_type& black_height) const;
@@ -1470,11 +1472,206 @@ inline void map<K, T, Compare, Allocator>::destroy(Node* node)
 template <typename K, typename T, typename Compare, typename Allocator>
 inline void map<K, T, Compare, Allocator>::insert_balance(Node* node)
 {
+    while (node != m_root && node->parent->color == Color::RED)
+    {
+        Node* parent  = node->parent;
+        Node* grandpa = parent->parent;
+
+        if (parent == grandpa->left)
+        {
+            Node* uncle = grandpa->right;
+
+            if (uncle->color == Color::RED)
+            {
+                parent->color  = Color::BLACK;
+                uncle->color   = Color::BLACK;
+                grandpa->color = Color::RED;
+                node           = grandpa;
+            }
+            else
+            {
+                if (node == parent->right)
+                {
+                    node = parent;
+                    rotate_left(node);
+                    parent = node->parent;
+                }
+                parent->color  = Color::BLACK;
+                grandpa->color = Color::RED;
+                rotate_right(grandpa);
+            }
+        }
+        else
+        {
+            Node* uncle = grandpa->left;
+
+            if (uncle->color == Color::RED)
+            {
+                parent->color  = Color::BLACK;
+                uncle->color   = Color::BLACK;
+                grandpa->color = Color::RED;
+                node           = grandpa;
+            }
+            else
+            {
+                if (node == parent->left)
+                {
+                    node = parent;
+                    rotate_right(node);
+                    parent = node->parent;
+                }
+                parent->color  = Color::BLACK;
+                grandpa->color = Color::RED;
+                rotate_left(grandpa);
+            }
+        }
+    }
+
+    m_root->color = Color::BLACK;
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
 inline void map<K, T, Compare, Allocator>::erase_balance(Node* node)
 {
+    while (node != m_root && node->color == Color::BLACK)
+    {
+        Node* parent  = node->parent;
+        Node* sibling = m_nil;
+
+        if (node == parent->left)
+        {
+            sibling = parent->right;
+            if (sibling->color == Color::RED)
+            {
+                sibling->color = Color::BLACK;
+                parent->color  = Color::RED;
+                rotate_left(parent);
+                sibling = parent->right;
+            }
+
+            if (sibling->left->color == Color::BLACK &&
+                sibling->right->color == Color::BLACK)
+            {
+                sibling->color = Color::RED;
+                node           = parent;
+            }
+            else
+            {
+                if (sibling->right->color == Color::BLACK)
+                {
+                    sibling->left->color = Color::BLACK;
+                    sibling->color       = Color::RED;
+                    rotate_right(sibling);
+                    sibling = parent->right;
+                }
+
+                sibling->color        = parent->color;
+                parent->color         = Color::BLACK;
+                sibling->right->color = Color::BLACK;
+                rotate_left(parent);
+                node = m_root;
+            }
+        }
+        else
+        {
+            sibling = parent->left;
+
+            if (sibling->color == Color::RED)
+            {
+                sibling->color = Color::BLACK;
+                parent->color  = Color::RED;
+                rotate_right(parent);
+                sibling = parent->left;
+            }
+
+            if (sibling->right->color == Color::BLACK &&
+                sibling->left->color == Color::BLACK)
+            {
+                sibling->color = Color::RED;
+                node           = parent;
+            }
+            else
+            {
+                if (sibling->left->color == Color::BLACK)
+                {
+                    sibling->right->color = Color::BLACK;
+                    sibling->color        = Color::RED;
+                    rotate_left(sibling);
+                    sibling = parent->left;
+                }
+
+                sibling->color       = parent->color;
+                parent->color        = Color::BLACK;
+                sibling->left->color = Color::BLACK;
+                rotate_right(parent);
+                node = m_root;
+            }
+        }
+    }
+
+    node->color = Color::BLACK;
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+inline typename map<K, T, Compare, Allocator>::Node*
+map<K, T, Compare, Allocator>::rotate_left(Node* node)
+{
+    Node* rotation_center = node->right;
+    Node* parent          = node->parent;
+
+    node->right = rotation_center->left;
+    if (rotation_center->left != m_nil)
+        rotation_center->left->parent = node;
+
+    rotation_center->parent = parent;
+    if (parent == m_nil)
+    {
+        m_root = rotation_center;
+    }
+    else if (node == parent->left)
+    {
+        parent->left = rotation_center;
+    }
+    else
+    {
+        parent->right = rotation_center;
+    }
+
+    rotation_center->left = node;
+    node->parent          = rotation_center;
+
+    return rotation_center;
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+inline typename map<K, T, Compare, Allocator>::Node*
+map<K, T, Compare, Allocator>::rotate_right(Node* node)
+{
+    Node* parent          = node->parent;
+    Node* rotation_center = node->left;
+
+    node->left = rotation_center->right;
+    if (rotation_center->right != m_nil)
+        rotation_center->right->parent = node;
+
+    rotation_center->parent = parent;
+    if (parent == m_nil)
+    {
+        m_root = rotation_center;
+    }
+    else if (node == parent->left)
+    {
+        parent->left = rotation_center;
+    }
+    else
+    {
+        parent->right = rotation_center;
+    }
+
+    rotation_center->right = node;
+    node->parent           = rotation_center;
+
+    return rotation_center;
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
