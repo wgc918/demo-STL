@@ -685,8 +685,9 @@ TEST_SUITE("Map Modifiers - Insert")
             {1, 10},
             {3, 30}
         };
-
+        CHECK(m.size() == 2);
         auto hint = m.find(1);
+        CHECK(hint != m.end());
         m.insert(hint, {2, 20});
 
         CHECK(m.size() == 3);

@@ -802,7 +802,7 @@ template <typename K, typename T, typename Compare, typename Allocator>
 inline typename map<K, T, Compare, Allocator>::const_iterator
 map<K, T, Compare, Allocator>::cbegin() const noexcept
 {
-    return const_iterator(m_root, this);
+    return begin();
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
@@ -1146,11 +1146,11 @@ map<K, T, Compare, Allocator>::erase(const_iterator pos)
         {
             if (node_to_replace->parent->left == node_to_replace)
             {
-                node_to_replace->left = fill_node;
+                node_to_replace->parent->left = fill_node;
             }
             else
             {
-                node_to_replace->right = fill_node;
+                node_to_replace->parent->right = fill_node;
             }
             fill_node->parent = node_to_replace->parent;
 
@@ -1258,11 +1258,11 @@ map<K, T, Compare, Allocator>::erase(const key_type& key)
         {
             if (node_to_replace->parent->left == node_to_replace)
             {
-                node_to_replace->left = fill_node;
+                node_to_replace->parent->left = fill_node;
             }
             else
             {
-                node_to_replace->right = fill_node;
+                node_to_replace->parent->right = fill_node;
             }
             fill_node->parent = node_to_replace->parent;
 
