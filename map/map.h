@@ -3,6 +3,7 @@
 #include <initializer_list>
 #include <iterator>
 #include <memory>
+#include <stdexcept>
 #include <type_traits>
 #include <vector>
 
@@ -533,6 +534,8 @@ map<K, T, Compare, Allocator>::map()
 
     m_root         = m_nil;
     m_root->parent = m_nil;
+    m_root->left   = m_nil;
+    m_root->right  = m_nil;
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
@@ -544,6 +547,8 @@ map<K, T, Compare, Allocator>::map(const Compare& comp)
 
     m_root         = m_nil;
     m_root->parent = m_nil;
+    m_root->left   = m_nil;
+    m_root->right  = m_nil;
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
@@ -557,6 +562,8 @@ map<K, T, Compare, Allocator>::map(InputIt first, InputIt last,
 
     m_root         = m_nil;
     m_root->parent = m_nil;
+    m_root->left   = m_nil;
+    m_root->right  = m_nil;
 
     for (; first != last; first++)
         insert(*first);
@@ -572,6 +579,8 @@ map<K, T, Compare, Allocator>::map(std::initializer_list<value_type> ilist,
 
     m_root         = m_nil;
     m_root->parent = m_nil;
+    m_root->left   = m_nil;
+    m_root->right  = m_nil;
 
     for (const value_type& val : ilist)
         insert(val);
@@ -587,6 +596,8 @@ map<K, T, Compare, Allocator>::map(const std::vector<value_type>& vec,
 
     m_root         = m_nil;
     m_root->parent = m_nil;
+    m_root->left   = m_nil;
+    m_root->right  = m_nil;
 
     for (const value_type& val : vec)
         insert(val);
@@ -606,7 +617,10 @@ map<K, T, Compare, Allocator>::map(const std::vector<value_type>& vec,
 
     if (vec.empty())
     {
-        m_root = m_nil;
+        m_root         = m_nil;
+        m_root->parent = m_nil;
+        m_root->left   = m_nil;
+        m_root->right  = m_nil;
         return;
     }
 
@@ -642,6 +656,8 @@ map<K, T, Compare, Allocator>::map(map&& other) noexcept
     alloc_traits::construct(other.m_node_alloc, other.m_nil);
     other.m_root         = other.m_nil;
     other.m_root->parent = other.m_nil;
+    other.m_root->left   = other.m_nil;
+    other.m_root->right  = other.m_nil;
     other.m_size         = 0;
 }
 
@@ -672,17 +688,18 @@ inline map<K, T, Compare, Allocator>& map<K, T, Compare, Allocator>::operator=(
         return *this;
 
     clear();
-    m_root         = other.m_root;
-    m_nil          = other.m_nil;
-    m_size         = other.m_size;
-    m_comp         = std::move(other.m_comp);
-    m_node_alloc   = std::move(other.m_node_alloc);
-    m_root->parent = m_nil;
+    m_root       = other.m_root;
+    m_nil        = other.m_nil;
+    m_size       = other.m_size;
+    m_comp       = std::move(other.m_comp);
+    m_node_alloc = std::move(other.m_node_alloc);
 
     other.m_nil = alloc_traits::allocate(other.m_node_alloc, 1);
     alloc_traits::construct(other.m_node_alloc, other.m_nil);
     other.m_root         = other.m_nil;
     other.m_root->parent = other.m_nil;
+    other.m_root->left   = other.m_nil;
+    other.m_root->right  = other.m_nil;
     other.m_size         = 0;
 
     return *this;
