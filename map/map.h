@@ -615,18 +615,15 @@ map<K, T, Compare, Allocator>::map(const std::vector<value_type>& vec,
     m_nil = alloc_traits::allocate(m_node_alloc, 1);
     alloc_traits::construct(m_node_alloc, m_nil);
 
-    if (vec.empty())
-    {
-        m_root         = m_nil;
-        m_root->parent = m_nil;
-        m_root->left   = m_nil;
-        m_root->right  = m_nil;
-        return;
-    }
-
     std::vector<value_type> vec_copy(vec);
     m_root         = build_tree(vec_copy, 0, vec_copy.size() - 1, 0);
     m_root->parent = m_nil;
+
+    if (vec.empty())
+    {
+        m_root->left  = m_nil;
+        m_root->right = m_nil;
+    }
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
@@ -735,7 +732,10 @@ template <typename K, typename T, typename Compare, typename Allocator>
 inline const typename map<K, T, Compare, Allocator>::mapped_type&
 map<K, T, Compare, Allocator>::at(const key_type& key) const
 {
-    return at(key);
+    const_iterator it = find(key);
+    if (it == end())
+        throw std::out_of_range("map::at: key not found");
+    return it->second;
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
@@ -1145,7 +1145,7 @@ map<K, T, Compare, Allocator>::erase(const_iterator pos)
         }
 
         // 把 cur 与 node_to_replace 进行替换
-        if (cur->parent = m_nil)
+        if (cur->parent == m_nil)
         {
             m_root = node_to_replace;
         }
@@ -1257,7 +1257,7 @@ map<K, T, Compare, Allocator>::erase(const key_type& key)
         }
 
         // 把 cur 与 node_to_replace 进行替换
-        if (cur->parent = m_nil)
+        if (cur->parent == m_nil)
         {
             m_root = node_to_replace;
         }
@@ -1361,10 +1361,7 @@ map<K, T, Compare, Allocator>::build_tree(std::vector<value_type>& vec,
                                           size_type left, size_type right,
                                           size_type depth)
 {
-    if (vec.empty())
-        return m_nil;
-
-    if (left > right)
+    if (vec.empty() || left > right)
         return m_nil;
 
     size_type         mid = left + (right - left) / 2;
@@ -1372,10 +1369,7 @@ map<K, T, Compare, Allocator>::build_tree(std::vector<value_type>& vec,
 
     Node* root = alloc_traits::allocate(m_node_alloc, 1);
     alloc_traits::construct(m_node_alloc, root, val.first, val.second);
-    root->color  = (depth & 1) == 0 ? Color::BLACK : Color::RED;
-    root->left   = m_nil;
-    root->right  = m_nil;
-    root->parent = m_nil;
+    root->color = (depth & 1) == 0 ? Color::BLACK : Color::RED;
 
     root->left  = build_tree(vec, left, mid - 1, depth + 1);
     root->right = build_tree(vec, mid + 1, right, depth + 1);
