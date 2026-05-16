@@ -266,8 +266,8 @@ public:
 #endif
 
 private:
-    Node* build_tree(std::vector<value_type>& vec, size_type left,
-                     size_type right, size_type depth);
+    Node* build_tree(std::vector<value_type>& vec, int left, int right,
+                     size_type depth);
     Node* copy_node(Node* cur, const map& other);
     void destroy(Node* node);
     void insert_balance(Node* node);
@@ -616,7 +616,7 @@ map<K, T, Compare, Allocator>::map(const std::vector<value_type>& vec,
     alloc_traits::construct(m_node_alloc, m_nil);
 
     std::vector<value_type> vec_copy(vec);
-    m_root         = build_tree(vec_copy, 0, vec_copy.size() - 1, 0);
+    m_root = build_tree(vec_copy, 0, static_cast<int>(vec_copy.size()) - 1, 0);
     m_root->parent = m_nil;
 
     if (vec.empty())
@@ -1358,13 +1358,12 @@ map<K, T, Compare, Allocator>::find(const key_type& key) const
 template <typename K, typename T, typename Compare, typename Allocator>
 inline typename map<K, T, Compare, Allocator>::Node*
 map<K, T, Compare, Allocator>::build_tree(std::vector<value_type>& vec,
-                                          size_type left, size_type right,
-                                          size_type depth)
+                                          int left, int right, size_type depth)
 {
     if (vec.empty() || left > right)
         return m_nil;
 
-    size_type         mid = left + (right - left) / 2;
+    int               mid = left + (right - left) / 2;
     const value_type& val = vec[mid];
 
     Node* root = alloc_traits::allocate(m_node_alloc, 1);
