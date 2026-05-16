@@ -213,10 +213,10 @@ public:
     const_iterator end() const;
     const_iterator cend() const noexcept;
     reverse_iterator rbegin();
-    reverse_iterator rbegin() const;
+    const_reverse_iterator rbegin() const;
     const_reverse_iterator crbegin() const noexcept;
     reverse_iterator rend();
-    reverse_iterator rend() const;
+    const_reverse_iterator rend() const;
     const_reverse_iterator crend() const noexcept;
 
     size_type size() const;
@@ -820,10 +820,10 @@ map<K, T, Compare, Allocator>::rbegin()
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
-inline typename map<K, T, Compare, Allocator>::reverse_iterator
+inline typename map<K, T, Compare, Allocator>::const_reverse_iterator
 map<K, T, Compare, Allocator>::rbegin() const
 {
-    return reverse_iterator(cend());
+    return const_reverse_iterator(cend());
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
@@ -841,10 +841,10 @@ map<K, T, Compare, Allocator>::rend()
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
-inline typename map<K, T, Compare, Allocator>::reverse_iterator
+inline typename map<K, T, Compare, Allocator>::const_reverse_iterator
 map<K, T, Compare, Allocator>::rend() const
 {
-    return reverse_iterator(cbegin());
+    return const_reverse_iterator(cbegin());
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
