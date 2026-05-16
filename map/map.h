@@ -276,6 +276,8 @@ private:
     Node* rotate_right(Node* node);
     Node* find_node(const key_type& key);
     const Node* find_node(const key_type& key) const;
+    Node* max_node(Node* node);
+    const Node* max_node(const Node* node) const;
 #ifndef NDEBUG
     bool validate_properties(Node* node, size_type& black_height) const;
 #endif
@@ -353,6 +355,12 @@ template <typename K, typename T, typename Compare, typename Allocator>
 inline typename map<K, T, Compare, Allocator>::iterator&
 map<K, T, Compare, Allocator>::iterator::operator--()
 {
+    if (m_node == m_container->m_nil)
+    {
+        m_node = m_container->max_node(m_container->m_root);
+        return *this;
+    }
+
     if (m_node->left != m_container->m_nil)
     {
         m_node = m_node->left;
@@ -473,6 +481,12 @@ template <typename K, typename T, typename Compare, typename Allocator>
 inline typename map<K, T, Compare, Allocator>::const_iterator&
 map<K, T, Compare, Allocator>::const_iterator::operator--()
 {
+    if (m_node == m_container->m_nil)
+    {
+        m_node = const_cast<Node*>(m_container->max_node(m_container->m_root));
+        return *this;
+    }
+
     if (m_node->left != m_container->m_nil)
     {
         m_node = m_node->left;
@@ -1655,6 +1669,24 @@ map<K, T, Compare, Allocator>::find_node(const key_type& key) const
     }
 
     return m_nil;
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+inline typename map<K, T, Compare, Allocator>::Node*
+map<K, T, Compare, Allocator>::max_node(Node* node)
+{
+    while (node->right != m_nil)
+        node = node->right;
+    return node;
+}
+
+template <typename K, typename T, typename Compare, typename Allocator>
+inline const typename map<K, T, Compare, Allocator>::Node*
+map<K, T, Compare, Allocator>::max_node(const Node* node) const
+{
+    while (node->right != m_nil)
+        node = node->right;
+    return node;
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
