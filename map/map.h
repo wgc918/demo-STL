@@ -359,7 +359,8 @@ public:
     /// @param first 范围起始迭代器
     /// @param last 范围结束迭代器
     /// @param comp 比较函数对象，默认为 Compare()
-    template <typename InputIt>
+    template <typename InputIt,
+              std::enable_if_t<!std::is_integral<InputIt>::value, int> = 0>
     map(InputIt first, InputIt last, const Compare& comp = Compare());
 
     /// @brief 初始化列表构造函数
@@ -529,7 +530,8 @@ public:
     /// @tparam InputIt 输入迭代器类型
     /// @param first 范围起始迭代器
     /// @param last 范围结束迭代器
-    template <typename InputIt>
+    template <typename InputIt,
+              std::enable_if_t<!std::is_integral<InputIt>::value, int> = 0>
     void insert(InputIt first, InputIt last);
 
     /// @brief 插入初始化列表中的元素
@@ -1013,7 +1015,8 @@ map<K, T, Compare, Allocator>::map(const Compare& comp)
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
-template <typename InputIt>
+template <typename InputIt,
+          std::enable_if_t<!std::is_integral<InputIt>::value, int>>
 map<K, T, Compare, Allocator>::map(InputIt first, InputIt last,
                                    const Compare& comp)
     : m_root(nullptr), m_nil(nullptr), m_size(0), m_comp(comp), m_node_alloc()
@@ -1453,7 +1456,8 @@ map<K, T, Compare, Allocator>::insert(const_iterator pos, value_type&& value)
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
-template <typename InputIt>
+template <typename InputIt,
+          std::enable_if_t<!std::is_integral<InputIt>::value, int>>
 inline void map<K, T, Compare, Allocator>::insert(InputIt first, InputIt last)
 {
     for (; first != last; ++first)
@@ -1588,7 +1592,7 @@ map<K, T, Compare, Allocator>::erase(const_iterator pos)
         // 把 node_to_replace 分离出来，并用 fill_node 去代替它
         if (node_to_replace->parent == cur)
         {
-            //fill_node->parent = node_to_replace;
+            // fill_node->parent = node_to_replace;
         }
         else
         {
@@ -1701,7 +1705,7 @@ map<K, T, Compare, Allocator>::erase(const key_type& key)
         // 把 node_to_replace 分离出来，并用 fill_node 去代替它
         if (node_to_replace->parent == cur)
         {
-            //fill_node->parent = node_to_replace;
+            // fill_node->parent = node_to_replace;
         }
         else
         {
@@ -1805,17 +1809,8 @@ template <typename K, typename T, typename Compare, typename Allocator>
 inline typename map<K, T, Compare, Allocator>::const_iterator
 map<K, T, Compare, Allocator>::find(const key_type& key) const
 {
-    const Node* cur = m_root;
-    while (cur != m_nil)
-    {
-        if (m_comp(key, cur->value.first))
-            cur = cur->left;
-        else if (m_comp(cur->value.first, key))
-            cur = cur->right;
-        else
-            return const_iterator(const_cast<Node*>(cur), this);
-    }
-    return const_iterator(const_cast<Node*>(m_nil), this);
+    const Node* cur = find_node(key);
+    return const_iterator(const_cast<Node*>(cur), this);
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
