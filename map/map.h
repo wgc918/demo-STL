@@ -1760,7 +1760,7 @@ map<K, T, Compare, Allocator>::upper_bound(const key_type& key)
             cur    = cur->left;
         }
         else
-            break;
+            cur = cur->right;
     }
     return iterator(result, this);
 }
@@ -1780,7 +1780,7 @@ map<K, T, Compare, Allocator>::upper_bound(const key_type& key) const
             cur    = cur->left;
         }
         else
-            break;
+            cur = cur->right;
     }
     return const_iterator(result, this);
 }
