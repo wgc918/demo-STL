@@ -173,6 +173,7 @@ TEST_SUITE("Map Constructors")
         CHECK(m[1] == "one");
         CHECK(m[2] == "two");
         CHECK(m[3] == "three");
+        assert_map_sorted(m);
     }
 
     TEST_CASE("Iterator range constructor")
@@ -187,6 +188,7 @@ TEST_SUITE("Map Constructors")
         CHECK(m[1] == 10);
         CHECK(m[2] == 20);
         CHECK(m[3] == 30);
+        assert_map_sorted(m);
     }
 
     TEST_CASE("Copy constructor")
@@ -200,7 +202,9 @@ TEST_SUITE("Map Constructors")
         CHECK(m2.size() == 2);
         CHECK(m2[1] == "one");
         CHECK(m2[2] == "two");
+        assert_map_sorted(m2);
         CHECK(maps_equal(m1, m2));
+        CHECK(m1.size() == 2);
     }
 
     TEST_CASE("Move constructor")
@@ -216,7 +220,9 @@ TEST_SUITE("Map Constructors")
         CHECK(m2.size() == size_before);
         CHECK(m2[1] == "one");
         CHECK(m2[2] == "two");
+        assert_map_sorted(m2);
         CHECK(m1.empty());
+        CHECK(m1.size() == 0);
     }
 
     TEST_CASE("Constructor from sorted vector")
@@ -302,6 +308,7 @@ TEST_SUITE("Map Assignment Operators")
         CHECK(m[1] == "one");
         CHECK(m[2] == "two");
         CHECK(m[3] == "three");
+        assert_map_sorted(m);
     }
 
     TEST_CASE("Self assignment")
@@ -331,6 +338,7 @@ TEST_SUITE("Map Element Access")
         CHECK(m.size() == 2);
         CHECK(m[1] == "one");
         CHECK(m[2] == "two");
+        assert_map_sorted(m);
     }
 
     TEST_CASE("operator[] with rvalue key")
@@ -376,12 +384,21 @@ TEST_SUITE("Map Element Access")
     TEST_CASE("operator[] modifies existing element")
     {
         demo::map<int, std::string> m = {
-            {1, "one"}
+            {1, "one"  },
+            {2, "two"  },
+            {3, "three"}
         };
         m[1] = "modified";
-
+        m[2] = "modified";
+        m[3] = "modified";
+        CHECK(m.size() == 3);
+        m[0] = "modified";
+        assert_map_sorted(m);
         CHECK(m[1] == "modified");
-        CHECK(m.size() == 1);
+        CHECK(m[2] == "modified");
+        CHECK(m[3] == "modified");
+        CHECK(m[0] == "modified");
+        CHECK(m.size() == 4);
     }
 }
 
@@ -464,6 +481,8 @@ TEST_SUITE("Map Iterators")
         CHECK(it->first == 2);
         ++it;
         CHECK(it->first == 3);
+        ++it;
+        CHECK(it == m.end());
     }
 
     TEST_CASE("iterator decrement operator--")
@@ -679,7 +698,7 @@ TEST_SUITE("Map Modifiers - Insert")
         CHECK(result.first->second == "one");
     }
 
-    TEST_CASE("insert() with hint position")
+    TEST_CASE("insert() with hint position successfully")
     {
         demo::map<int, int> m = {
             {1, 10},
@@ -688,10 +707,28 @@ TEST_SUITE("Map Modifiers - Insert")
         CHECK(m.size() == 2);
         auto hint = m.find(1);
         CHECK(hint != m.end());
-        m.insert(hint, {2, 20});
-
+        auto result = m.insert(hint, {0, 20});
+        CHECK(result->second == 20);
+        CHECK(result->first == 0);
         CHECK(m.size() == 3);
-        CHECK(m[2] == 20);
+        CHECK(m[0] == 20);
+        assert_map_sorted(m);
+    }
+
+    TEST_CASE("insert() with hint position failed")
+    {
+        demo::map<int, int> m = {
+            {1, 10},
+            {3, 30}
+        };
+        CHECK(m.size() == 2);
+        auto hint = m.find(1);
+        CHECK(hint != m.end());
+        auto result = m.insert(hint, {2, 20});
+        CHECK(result->second == 10);
+        CHECK(result->first == 1);
+        CHECK(m.size() == 2);
+        CHECK(m[1] == 10);
         assert_map_sorted(m);
     }
 
@@ -710,6 +747,7 @@ TEST_SUITE("Map Modifiers - Insert")
         CHECK(m[1] == 10);
         CHECK(m[2] == 20);
         CHECK(m[3] == 30);
+        assert_map_sorted(m);
     }
 
     TEST_CASE("insert() with initializer list")
@@ -726,6 +764,7 @@ TEST_SUITE("Map Modifiers - Insert")
         CHECK(m[1] == 10);
         CHECK(m[2] == 20);
         CHECK(m[3] == 30);
+        assert_map_sorted(m);
     }
 
     TEST_CASE("insert_or_assign() inserts new element")
@@ -901,6 +940,9 @@ TEST_SUITE("Map Modifiers - Erase")
 
         CHECK(m.size() == 2);
         CHECK(m.find(2) == m.end());
+        CHECK(m.find(1) != m.end());
+        CHECK(m.find(3) != m.end());
+        CHECK(m.begin()->first == 1);
         assert_map_sorted(m);
     }
 
@@ -1103,6 +1145,7 @@ TEST_SUITE("Map Operations")
         CHECK(m1[2] == 20);
         CHECK(m1[3] == 30);
         CHECK(m1[4] == 40);
+        assert_map_sorted(m1);
     }
 
     TEST_CASE("merge() with overlapping keys")
@@ -1121,6 +1164,7 @@ TEST_SUITE("Map Operations")
         CHECK(m1.size() == 3);
         CHECK(m1[2] == 20);
         CHECK(m1[3] == 300);
+        assert_map_sorted(m1);
     }
 
     TEST_CASE("merge() with empty map")
@@ -1408,6 +1452,7 @@ TEST_SUITE("Map Stress Tests")
         }
 
         CHECK(m.size() > 0);
+        assert_map_sorted(m);
     }
 
     TEST_CASE("performance test - insert speed")
@@ -1426,6 +1471,28 @@ TEST_SUITE("Map Stress Tests")
 
         CHECK(m.size() == 50000);
         CHECK(duration.count() < 5000);
+    }
+
+    TEST_CASE("performance test - build speed")
+    {
+        demo::map<int, int>                    m;
+        std::vector<std::pair<const int, int>> keys;
+        auto start = std::chrono::high_resolution_clock::now();
+        for (int i = 0; i < 50000; ++i)
+        {
+            m.insert({i, i});
+            keys.push_back({i, i});
+        }
+        auto end = std::chrono::high_resolution_clock::now();
+        auto duration1 =
+            std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+
+        start = std::chrono::high_resolution_clock::now();
+        demo::map<int, int> m2(keys, demo::map<int, int>::sorted_tag());
+        end = std::chrono::high_resolution_clock::now();
+        auto duration2 =
+            std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+        CHECK(duration2.count() < duration1.count());
     }
 
     TEST_CASE("performance test - find speed")
