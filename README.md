@@ -33,6 +33,7 @@
 | `demo::forward_list` | 单向链表 | ✅ 已实现 | 前向迭代、O(1) 前端操作、低内存开销     |
 | `demo::list`         | 双向链表 | ✅ 已实现 | 双向迭代、O(1) 任意位置操作、迭代器稳定 |
 | `demo::deque`        | 双端队列 | ✅ 已实现 | 双端操作、分段存储、随机访问迭代器      |
+| `demo::map`          | 关联容器 | ✅ 已实现 | 有序键值对、红黑树实现、O(log n) 查找   |
 
 ### 核心功能
 
@@ -59,6 +60,13 @@
   - O(1) 时间复杂度的双端增删操作（`push_front`/`pop_front`、`push_back`/`pop_back`）
   - 分段存储结构（Map + Buffer），避免扩容时的大量元素移动
   - 支持移动语义和完美转发，高效的 emplace 系列接口
+
+- **关联容器 (`demo::map`)**
+  - 基于红黑树实现，保证 O(log n) 的插入、删除和查找操作
+  - 存储键值对（key-value pairs），键唯一且自动排序
+  - 支持双向迭代器，按中序遍历顺序访问元素
+  - 提供 `find()`、`lower_bound()`、`upper_bound()`、`equal_range()` 等查找接口
+  - 支持 `insert_or_assign()`、`try_emplace()` 等高效插入操作
 
 ## 快速开始
 
@@ -144,14 +152,22 @@ demo-STL/
 │       ├── doctest.h            # 测试框架
 │       ├── test_vector.cpp      # vector测试用例
 │       └── main.cpp             # 测试入口
-└── deque/                       # 双端队列容器模块
-    ├── deque.h                  # 双端队列实现
-    ├── deque.md                 # deque详细文档
-    └── utest/                   # 测试用例目录
-        ├── CMakeLists.txt       # 测试构建配置
-        ├── doctest.h            # 测试框架
-        ├── test_deque.cpp       # deque测试用例
-        └── main.cpp             # 测试入口
+├── deque/                       # 双端队列容器模块
+│   ├── deque.h                  # 双端队列实现
+│   ├── deque.md                 # deque详细文档
+│   └── utest/                   # 测试用例目录
+│       ├── CMakeLists.txt       # 测试构建配置
+│       ├── doctest.h            # 测试框架
+│       ├── test_deque.cpp       # deque测试用例
+│       └── main.cpp             # 测试入口
+└── map/                         # 关联容器模块
+│     ├── map.h                  # map实现
+│     └── map.md                 # map详细文档
+│     └── utest/                 # 测试用例目录
+│       ├── CMakeLists.txt       # 测试构建配置
+│       ├── doctest.h            # 测试框架
+│       ├── test_map.cpp         # map测试用例
+│       └── main.cpp             # 测试入口
 ```
 
 ## API 参考
@@ -175,12 +191,12 @@ demo-STL/
 
 #### 迭代器接口
 
-| 迭代器类型         | 说明           | 支持操作                               | 支持容器      |
-| :----------------- | :------------- | :------------------------------------- | :------------ |
-| `iterator`         | 可变迭代器     | `++`, `--`, `*`, `->`                  | 所有容器      |
-| `const_iterator`   | 常量迭代器     | 只读访问                               | 所有容器      |
-| `reverse_iterator` | 反向迭代器     | 反向遍历                               | list, deque   |
-| `random_access`    | 随机访问迭代器 | `++`, `--`, `[]`, `+`, `-`, 比较运算符 | vector, deque |
+| 迭代器类型         | 说明           | 支持操作                               | 支持容器         |
+| :----------------- | :------------- | :------------------------------------- | :--------------- |
+| `iterator`         | 可变迭代器     | `++`, `--`, `*`, `->`                  | 所有容器         |
+| `const_iterator`   | 常量迭代器     | 只读访问                               | 所有容器         |
+| `reverse_iterator` | 反向迭代器     | 反向遍历                               | list, deque, map |
+| `random_access`    | 随机访问迭代器 | `++`, `--`, `[]`, `+`, `-`, 比较运算符 | vector, deque    |
 
 ## 测试框架
 
@@ -231,8 +247,8 @@ demo-STL/
 
 ---
 
-**文档版本**：v1.5
-**最后更新**：2026-05-05
+**文档版本**：v1.6
+**最后更新**：2026-05-17
 **项目地址**：[demo-STL](https://github.com/wgc918/demo-STL)
 
 > **提示**：如需了解各容器的详细实现，请查阅 [自定义STL容器综合文档](./自定义STL容器综合文档.md)

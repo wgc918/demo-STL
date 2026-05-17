@@ -235,14 +235,154 @@ class iterator {
 
 **详细文档跳转**：跳转至[demo::deque容器开发文档](./deque/deque.md)。
 
-## 二、关联式容器（Associative Containers）【待扩展】
+## 二、关联式容器（Associative Containers）
 
 关联式容器按照**键值（key）**存储元素，元素自动排序（默认升序），支持基于键值的快速查找，核心特点是元素有序且不重复（或可重复，如multiset/multimap），适配查找频繁的场景。
+
+### 1. demo::map（有序键值对容器）
+
+**核心定位**：基于红黑树实现的关联容器，存储键值对（key-value pairs），键唯一且自动按升序排序，支持 O(log n) 时间复杂度的插入、删除和查找操作，是实现字典、配置管理等场景的理想选择。
+
+**设计目标**：对齐 `std::map` 接口，实现红黑树的自平衡机制，提供高效的键值查找和有序遍历能力，补充异常安全机制和迭代器稳定性。
+
+**核心特性**：
+
+- **红黑树实现**：底层基于红黑树数据结构，保证最坏情况下 O(log n) 的时间复杂度；
+- **键值对存储**：存储 `std::pair<const K, T>` 类型，键不可修改，值可修改；
+- **键唯一性**：自动保证键的唯一性，重复键插入会被忽略；
+- **有序遍历**：迭代器按中序遍历顺序访问元素（按键升序）；
+- **高效查找**：提供 `find()`、`lower_bound()`、`upper_bound()`、`equal_range()` 等查找接口；
+- **双向迭代器**：支持双向迭代器（`std::bidirectional_iterator_tag`），支持前置/后置自增、自减操作；
+- **高效插入**：支持 `insert_or_assign()`（插入或赋值）、`try_emplace()`（原地构造）等高效插入接口；
+- **移动语义优化**：支持移动构造、移动赋值，避免不必要的拷贝开销；
+- **异常安全**：`at()` 访问不存在的键抛 `std::out_of_range` 异常，内存分配失败抛 `std::bad_alloc` 异常；
+- **扩展接口**：支持从已排序的 `vector` 快速构建平衡树（`sorted_tag`），优化初始化效率。
+
+**核心数据结构设计原理**：
+
+`map` 采用红黑树（Red-Black Tree）实现，红黑树是一种自平衡二叉搜索树，通过维护节点颜色（红色/黑色）和旋转操作保持树的平衡，确保：
+
+1. 根节点为黑色；
+2. 每个红色节点的子节点均为黑色（红节点不相邻）；
+3. 从任意节点到其所有叶子节点的路径包含相同数量的黑色节点；
+4. 叶子节点（哨兵节点）为黑色。
+
+这些性质保证了树的高度为 O(log n)，从而实现高效的查找、插入和删除操作。
+
+**常用操作方法及时间复杂度**：
+
+| 操作方法                   | 功能描述         | 时间复杂度 | 说明              |
+| :------------------------- | :--------------- | :--------- | :---------------- |
+| `insert(const value_type&)` | 插入键值对       | O(log n)   | 键已存在则忽略    |
+| `emplace(key, args...)`    | 原地构造键值对   | O(log n)   | 避免拷贝开销      |
+| `try_emplace(key, args...)`| 键不存在时插入   | O(log n)   | 键存在则不操作    |
+| `insert_or_assign(key, val)`| 插入或覆盖值     | O(log n)   | 键存在则更新值    |
+| `erase(key)`               | 删除指定键的元素 | O(log n)   | 返回下一个迭代器  |
+| `erase(iterator)`          | 删除迭代器指向元素 | O(log n)  | 返回下一个迭代器  |
+| `find(key)`                | 查找指定键       | O(log n)   | 返回迭代器        |
+| `count(key)`               | 统计键出现次数   | O(log n)   | map 中返回 0 或 1 |
+| `lower_bound(key)`         | 第一个不小于key的元素 | O(log n) | 返回迭代器        |
+| `upper_bound(key)`         | 第一个大于key的元素 | O(log n) | 返回迭代器        |
+| `equal_range(key)`         | 等于key的元素范围 | O(log n) | 返回迭代器对      |
+| `operator[](key)`          | 访问或插入元素   | O(log n)   | 键不存在则插入    |
+| `at(key)`                  | 访问元素（带检查） | O(log n) | 键不存在抛异常    |
+| `size()`                   | 返回元素个数     | O(1)       | 直接返回成员变量  |
+| `empty()`                  | 判断是否为空     | O(1)       | 比较根节点        |
+| `clear()`                  | 清空容器         | O(n)       | 销毁所有节点      |
+| `swap(map&)`               | 交换两个容器     | O(1)       | 交换内部指针      |
+
+**使用示例代码**：
+
+```cpp
+#include <iostream>
+#include "map/map.h"
+#include <string>
+
+int main() {
+    // 创建 map 容器
+    demo::map<std::string, int> m{{"apple", 1}, {"banana", 2}, {"cherry", 3}};
+
+    // 插入元素
+    m.insert({"date", 4});
+    m.emplace("elderberry", 5);
+    m["fig"] = 6;
+
+    // 访问元素
+    std::cout << "apple: " << m.at("apple") << std::endl;
+    std::cout << "banana: " << m["banana"] << std::endl;
+
+    // 查找元素
+    auto it = m.find("cherry");
+    if (it != m.end()) {
+        std::cout << "Found: " << it->first << " -> " << it->second << std::endl;
+    }
+
+    // 有序遍历（按键升序）
+    std::cout << "Forward traversal: ";
+    for (const auto& [key, value] : m) {
+        std::cout << key << ":" << value << " ";
+    }
+    std::cout << std::endl;
+
+    // 反向遍历
+    std::cout << "Reverse traversal: ";
+    for (auto it = m.rbegin(); it != m.rend(); ++it) {
+        std::cout << it->first << ":" << it->second << " ";
+    }
+    std::cout << std::endl;
+
+    // 使用 lower_bound 和 upper_bound
+    auto range = m.equal_range("cherry");
+    std::cout << "Range size: " << std::distance(range.first, range.second) << std::endl;
+
+    // 使用 insert_or_assign
+    m.insert_or_assign("apple", 10);
+    std::cout << "apple after insert_or_assign: " << m["apple"] << std::endl;
+
+    // 使用 try_emplace
+    m.try_emplace("grape", 7);
+    m.try_emplace("apple", 100); // 键已存在，不覆盖
+    std::cout << "apple after try_emplace: " << m["apple"] << std::endl;
+
+    // 删除元素
+    m.erase("banana");
+    std::cout << "Size after erase: " << m.size() << std::endl;
+
+    return 0;
+}
+```
+
+**输出结果**：
+
+```
+apple: 1
+banana: 2
+Found: cherry -> 3
+Forward traversal: apple:1 banana:2 cherry:3 date:4 elderberry:5 fig:6 
+Reverse traversal: fig:6 elderberry:5 date:4 cherry:3 banana:2 apple:1 
+Range size: 1
+apple after insert_or_assign: 10
+apple after try_emplace: 10
+Size after erase: 5
+```
+
+**适用场景**：
+
+| 场景             | 推荐使用 map 的原因                     |
+| :--------------- | :------------------------------------- |
+| 字典/配置管理    | 键值对存储，快速查找                   |
+| 缓存系统         | 按键快速查找、插入、删除               |
+| 有序数据存储     | 自动排序，支持有序遍历                 |
+| 去重存储         | 键唯一性保证，自动去重                 |
+| 范围查询         | `lower_bound()`/`upper_bound()` 高效范围查找 |
+
+**详细文档跳转**：跳转至[demo::map容器开发文档](./map/map.md)
+
+### 待实现关联式容器
 
 后续将逐步实现以下关联式容器，实现后将同步更新本总览及对应详细文档：
 
 - demo::set（有序不重复集合）：基于红黑树实现，键值即元素值，不允许重复，支持快速查找；
-- demo::map（有序键值对容器）：基于红黑树实现，键值唯一，映射键值对（key-value），支持基于键的快速查找；
 - demo::multiset（有序可重复集合）：set的扩展，允许键值重复；
 - demo::multimap（有序可重复键值对容器）：map的扩展，允许键值重复。
 
@@ -290,7 +430,8 @@ class iterator {
 | v1.3   | 1. 新增 demo::deque 容器简介及跳转指引；2. 补充 deque 核心特性、适用场景和详细文档跳转；3. 更新版本历史记录                                                                                                                            | 2026-04-27 |
 | v1.4   | 1. 更新 demo::deque 为已实现状态；2. 补充 deque 核心数据结构设计原理、关键成员函数实现逻辑与时间复杂度分析、与 vector 对比、内存管理机制、迭代器实现原理及失效情况、异常安全保证级别、完整使用示例；3. 更新版本历史记录                | 2026-04-27 |
 | v1.5   | 1. 完善 demo::deque 文档，添加常用操作方法及时间复杂度表格；2. 补充 deque 与 vector、list 的三容器对比分析；3. 添加适用场景建议表格；4. 详细说明迭代器实现原理和异常安全保证；5. 更新 README.md 中 deque 相关内容；6. 更新版本历史记录 | 2026-05-05 |
-| 待更新 | 1. 扩展关联式容器、容器适配器的框架内容                                                                                                                                                                                                | -          |
+| v1.6   | 1. 更新 demo::map 为已实现状态；2. 补充 map 核心特性、核心数据结构设计原理、常用操作方法及时间复杂度、完整使用示例和输出结果；3. 添加适用场景建议表格；4. 更新 README.md 中 map 相关内容；5. 更新版本历史记录 | 2026-05-17 |
+| 待更新 | 1. 扩展关联式容器（set、multiset、multimap）、容器适配器的框架内容                                                                                                                                                                        | -          |
 
 # 注意事项
 
