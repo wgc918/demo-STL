@@ -146,7 +146,7 @@ public:
 
     public:
         iterator();
-        explicit iterator(Node* node, set* container);
+        explicit iterator(Node* m_node, set* container);
         iterator(const iterator& other);
 
         pointer operator->() const;
@@ -161,7 +161,7 @@ public:
         bool operator!=(const iterator&) const;
 
     private:
-        Node* node;
+        Node* m_node;
         set*  m_container;
     };
 
@@ -178,7 +178,7 @@ public:
 
     public:
         const_iterator();
-        explicit const_iterator(Node* node, const set* container);
+        explicit const_iterator(Node* m_node, const set* container);
         const_iterator(const iterator& other);
         const_iterator(const const_iterator& other);
 
@@ -194,7 +194,7 @@ public:
         bool operator!=(const const_iterator&) const;
 
     private:
-        Node*      node;
+        Node*      m_node;
         const set* m_container;
     };
 
@@ -281,21 +281,21 @@ public:
 private:
     Node* build_tree(std::vector<value_type>& values, int left, int right,
                      size_type depth);
-    Node* copy_node(Node* node, const set& other);
-    void destroy(Node* node);
-    void insert_balance(Node* node);
-    void erase_balance(Node* node);
-    Node* rotate_left(Node* node);
-    Node* rotate_right(Node* node);
+    Node* copy_node(Node* m_node, const set& other);
+    void destroy(Node* m_node);
+    void insert_balance(Node* m_node);
+    void erase_balance(Node* m_node);
+    Node* rotate_left(Node* m_node);
+    Node* rotate_right(Node* m_node);
     Node* find_node(const key_type& key);
     const Node* find_node(const key_type& key) const;
-    Node* min_node(Node* node);
-    const Node* min_node(const Node* node) const;
-    Node* max_node(Node* node);
-    const Node* max_node(const Node* node) const;
+    Node* min_node(Node* m_node);
+    const Node* min_node(const Node* m_node) const;
+    Node* max_node(Node* m_node);
+    const Node* max_node(const Node* m_node) const;
 
 #ifndef NDEBUG
-    bool validate_properties(Node* node, size_type& black_height) const;
+    bool validate_properties(Node* m_node, size_type& black_height) const;
 #endif
 
 private:
@@ -313,19 +313,19 @@ private:
 
 template <typename Key, typename Compare, typename Allocator>
 set<Key, Compare, Allocator>::iterator::iterator()
-    : node(nullptr), m_container(nullptr)
+    : m_node(nullptr), m_container(nullptr)
 {
 }
 
 template <typename Key, typename Compare, typename Allocator>
 set<Key, Compare, Allocator>::iterator::iterator(Node* n, set* container)
-    : node(n), m_container(container)
+    : m_node(n), m_container(container)
 {
 }
 
 template <typename Key, typename Compare, typename Allocator>
 set<Key, Compare, Allocator>::iterator::iterator(const iterator& other)
-    : node(other.node), m_container(other.m_container)
+    : m_node(other.m_node), m_container(other.m_container)
 {
 }
 
@@ -333,35 +333,35 @@ template <typename Key, typename Compare, typename Allocator>
 inline typename set<Key, Compare, Allocator>::iterator::pointer
 set<Key, Compare, Allocator>::iterator::operator->() const
 {
-    return &node->key;
+    return &m_node->key;
 }
 
 template <typename Key, typename Compare, typename Allocator>
 inline typename set<Key, Compare, Allocator>::iterator::reference
 set<Key, Compare, Allocator>::iterator::operator*() const
 {
-    return node->key;
+    return m_node->key;
 }
 
 template <typename Key, typename Compare, typename Allocator>
 inline typename set<Key, Compare, Allocator>::iterator&
 set<Key, Compare, Allocator>::iterator::operator++()
 {
-    if (node->right != m_container->m_nil)
+    if (m_node->right != m_container->m_nil)
     {
-        node = node->right;
-        while (node->left != m_container->m_nil)
-            node = node->left;
+        m_node = m_node->right;
+        while (m_node->left != m_container->m_nil)
+            m_node = m_node->left;
     }
     else
     {
-        Node* parent = node->parent;
-        while (parent != m_container->m_nil && node == parent->right)
+        Node* parent = m_node->parent;
+        while (parent != m_container->m_nil && m_node == parent->right)
         {
-            node = parent;
+            m_node   = parent;
             parent = parent->parent;
         }
-        node = parent;
+        m_node = parent;
     }
     return *this;
 }
@@ -370,27 +370,27 @@ template <typename Key, typename Compare, typename Allocator>
 inline typename set<Key, Compare, Allocator>::iterator&
 set<Key, Compare, Allocator>::iterator::operator--()
 {
-    if (node == m_container->m_nil)
+    if (m_node == m_container->m_nil)
     {
-        node = m_container->max_node(m_container->m_root);
+        m_node = m_container->max_node(m_container->m_root);
         return *this;
     }
 
-    if (node->left != m_container->m_nil)
+    if (m_node->left != m_container->m_nil)
     {
-        node = node->left;
-        while (node->right != m_container->m_nil)
-            node = node->right;
+        m_node = m_node->left;
+        while (m_node->right != m_container->m_nil)
+            m_node = m_node->right;
     }
     else
     {
-        Node* parent = node->parent;
-        while (parent != m_container->m_nil && node == parent->left)
+        Node* parent = m_node->parent;
+        while (parent != m_container->m_nil && m_node == parent->left)
         {
-            node = parent;
+            m_node   = parent;
             parent = parent->parent;
         }
-        node = parent;
+        m_node = parent;
     }
     return *this;
 }
@@ -417,40 +417,40 @@ template <typename Key, typename Compare, typename Allocator>
 inline bool set<Key, Compare, Allocator>::iterator::operator==(
     const iterator& other) const
 {
-    return node == other.node;
+    return m_node == other.m_node;
 }
 
 template <typename Key, typename Compare, typename Allocator>
 inline bool set<Key, Compare, Allocator>::iterator::operator!=(
     const iterator& other) const
 {
-    return node != other.node;
+    return m_node != other.m_node;
 }
 
 template <typename Key, typename Compare, typename Allocator>
 set<Key, Compare, Allocator>::const_iterator::const_iterator()
-    : node(nullptr), m_container(nullptr)
+    : m_node(nullptr), m_container(nullptr)
 {
 }
 
 template <typename Key, typename Compare, typename Allocator>
 set<Key, Compare, Allocator>::const_iterator::const_iterator(
     Node* n, const set* container)
-    : node(n), m_container(container)
+    : m_node(n), m_container(container)
 {
 }
 
 template <typename Key, typename Compare, typename Allocator>
 set<Key, Compare, Allocator>::const_iterator::const_iterator(
     const const_iterator& other)
-    : node(other.node), m_container(other.m_container)
+    : m_node(other.m_node), m_container(other.m_container)
 {
 }
 
 template <typename Key, typename Compare, typename Allocator>
 set<Key, Compare, Allocator>::const_iterator::const_iterator(
     const iterator& other)
-    : node(other.node), m_container(other.m_container)
+    : m_node(other.m_node), m_container(other.m_container)
 {
 }
 
@@ -458,35 +458,35 @@ template <typename Key, typename Compare, typename Allocator>
 inline typename set<Key, Compare, Allocator>::const_iterator::pointer
 set<Key, Compare, Allocator>::const_iterator::operator->() const
 {
-    return &node->key;
+    return &m_node->key;
 }
 
 template <typename Key, typename Compare, typename Allocator>
 inline typename set<Key, Compare, Allocator>::const_iterator::reference
 set<Key, Compare, Allocator>::const_iterator::operator*() const
 {
-    return node->key;
+    return m_node->key;
 }
 
 template <typename Key, typename Compare, typename Allocator>
 inline typename set<Key, Compare, Allocator>::const_iterator&
 set<Key, Compare, Allocator>::const_iterator::operator++()
 {
-    if (node->right != m_container->m_nil)
+    if (m_node->right != m_container->m_nil)
     {
-        node = node->right;
-        while (node->left != m_container->m_nil)
-            node = node->left;
+        m_node = m_node->right;
+        while (m_node->left != m_container->m_nil)
+            m_node = m_node->left;
     }
     else
     {
-        Node* parent = node->parent;
-        while (parent != m_container->m_nil && node == parent->right)
+        Node* parent = m_node->parent;
+        while (parent != m_container->m_nil && m_node == parent->right)
         {
-            node = parent;
+            m_node   = parent;
             parent = parent->parent;
         }
-        node = parent;
+        m_node = parent;
     }
     return *this;
 }
@@ -495,27 +495,27 @@ template <typename Key, typename Compare, typename Allocator>
 inline typename set<Key, Compare, Allocator>::const_iterator&
 set<Key, Compare, Allocator>::const_iterator::operator--()
 {
-    if (node == m_container->m_nil)
+    if (m_node == m_container->m_nil)
     {
-        node = const_cast<Node*>(m_container->max_node(m_container->m_root));
+        m_node = const_cast<Node*>(m_container->max_node(m_container->m_root));
         return *this;
     }
 
-    if (node->left != m_container->m_nil)
+    if (m_node->left != m_container->m_nil)
     {
-        node = node->left;
-        while (node->right != m_container->m_nil)
-            node = node->right;
+        m_node = m_node->left;
+        while (m_node->right != m_container->m_nil)
+            m_node = m_node->right;
     }
     else
     {
-        Node* parent = node->parent;
-        while (parent != m_container->m_nil && node == parent->left)
+        Node* parent = m_node->parent;
+        while (parent != m_container->m_nil && m_node == parent->left)
         {
-            node = parent;
+            m_node   = parent;
             parent = parent->parent;
         }
-        node = parent;
+        m_node = parent;
     }
     return *this;
 }
@@ -542,14 +542,14 @@ template <typename Key, typename Compare, typename Allocator>
 inline bool set<Key, Compare, Allocator>::const_iterator::operator==(
     const const_iterator& other) const
 {
-    return node == other.node;
+    return m_node == other.m_node;
 }
 
 template <typename Key, typename Compare, typename Allocator>
 inline bool set<Key, Compare, Allocator>::const_iterator::operator!=(
     const const_iterator& other) const
 {
-    return node != other.node;
+    return m_node != other.m_node;
 }
 
 template <typename Key, typename Compare, typename Allocator>
@@ -599,7 +599,7 @@ set<Key, Compare, Allocator>::set(InputIt first, InputIt last,
 
 template <typename Key, typename Compare, typename Allocator>
 set<Key, Compare, Allocator>::set(std::initializer_list<value_type> ilist,
-                                   const Compare&                    comp)
+                                  const Compare&                    comp)
     : m_root(nullptr), m_nil(nullptr), m_size(0), m_comp(comp), m_node_alloc()
 {
     m_nil = alloc_traits::allocate(m_node_alloc, 1);
@@ -615,8 +615,7 @@ set<Key, Compare, Allocator>::set(std::initializer_list<value_type> ilist,
 }
 
 template <typename Key, typename Compare, typename Allocator>
-set<Key, Compare, Allocator>::set(std::vector<value_type>& values,
-                                   unsorted_tag)
+set<Key, Compare, Allocator>::set(std::vector<value_type>& values, unsorted_tag)
     : m_root(nullptr), m_nil(nullptr), m_size(0), m_comp(), m_node_alloc()
 {
     m_nil = alloc_traits::allocate(m_node_alloc, 1);
@@ -632,8 +631,7 @@ set<Key, Compare, Allocator>::set(std::vector<value_type>& values,
 }
 
 template <typename Key, typename Compare, typename Allocator>
-set<Key, Compare, Allocator>::set(std::vector<value_type>& values,
-                                   sorted_tag)
+set<Key, Compare, Allocator>::set(std::vector<value_type>& values, sorted_tag)
     : m_root(nullptr),
       m_nil(nullptr),
       m_size(values.size()),
@@ -756,26 +754,26 @@ template <typename Key, typename Compare, typename Allocator>
 inline typename set<Key, Compare, Allocator>::iterator
 set<Key, Compare, Allocator>::begin() noexcept
 {
-    Node* node = m_root;
-    if (node != m_nil)
+    Node* m_node = m_root;
+    if (m_node != m_nil)
     {
-        while (node->left != m_nil)
-            node = node->left;
+        while (m_node->left != m_nil)
+            m_node = m_node->left;
     }
-    return iterator(node, this);
+    return iterator(m_node, this);
 }
 
 template <typename Key, typename Compare, typename Allocator>
 inline typename set<Key, Compare, Allocator>::const_iterator
 set<Key, Compare, Allocator>::begin() const noexcept
 {
-    Node* node = m_root;
-    if (node != m_nil)
+    Node* m_node = m_root;
+    if (m_node != m_nil)
     {
-        while (node->left != m_nil)
-            node = node->left;
+        while (m_node->left != m_nil)
+            m_node = m_node->left;
     }
-    return const_iterator(node, this);
+    return const_iterator(m_node, this);
 }
 
 template <typename Key, typename Compare, typename Allocator>
@@ -942,18 +940,14 @@ set<Key, Compare, Allocator>::insert(const_iterator pos, value_type&& value)
 
     if (pos != cend())
     {
-        cur = pos.node;
+        cur = pos.m_node;
         if (m_comp(value, cur->key))
         {
+            // 指定的pos有效，从pos的左子节点开始比较
             parent = cur;
             cur    = cur->left;
         }
-        else if (m_comp(cur->key, value))
-        {
-            parent = cur;
-            cur    = cur->right;
-        }
-        else
+        else if (!m_comp(value, cur->key))
             return iterator(cur, this);
     }
 
@@ -1025,7 +1019,7 @@ template <typename Key, typename Compare, typename Allocator>
 inline typename set<Key, Compare, Allocator>::iterator
 set<Key, Compare, Allocator>::erase(const_iterator pos)
 {
-    Node* cur = pos.node;
+    Node* cur = pos.m_node;
     if (cur == m_nil)
         return iterator(m_nil, this);
 
@@ -1133,7 +1127,7 @@ template <typename Key, typename Compare, typename Allocator>
 inline typename set<Key, Compare, Allocator>::iterator
 set<Key, Compare, Allocator>::erase(const_iterator first, const_iterator last)
 {
-    iterator ret(last.node, const_cast<set*>(this));
+    iterator ret(last.m_node, const_cast<set*>(this));
     while (first != last)
         first = erase(first);
     return ret;
@@ -1302,7 +1296,7 @@ set<Key, Compare, Allocator>::build_tree(std::vector<value_type>& values,
     if (values.empty() || left > right)
         return m_nil;
 
-    int             mid = left + (right - left) / 2;
+    int               mid = left + (right - left) / 2;
     const value_type& val = values[mid];
 
     Node* root = alloc_traits::allocate(m_node_alloc, 1);
@@ -1343,24 +1337,24 @@ set<Key, Compare, Allocator>::copy_node(Node* cur, const set& other)
 }
 
 template <typename Key, typename Compare, typename Allocator>
-inline void set<Key, Compare, Allocator>::destroy(Node* node)
+inline void set<Key, Compare, Allocator>::destroy(Node* m_node)
 {
-    if (node == m_nil)
+    if (m_node == m_nil)
         return;
 
-    destroy(node->left);
-    destroy(node->right);
+    destroy(m_node->left);
+    destroy(m_node->right);
 
-    alloc_traits::destroy(m_node_alloc, node);
-    alloc_traits::deallocate(m_node_alloc, node, 1);
+    alloc_traits::destroy(m_node_alloc, m_node);
+    alloc_traits::deallocate(m_node_alloc, m_node, 1);
 }
 
 template <typename Key, typename Compare, typename Allocator>
-inline void set<Key, Compare, Allocator>::insert_balance(Node* node)
+inline void set<Key, Compare, Allocator>::insert_balance(Node* m_node)
 {
-    while (node != m_root && node->parent->color == Color::RED)
+    while (m_node != m_root && m_node->parent->color == Color::RED)
     {
-        Node* parent  = node->parent;
+        Node* parent  = m_node->parent;
         Node* grandpa = parent->parent;
 
         if (parent == grandpa->left)
@@ -1372,15 +1366,15 @@ inline void set<Key, Compare, Allocator>::insert_balance(Node* node)
                 parent->color  = Color::BLACK;
                 uncle->color   = Color::BLACK;
                 grandpa->color = Color::RED;
-                node           = grandpa;
+                m_node           = grandpa;
             }
             else
             {
-                if (node == parent->right)
+                if (m_node == parent->right)
                 {
-                    node = parent;
-                    rotate_left(node);
-                    parent = node->parent;
+                    m_node = parent;
+                    rotate_left(m_node);
+                    parent = m_node->parent;
                 }
                 parent->color  = Color::BLACK;
                 grandpa->color = Color::RED;
@@ -1396,15 +1390,15 @@ inline void set<Key, Compare, Allocator>::insert_balance(Node* node)
                 parent->color  = Color::BLACK;
                 uncle->color   = Color::BLACK;
                 grandpa->color = Color::RED;
-                node           = grandpa;
+                m_node           = grandpa;
             }
             else
             {
-                if (node == parent->left)
+                if (m_node == parent->left)
                 {
-                    node = parent;
-                    rotate_right(node);
-                    parent = node->parent;
+                    m_node = parent;
+                    rotate_right(m_node);
+                    parent = m_node->parent;
                 }
                 parent->color  = Color::BLACK;
                 grandpa->color = Color::RED;
@@ -1417,14 +1411,14 @@ inline void set<Key, Compare, Allocator>::insert_balance(Node* node)
 }
 
 template <typename Key, typename Compare, typename Allocator>
-inline void set<Key, Compare, Allocator>::erase_balance(Node* node)
+inline void set<Key, Compare, Allocator>::erase_balance(Node* m_node)
 {
-    while (node != m_root && node->color == Color::BLACK)
+    while (m_node != m_root && m_node->color == Color::BLACK)
     {
-        Node* parent  = node->parent;
+        Node* parent  = m_node->parent;
         Node* sibling = m_nil;
 
-        if (node == parent->left)
+        if (m_node == parent->left)
         {
             sibling = parent->right;
             if (sibling->color == Color::RED)
@@ -1439,7 +1433,7 @@ inline void set<Key, Compare, Allocator>::erase_balance(Node* node)
                 sibling->right->color == Color::BLACK)
             {
                 sibling->color = Color::RED;
-                node           = parent;
+                m_node           = parent;
             }
             else
             {
@@ -1455,7 +1449,7 @@ inline void set<Key, Compare, Allocator>::erase_balance(Node* node)
                 parent->color         = Color::BLACK;
                 sibling->right->color = Color::BLACK;
                 rotate_left(parent);
-                node = m_root;
+                m_node = m_root;
             }
         }
         else
@@ -1474,7 +1468,7 @@ inline void set<Key, Compare, Allocator>::erase_balance(Node* node)
                 sibling->left->color == Color::BLACK)
             {
                 sibling->color = Color::RED;
-                node           = parent;
+                m_node           = parent;
             }
             else
             {
@@ -1490,31 +1484,31 @@ inline void set<Key, Compare, Allocator>::erase_balance(Node* node)
                 parent->color        = Color::BLACK;
                 sibling->left->color = Color::BLACK;
                 rotate_right(parent);
-                node = m_root;
+                m_node = m_root;
             }
         }
     }
 
-    node->color = Color::BLACK;
+    m_node->color = Color::BLACK;
 }
 
 template <typename Key, typename Compare, typename Allocator>
 inline typename set<Key, Compare, Allocator>::Node*
-set<Key, Compare, Allocator>::rotate_left(Node* node)
+set<Key, Compare, Allocator>::rotate_left(Node* m_node)
 {
-    Node* rotation_center = node->right;
-    Node* parent          = node->parent;
+    Node* rotation_center = m_node->right;
+    Node* parent          = m_node->parent;
 
-    node->right = rotation_center->left;
+    m_node->right = rotation_center->left;
     if (rotation_center->left != m_nil)
-        rotation_center->left->parent = node;
+        rotation_center->left->parent = m_node;
 
     rotation_center->parent = parent;
     if (parent == m_nil)
     {
         m_root = rotation_center;
     }
-    else if (node == parent->left)
+    else if (m_node == parent->left)
     {
         parent->left = rotation_center;
     }
@@ -1523,29 +1517,29 @@ set<Key, Compare, Allocator>::rotate_left(Node* node)
         parent->right = rotation_center;
     }
 
-    rotation_center->left = node;
-    node->parent          = rotation_center;
+    rotation_center->left = m_node;
+    m_node->parent          = rotation_center;
 
     return rotation_center;
 }
 
 template <typename Key, typename Compare, typename Allocator>
 inline typename set<Key, Compare, Allocator>::Node*
-set<Key, Compare, Allocator>::rotate_right(Node* node)
+set<Key, Compare, Allocator>::rotate_right(Node* m_node)
 {
-    Node* parent          = node->parent;
-    Node* rotation_center = node->left;
+    Node* parent          = m_node->parent;
+    Node* rotation_center = m_node->left;
 
-    node->left = rotation_center->right;
+    m_node->left = rotation_center->right;
     if (rotation_center->right != m_nil)
-        rotation_center->right->parent = node;
+        rotation_center->right->parent = m_node;
 
     rotation_center->parent = parent;
     if (parent == m_nil)
     {
         m_root = rotation_center;
     }
-    else if (node == parent->left)
+    else if (m_node == parent->left)
     {
         parent->left = rotation_center;
     }
@@ -1554,8 +1548,8 @@ set<Key, Compare, Allocator>::rotate_right(Node* node)
         parent->right = rotation_center;
     }
 
-    rotation_center->right = node;
-    node->parent           = rotation_center;
+    rotation_center->right = m_node;
+    m_node->parent           = rotation_center;
 
     return rotation_center;
 }
@@ -1598,38 +1592,38 @@ set<Key, Compare, Allocator>::find_node(const key_type& key) const
 
 template <typename Key, typename Compare, typename Allocator>
 inline typename set<Key, Compare, Allocator>::Node*
-set<Key, Compare, Allocator>::min_node(Node* node)
+set<Key, Compare, Allocator>::min_node(Node* m_node)
 {
-    while (node->left != m_nil)
-        node = node->left;
-    return node;
+    while (m_node->left != m_nil)
+        m_node = m_node->left;
+    return m_node;
 }
 
 template <typename Key, typename Compare, typename Allocator>
 inline const typename set<Key, Compare, Allocator>::Node*
-set<Key, Compare, Allocator>::min_node(const Node* node) const
+set<Key, Compare, Allocator>::min_node(const Node* m_node) const
 {
-    while (node->left != m_nil)
-        node = node->left;
-    return node;
+    while (m_node->left != m_nil)
+        m_node = m_node->left;
+    return m_node;
 }
 
 template <typename Key, typename Compare, typename Allocator>
 inline typename set<Key, Compare, Allocator>::Node*
-set<Key, Compare, Allocator>::max_node(Node* node)
+set<Key, Compare, Allocator>::max_node(Node* m_node)
 {
-    while (node->right != m_nil)
-        node = node->right;
-    return node;
+    while (m_node->right != m_nil)
+        m_node = m_node->right;
+    return m_node;
 }
 
 template <typename Key, typename Compare, typename Allocator>
 inline const typename set<Key, Compare, Allocator>::Node*
-set<Key, Compare, Allocator>::max_node(const Node* node) const
+set<Key, Compare, Allocator>::max_node(const Node* m_node) const
 {
-    while (node->right != m_nil)
-        node = node->right;
-    return node;
+    while (m_node->right != m_nil)
+        m_node = m_node->right;
+    return m_node;
 }
 
 #ifndef NDEBUG
@@ -1648,32 +1642,32 @@ inline bool set<Key, Compare, Allocator>::validate_tree() const
 
 template <typename Key, typename Compare, typename Allocator>
 inline bool set<Key, Compare, Allocator>::validate_properties(
-    Node* node, size_type& black_height) const
+    Node* m_node, size_type& black_height) const
 {
-    if (node == m_nil)
+    if (m_node == m_nil)
     {
         black_height = 1;
         return true;
     }
 
-    if (node->color == Color::RED)
+    if (m_node->color == Color::RED)
     {
-        if (node->left != m_nil && node->left->color == Color::RED)
+        if (m_node->left != m_nil && m_node->left->color == Color::RED)
             return false;
-        if (node->right != m_nil && node->right->color == Color::RED)
+        if (m_node->right != m_nil && m_node->right->color == Color::RED)
             return false;
     }
 
     size_type left_black_height  = 0;
     size_type right_black_height = 0;
-    if (!validate_properties(node->left, left_black_height))
+    if (!validate_properties(m_node->left, left_black_height))
         return false;
-    if (!validate_properties(node->right, right_black_height))
+    if (!validate_properties(m_node->right, right_black_height))
         return false;
     if (left_black_height != right_black_height)
         return false;
 
-    black_height = left_black_height + (node->color == Color::BLACK ? 1 : 0);
+    black_height = left_black_height + (m_node->color == Color::BLACK ? 1 : 0);
 
     return true;
 }
