@@ -10,12 +10,45 @@
 //     本文件实现了一个 STL 风格的 set 容器。
 //     set 是一种关联容器，存储唯一的键，按键的顺序进行排序。
 //
-// 功能特性:
+// 基本概念:
+//     set（集合）是一种只包含唯一键的容器，每个键只能出现一次。
+//     与 map 的区别在于，set 只存储键本身，不存储键值对。
+//     set 中的元素自动按键排序，支持高效的有序遍历。
+//
+// 主要特性:
 //     - 基于红黑树实现，保证 O(log n) 的插入、删除和查找操作
 //     - 自动按键排序，支持有序遍历
 //     - 键唯一，不允许重复键
 //     - 提供双向迭代器支持
 //     - 符合 STL 容器规范
+//
+// 常用操作:
+//     - 插入: insert(), emplace(), emplace_hint()
+//     - 删除: erase(), clear()
+//     - 查找: find(), count(), lower_bound(), upper_bound(), equal_range()
+//     - 遍历: begin(), end(), iterator, const_iterator
+//     - 容量: size(), empty(), max_size()
+//
+// 使用场景:
+//     - 需要存储唯一值的集合
+//     - 需要快速查找唯一键
+//     - 需要按键的有序遍历
+//     - 需要集合操作（交集、并集、差集等）
+//     - 去重处理
+//
+// 注意事项:
+//     - set 中的元素是唯一的，重复插入会被忽略
+//     - set 不支持直接访问元素，只能通过迭代器访问
+//     - 键的类型必须支持比较操作（默认使用 std::less）
+//     - 删除操作会保持树的平衡，性能稳定
+//     - 迭代器按中序遍历顺序访问元素
+//
+// 与 map 的区别与联系:
+//     - 联系: 都基于红黑树实现，具有相同的查找、插入、删除性能
+//     - 区别: map 存储键值对 (key-value)，set 只存储键 (key)
+//     - map 可以通过键访问对应的值，set 只能检查键是否存在
+//     - set 是 map 的简化版本，适用于只需要键的场景
+//     - 两者都支持按键排序和有序遍历
 //
 // 实现说明:
 //     set 使用红黑树（Red-Black Tree）数据结构实现，这是一种自平衡二叉搜索树。
@@ -58,14 +91,35 @@
 namespace demo
 {
 
+/// @brief set 容器类
+/// @details
+/// set 是一种关联容器，存储唯一的键，按键的顺序进行排序。
+/// set 使用红黑树实现，保证 O(log n) 的插入、删除和查找操作。
+/// @tparam Key 键类型，必须满足可比较（Compare）要求
+/// @tparam Compare 比较函数对象类型，用于键的比较，默认为 std::less<Key>
+/// @tparam Allocator 分配器类型，用于内存管理，默认为 std::allocator<Key>
 template <typename Key, typename Compare = std::less<Key>,
           typename Allocator = std::allocator<Key>>
 class set;
 
+/// @brief 比较两个 set 是否相等
+/// @tparam Key 键类型
+/// @tparam Compare 比较函数对象类型
+/// @tparam Allocator 分配器类型
+/// @param lhs 左操作数
+/// @param rhs 右操作数
+/// @return 如果两个 set 相等返回 true，否则返回 false
 template <typename Key, typename Compare, typename Allocator>
 bool operator==(const set<Key, Compare, Allocator>& lhs,
                 const set<Key, Compare, Allocator>& rhs);
 
+/// @brief 比较两个 set 是否不相等
+/// @tparam Key 键类型
+/// @tparam Compare 比较函数对象类型
+/// @tparam Allocator 分配器类型
+/// @param lhs 左操作数
+/// @param rhs 右操作数
+/// @return 如果两个 set 不相等返回 true，否则返回 false
 template <typename Key, typename Compare, typename Allocator>
 bool operator!=(const set<Key, Compare, Allocator>& lhs,
                 const set<Key, Compare, Allocator>& rhs);
@@ -77,41 +131,50 @@ class set
     friend bool operator!= <>(const set& lhs, const set& rhs);
 
 public:
-    using key_type        = Key;
-    using value_type      = Key;
-    using key_compare     = Compare;
-    using allocator_type  = Allocator;
-    using size_type       = std::size_t;
-    using difference_type = std::ptrdiff_t;
-    using pointer         = value_type*;
-    using const_pointer   = const value_type*;
-    using reference       = value_type&;
-    using const_reference = const value_type&;
+    using key_type        = Key;                ///< 键类型
+    using value_type      = Key;                ///< 元素类型（与键类型相同）
+    using key_compare     = Compare;            ///< 键比较函数类型
+    using allocator_type  = Allocator;          ///< 分配器类型
+    using size_type       = std::size_t;        ///< 大小类型
+    using difference_type = std::ptrdiff_t;     ///< 差值类型
+    using pointer         = value_type*;        ///< 元素指针类型
+    using const_pointer   = const value_type*;  ///< 常量元素指针类型
+    using reference       = value_type&;        ///< 元素引用类型
+    using const_reference = const value_type&;  ///< 常量元素引用类型
 
 public:
+    /// @brief 已排序标记
+    /// @details 用于从已排序的 vector 构造 set，可优化构建效率
     struct sorted_tag
     {
     };
 
+    /// @brief 未排序标记
+    /// @details 用于从未排序的 vector 构造 set
     struct unsorted_tag
     {
     };
 
 private:
+    /// @brief 红黑树节点颜色
+    /// @details 红黑树通过节点颜色维护平衡性质
     enum class Color : uint8_t
     {
-        RED,
-        BLACK
+        RED,   ///< 红色节点
+        BLACK  ///< 黑色节点
     };
 
+    /// @brief 红黑树节点结构体
+    /// @details 每个节点存储键、左右子节点指针、父节点指针和颜色
     struct Node
     {
-        value_type key;
-        Node*      left;
-        Node*      right;
-        Node*      parent;
-        Color      color;
+        value_type key;     ///< 键值
+        Node*      left;    ///< 左子节点指针
+        Node*      right;   ///< 右子节点指针
+        Node*      parent;  ///< 父节点指针
+        Color      color;   ///< 节点颜色
 
+        /// @brief 默认构造函数，创建空节点
         Node()
             : left(nullptr),
               right(nullptr),
@@ -120,6 +183,8 @@ private:
         {
         }
 
+        /// @brief 构造函数，从键创建节点
+        /// @param k 键值
         explicit Node(value_type k)
             : key(std::move(k)),
               left(nullptr),
@@ -133,182 +198,444 @@ private:
 public:
     class const_iterator;
 
+    /// @brief 双向迭代器类
+    /// @details set 的迭代器，支持双向遍历（++ 和 --），按键的顺序访问元素
     class iterator
     {
         friend class set;
 
     public:
-        using iterator_category = std::bidirectional_iterator_tag;
-        using value_type        = set::value_type;
-        using difference_type   = set::difference_type;
-        using pointer           = set::pointer;
-        using reference         = set::reference;
+        using iterator_category =
+            std::bidirectional_iterator_tag;      ///< 迭代器类别（双向迭代器）
+        using value_type      = set::value_type;  ///< 元素类型
+        using difference_type = set::difference_type;  ///< 差值类型
+        using pointer         = set::pointer;          ///< 元素指针类型
+        using reference       = set::reference;        ///< 元素引用类型
 
     public:
+        /// @brief 默认构造函数，创建空迭代器
         iterator();
-        explicit iterator(Node* m_node, set* container);
+        /// @brief 构造函数，从节点指针和容器指针创建迭代器
+        /// @param n 节点指针
+        /// @param container set 容器指针
+        explicit iterator(Node* n, set* container);
+        /// @brief 拷贝构造函数
+        /// @param other 要拷贝的迭代器
         iterator(const iterator& other);
 
+        /// @brief 箭头操作符，返回指向元素的指针
+        /// @return 指向键值的指针
         pointer operator->() const;
+        /// @brief 解引用操作符，返回元素的引用
+        /// @return 键值的引用
         reference operator*() const;
 
+        /// @brief 前置自增，移动到下一个元素（按中序遍历顺序）
+        /// @return 自增后的迭代器引用
         iterator& operator++();
+        /// @brief 前置自减，移动到前一个元素（按中序遍历顺序）
+        /// @return 自减后的迭代器引用
         iterator& operator--();
+        /// @brief 后置自增，移动到下一个元素
+        /// @return 自增前的迭代器副本
         iterator operator++(int);
+        /// @brief 后置自减，移动到前一个元素
+        /// @return 自减前的迭代器副本
         iterator operator--(int);
 
-        bool operator==(const iterator&) const;
-        bool operator!=(const iterator&) const;
+        /// @brief 比较两个迭代器是否相等
+        /// @param other 要比较的另一个迭代器
+        /// @return 如果相等返回 true，否则返回 false
+        bool operator==(const iterator& other) const;
+        /// @brief 比较两个迭代器是否不相等
+        /// @param other 要比较的另一个迭代器
+        /// @return 如果不相等返回 true，否则返回 false
+        bool operator!=(const iterator& other) const;
 
     private:
-        Node* m_node;
-        set*  m_container;
+        Node* m_node;       ///< 当前节点指针
+        set*  m_container;  ///< 所属容器指针
     };
 
+    /// @brief 常量双向迭代器类
+    /// @details set 的常量迭代器，不允许修改指向的元素，支持双向遍历
     class const_iterator
     {
         friend class set;
 
     public:
-        using iterator_category = std::bidirectional_iterator_tag;
-        using value_type        = set::value_type;
-        using difference_type   = set::difference_type;
-        using pointer           = set::const_pointer;
-        using reference         = set::const_reference;
+        using iterator_category =
+            std::bidirectional_iterator_tag;      ///< 迭代器类别（双向迭代器）
+        using value_type      = set::value_type;  ///< 元素类型
+        using difference_type = set::difference_type;  ///< 差值类型
+        using pointer         = set::const_pointer;    ///< 常量元素指针类型
+        using reference       = set::const_reference;  ///< 常量元素引用类型
 
     public:
+        /// @brief 默认构造函数，创建空迭代器
         const_iterator();
-        explicit const_iterator(Node* m_node, const set* container);
+        /// @brief 构造函数，从节点指针和容器指针创建迭代器
+        /// @param n 节点指针
+        /// @param container set 容器指针（const）
+        explicit const_iterator(Node* n, const set* container);
+        /// @brief 从非 const 迭代器构造
+        /// @param other 非 const 迭代器
         const_iterator(const iterator& other);
+        /// @brief 拷贝构造函数
+        /// @param other 要拷贝的常量迭代器
         const_iterator(const const_iterator& other);
 
+        /// @brief 箭头操作符，返回指向元素的常量指针
+        /// @return 指向键值的常量指针
         pointer operator->() const;
+        /// @brief 解引用操作符，返回元素的常量引用
+        /// @return 键值的常量引用
         reference operator*() const;
 
+        /// @brief 前置自增，移动到下一个元素（按中序遍历顺序）
+        /// @return 自增后的迭代器引用
         const_iterator& operator++();
+        /// @brief 前置自减，移动到前一个元素（按中序遍历顺序）
+        /// @return 自减后的迭代器引用
         const_iterator& operator--();
+        /// @brief 后置自增，移动到下一个元素
+        /// @return 自增前的迭代器副本
         const_iterator operator++(int);
+        /// @brief 后置自减，移动到前一个元素
+        /// @return 自减前的迭代器副本
         const_iterator operator--(int);
 
-        bool operator==(const const_iterator&) const;
-        bool operator!=(const const_iterator&) const;
+        /// @brief 比较两个迭代器是否相等
+        /// @param other 要比较的另一个迭代器
+        /// @return 如果相等返回 true，否则返回 false
+        bool operator==(const const_iterator& other) const;
+        /// @brief 比较两个迭代器是否不相等
+        /// @param other 要比较的另一个迭代器
+        /// @return 如果不相等返回 true，否则返回 false
+        bool operator!=(const const_iterator& other) const;
 
     private:
-        Node*      m_node;
-        const set* m_container;
+        Node*      m_node;       ///< 当前节点指针
+        const set* m_container;  ///< 所属容器指针（const）
     };
 
-    using reverse_iterator       = std::reverse_iterator<iterator>;
+    /// @brief 反向迭代器类型，使用标准库适配器
+    using reverse_iterator = std::reverse_iterator<iterator>;
+    /// @brief 常量反向迭代器类型，使用标准库适配器
     using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
 public:
+    // 构造函数和析构函数
+
+    /// @brief 默认构造函数，创建空 set
     set();
+    /// @brief 构造函数，使用指定的比较函数创建空 set
+    /// @param comp 比较函数对象
     explicit set(const Compare& comp);
+    /// @brief 非标准接口：从已排序的 vector 构造 set（优化版本）
+    /// @param values 已排序的键值 vector
+    /// @param tag 已排序标记（sorted_tag）
     set(std::vector<value_type>& values, sorted_tag);
+    /// @brief 非标准接口：从未排序的 vector 构造 set
+    /// @param values 未排序的键值 vector
+    /// @param tag 未排序标记（unsorted_tag）
     set(std::vector<value_type>& values, unsorted_tag);
+    /// @brief 范围构造函数，复制 [first, last) 范围内的元素
+    /// @tparam InputIt 输入迭代器类型
+    /// @param first 范围起始迭代器
+    /// @param last 范围结束迭代器
+    /// @param comp 比较函数对象，默认为 Compare()
     template <typename InputIt,
               std::enable_if_t<!std::is_integral<InputIt>::value, int> = 0>
     set(InputIt first, InputIt last, const Compare& comp = Compare());
+    /// @brief 初始化列表构造函数
+    /// @param ilist 初始化列表
+    /// @param comp 比较函数对象，默认为 Compare()
     set(std::initializer_list<value_type> ilist,
         const Compare&                    comp = Compare());
+    /// @brief 拷贝构造函数
+    /// @param other 要拷贝的 set
     set(const set& other);
+    /// @brief 移动构造函数
+    /// @param other 要移动的 set
     set(set&& other) noexcept;
+    /// @brief 析构函数，释放所有资源
     ~set();
 
+    /// @brief 拷贝赋值运算符
+    /// @param other 要拷贝的 set
+    /// @return 当前 set 的引用
     set& operator=(const set& other);
+    /// @brief 移动赋值运算符
+    /// @param other 要移动的 set
+    /// @return 当前 set 的引用
     set& operator=(set&& other) noexcept;
+    /// @brief 初始化列表赋值运算符
+    /// @param ilist 初始化列表
+    /// @return 当前 set 的引用
     set& operator=(std::initializer_list<value_type> ilist);
 
+    /// @brief 获取分配器
+    /// @return 分配器对象
     allocator_type get_allocator() const;
+    /// @brief 获取键比较函数对象
+    /// @return 比较函数对象
     key_compare key_comp() const;
 
+    // 迭代器
+
+    /// @brief 返回指向第一个元素的迭代器
+    /// @return 指向最小键元素的迭代器
     iterator begin() noexcept;
+    /// @brief 返回指向第一个元素的常量迭代器
+    /// @return 指向最小键元素的常量迭代器
     const_iterator begin() const noexcept;
+    /// @brief 返回指向第一个元素的常量迭代器（const 版本）
+    /// @return 指向最小键元素的常量迭代器
     const_iterator cbegin() const noexcept;
+    /// @brief 返回指向末尾的迭代器
+    /// @return 指向末尾的迭代器（不指向任何元素）
     iterator end() noexcept;
+    /// @brief 返回指向末尾的常量迭代器
+    /// @return 指向末尾的常量迭代器（不指向任何元素）
     const_iterator end() const noexcept;
+    /// @brief 返回指向末尾的常量迭代器（const 版本）
+    /// @return 指向末尾的常量迭代器（不指向任何元素）
     const_iterator cend() const noexcept;
+    /// @brief 返回指向最后一个元素的反向迭代器
+    /// @return 指向最大键元素的反向迭代器
     reverse_iterator rbegin() noexcept;
+    /// @brief 返回指向最后一个元素的常量反向迭代器
+    /// @return 指向最大键元素的常量反向迭代器
     const_reverse_iterator rbegin() const noexcept;
+    /// @brief 返回指向最后一个元素的常量反向迭代器（const 版本）
+    /// @return 指向最大键元素的常量反向迭代器
     const_reverse_iterator crbegin() const noexcept;
+    /// @brief 返回指向第一个元素之前位置的反向迭代器
+    /// @return 指向最小键元素之前位置的反向迭代器
     reverse_iterator rend() noexcept;
+    /// @brief 返回指向第一个元素之前位置的常量反向迭代器
+    /// @return 指向最小键元素之前位置的常量反向迭代器
     const_reverse_iterator rend() const noexcept;
+    /// @brief 返回指向第一个元素之前位置的常量反向迭代器（const 版本）
+    /// @return 指向最小键元素之前位置的常量反向迭代器
     const_reverse_iterator crend() const noexcept;
 
+    // 容量
+
+    /// @brief 返回 set 中的元素数量
+    /// @return 元素数量
     size_type size() const noexcept;
+    /// @brief 检查 set 是否为空
+    /// @return 如果为空返回 true，否则返回 false
     bool empty() const noexcept;
+    /// @brief 返回 set 能容纳的最大元素数量
+    /// @return 最大元素数量
     size_type max_size() const noexcept;
 
+    // 修改器
+
+    /// @brief 清空 set，删除所有元素
     void clear() noexcept;
+    /// @brief 插入元素（拷贝版本）
+    /// @param value 要插入的键值
+    /// @return 包含迭代器和布尔值的 pair，迭代器指向插入的元素，
+    ///         布尔值表示是否成功插入（false 表示键已存在）
     std::pair<iterator, bool> insert(const value_type& value);
+    /// @brief 插入元素（移动版本）
+    /// @param value 要插入的键值（右值）
+    /// @return 包含迭代器和布尔值的 pair，迭代器指向插入的元素，
+    ///         布尔值表示是否成功插入（false 表示键已存在）
     std::pair<iterator, bool> insert(value_type&& value);
+    /// @brief 在指定位置附近插入元素（拷贝版本）
+    /// @param hint 提示位置（可能优化插入性能）
+    /// @param value 要插入的键值
+    /// @return 指向插入元素的迭代器，如果键已存在则返回指向现有元素的迭代器
     iterator insert(const_iterator hint, const value_type& value);
+    /// @brief 在指定位置附近插入元素（移动版本）
+    /// @param hint 提示位置（可能优化插入性能）
+    /// @param value 要插入的键值（右值）
+    /// @return 指向插入元素的迭代器，如果键已存在则返回指向现有元素的迭代器
     iterator insert(const_iterator hint, value_type&& value);
+    /// @brief 插入 [first, last) 范围内的元素
+    /// @tparam InputIt 输入迭代器类型
+    /// @param first 范围起始迭代器
+    /// @param last 范围结束迭代器
     template <typename InputIt,
               std::enable_if_t<!std::is_integral<InputIt>::value, int> = 0>
     void insert(InputIt first, InputIt last);
+    /// @brief 插入初始化列表中的元素
+    /// @param ilist 初始化列表
     void insert(std::initializer_list<value_type> ilist);
 
+    /// @brief 原地构造元素并插入
+    /// @tparam Args 构造参数类型
+    /// @param args 构造参数
+    /// @return 包含迭代器和布尔值的 pair，迭代器指向插入的元素，
+    ///         布尔值表示是否成功插入（false 表示键已存在）
     template <typename... Args>
     std::pair<iterator, bool> emplace(Args&&... args);
+    /// @brief 在指定位置附近原地构造元素并插入
+    /// @tparam Args 构造参数类型
+    /// @param hint 提示位置
+    /// @param args 构造参数
+    /// @return 指向插入元素的迭代器，如果键已存在则返回指向现有元素的迭代器
     template <typename... Args>
     iterator emplace_hint(const_iterator hint, Args&&... args);
 
+    /// @brief 删除指定位置的元素
+    /// @param pos 要删除的元素位置
+    /// @return 指向被删除元素之后的迭代器，如果删除的是 end() 则返回 end()
     iterator erase(const_iterator pos);
+    /// @brief 删除 [first, last) 范围内的元素
+    /// @param first 范围起始迭代器
+    /// @param last 范围结束迭代器
+    /// @return 指向最后一个被删除元素之后的迭代器
     iterator erase(const_iterator first, const_iterator last);
+    /// @brief 删除指定键的元素
+    /// @param key 要删除的键
+    /// @return 被删除的元素数量（0 或 1）
     size_type erase(const key_type& key);
 
+    /// @brief 交换两个 set 的内容
+    /// @param other 要交换的 set
     void swap(set& other) noexcept;
 
+    /// @brief 合并另一个 set 的元素
+    /// @tparam Compare2 另一个 set 的比较函数类型
+    /// @param other 要合并的 set，合并后 other 变为空
     template <typename Compare2>
     void merge(set<Key, Compare2, Allocator>& other);
 
+    // 查找
+
+    /// @brief 查找指定键的元素
+    /// @param key 要查找的键
+    /// @return 指向找到的元素的迭代器，如果未找到则返回 end()
     iterator find(const key_type& key);
+    /// @brief 查找指定键的元素（const 版本）
+    /// @param key 要查找的键
+    /// @return 指向找到的元素的常量迭代器，如果未找到则返回 cend()
     const_iterator find(const key_type& key) const;
+    /// @brief 统计指定键的元素数量（set 中键唯一，返回 0 或 1）
+    /// @param key 要查找的键
+    /// @return 如果键存在返回 1，否则返回 0
     size_type count(const key_type& key) const;
+    /// @brief 返回第一个不小于指定键的元素迭代器
+    /// @param key 键
+    /// @return 指向第一个不小于 key 的元素迭代器，如果所有元素都小于 key 则返回
+    /// end()
     iterator lower_bound(const key_type& key);
+    /// @brief 返回第一个不小于指定键的元素迭代器（const 版本）
+    /// @param key 键
+    /// @return 指向第一个不小于 key 的元素常量迭代器，如果所有元素都小于 key
+    /// 则返回 cend()
     const_iterator lower_bound(const key_type& key) const;
+    /// @brief 返回第一个大于指定键的元素迭代器
+    /// @param key 键
+    /// @return 指向第一个大于 key 的元素迭代器，如果所有元素都小于等于 key
+    /// 则返回 end()
     iterator upper_bound(const key_type& key);
+    /// @brief 返回第一个大于指定键的元素迭代器（const 版本）
+    /// @param key 键
+    /// @return 指向第一个大于 key 的元素常量迭代器，如果所有元素都小于等于 key
+    /// 则返回 cend()
     const_iterator upper_bound(const key_type& key) const;
+    /// @brief 返回等于指定键的元素范围
+    /// @param key 键
+    /// @return 包含 lower_bound 和 upper_bound 的 pair（set
+    /// 中范围最多包含一个元素）
     std::pair<iterator, iterator> equal_range(const key_type& key);
+    /// @brief 返回等于指定键的元素范围（const 版本）
+    /// @param key 键
+    /// @return 包含 lower_bound 和 upper_bound 的 pair（set
+    /// 中范围最多包含一个元素）
     std::pair<const_iterator, const_iterator> equal_range(
         const key_type& key) const;
 
 #ifndef NDEBUG
+    /// @brief 验证红黑树的性质（调试用）
+    /// @return 如果树结构有效返回 true，否则返回 false
     bool validate_tree() const;
 #endif
 
 private:
+    /// @brief 从已排序的 vector 构建平衡二叉搜索树
+    /// @param values 已排序的键值 vector
+    /// @param left 左边界索引
+    /// @param right 右边界索引
+    /// @param depth 当前深度（用于确定节点颜色）
+    /// @return 构建的子树根节点
     Node* build_tree(std::vector<value_type>& values, int left, int right,
                      size_type depth);
-    Node* copy_node(Node* m_node, const set& other);
-    void destroy(Node* m_node);
-    void insert_balance(Node* m_node);
-    void erase_balance(Node* m_node);
-    Node* rotate_left(Node* m_node);
-    Node* rotate_right(Node* m_node);
+    /// @brief 递归拷贝节点
+    /// @param cur 当前节点
+    /// @param other 源 set
+    /// @return 拷贝后的节点
+    Node* copy_node(Node* cur, const set& other);
+    /// @brief 递归销毁节点
+    /// @param node 要销毁的节点
+    void destroy(Node* node);
+    /// @brief 插入后平衡红黑树
+    /// @param node 新插入的节点
+    void insert_balance(Node* node);
+    /// @brief 删除后平衡红黑树
+    /// @param node 替换被删除节点的节点
+    void erase_balance(Node* node);
+    /// @brief 左旋操作
+    /// @param node 旋转节点
+    /// @return 旋转后的子树根节点
+    Node* rotate_left(Node* node);
+    /// @brief 右旋操作
+    /// @param node 旋转节点
+    /// @return 旋转后的子树根节点
+    Node* rotate_right(Node* node);
+    /// @brief 查找指定键的节点
+    /// @param key 要查找的键
+    /// @return 找到的节点，如果未找到返回 m_nil
     Node* find_node(const key_type& key);
+    /// @brief 查找指定键的节点（const 版本）
+    /// @param key 要查找的键
+    /// @return 找到的节点，如果未找到返回 m_nil
     const Node* find_node(const key_type& key) const;
-    Node* min_node(Node* m_node);
-    const Node* min_node(const Node* m_node) const;
-    Node* max_node(Node* m_node);
-    const Node* max_node(const Node* m_node) const;
+    /// @brief 获取子树中的最小节点
+    /// @param node 子树根节点
+    /// @return 子树中的最小节点
+    Node* min_node(Node* node);
+    /// @brief 获取子树中的最小节点（const 版本）
+    /// @param node 子树根节点
+    /// @return 子树中的最小节点
+    const Node* min_node(const Node* node) const;
+    /// @brief 获取子树中的最大节点
+    /// @param node 子树根节点
+    /// @return 子树中的最大节点
+    Node* max_node(Node* node);
+    /// @brief 获取子树中的最大节点（const 版本）
+    /// @param node 子树根节点
+    /// @return 子树中的最大节点
+    const Node* max_node(const Node* node) const;
 
 #ifndef NDEBUG
-    bool validate_properties(Node* m_node, size_type& black_height) const;
+    /// @brief 验证红黑树性质（递归）
+    /// @param node 当前节点
+    /// @param black_height 黑高度（输出参数）
+    /// @return 如果子树有效返回 true，否则返回 false
+    bool validate_properties(Node* node, size_type& black_height) const;
 #endif
 
 private:
+    /// @brief 节点分配器类型（从 value_type 分配器 rebind 而来）
     using node_alloc_type =
         typename std::allocator_traits<Allocator>::template rebind_alloc<Node>;
+    /// @brief 节点分配器的 traits 类型
     using alloc_traits = std::allocator_traits<node_alloc_type>;
 
 private:
-    Node*           m_root;
-    Node*           m_nil;
-    size_type       m_size;
-    Compare         m_comp;
-    node_alloc_type m_node_alloc;
+    Node*           m_root;        ///< 红黑树的根节点
+    Node*           m_nil;         ///< 哨兵节点（表示空）
+    size_type       m_size;        ///< 元素数量
+    Compare         m_comp;        ///< 键比较函数对象
+    node_alloc_type m_node_alloc;  ///< 节点分配器
 };
 
 template <typename Key, typename Compare, typename Allocator>
@@ -358,7 +685,7 @@ set<Key, Compare, Allocator>::iterator::operator++()
         Node* parent = m_node->parent;
         while (parent != m_container->m_nil && m_node == parent->right)
         {
-            m_node   = parent;
+            m_node = parent;
             parent = parent->parent;
         }
         m_node = parent;
@@ -387,7 +714,7 @@ set<Key, Compare, Allocator>::iterator::operator--()
         Node* parent = m_node->parent;
         while (parent != m_container->m_nil && m_node == parent->left)
         {
-            m_node   = parent;
+            m_node = parent;
             parent = parent->parent;
         }
         m_node = parent;
@@ -483,7 +810,7 @@ set<Key, Compare, Allocator>::const_iterator::operator++()
         Node* parent = m_node->parent;
         while (parent != m_container->m_nil && m_node == parent->right)
         {
-            m_node   = parent;
+            m_node = parent;
             parent = parent->parent;
         }
         m_node = parent;
@@ -512,7 +839,7 @@ set<Key, Compare, Allocator>::const_iterator::operator--()
         Node* parent = m_node->parent;
         while (parent != m_container->m_nil && m_node == parent->left)
         {
-            m_node   = parent;
+            m_node = parent;
             parent = parent->parent;
         }
         m_node = parent;
@@ -1366,7 +1693,7 @@ inline void set<Key, Compare, Allocator>::insert_balance(Node* m_node)
                 parent->color  = Color::BLACK;
                 uncle->color   = Color::BLACK;
                 grandpa->color = Color::RED;
-                m_node           = grandpa;
+                m_node         = grandpa;
             }
             else
             {
@@ -1390,7 +1717,7 @@ inline void set<Key, Compare, Allocator>::insert_balance(Node* m_node)
                 parent->color  = Color::BLACK;
                 uncle->color   = Color::BLACK;
                 grandpa->color = Color::RED;
-                m_node           = grandpa;
+                m_node         = grandpa;
             }
             else
             {
@@ -1433,7 +1760,7 @@ inline void set<Key, Compare, Allocator>::erase_balance(Node* m_node)
                 sibling->right->color == Color::BLACK)
             {
                 sibling->color = Color::RED;
-                m_node           = parent;
+                m_node         = parent;
             }
             else
             {
@@ -1468,7 +1795,7 @@ inline void set<Key, Compare, Allocator>::erase_balance(Node* m_node)
                 sibling->left->color == Color::BLACK)
             {
                 sibling->color = Color::RED;
-                m_node           = parent;
+                m_node         = parent;
             }
             else
             {
@@ -1518,7 +1845,7 @@ set<Key, Compare, Allocator>::rotate_left(Node* m_node)
     }
 
     rotation_center->left = m_node;
-    m_node->parent          = rotation_center;
+    m_node->parent        = rotation_center;
 
     return rotation_center;
 }
@@ -1549,7 +1876,7 @@ set<Key, Compare, Allocator>::rotate_right(Node* m_node)
     }
 
     rotation_center->right = m_node;
-    m_node->parent           = rotation_center;
+    m_node->parent         = rotation_center;
 
     return rotation_center;
 }
@@ -1673,6 +2000,13 @@ inline bool set<Key, Compare, Allocator>::validate_properties(
 }
 #endif
 
+/// @brief 比较两个 set 是否相等
+/// @tparam Key 键类型
+/// @tparam Compare 比较函数对象类型
+/// @tparam Allocator 分配器类型
+/// @param lhs 左操作数
+/// @param rhs 右操作数
+/// @return 如果两个 set 相等返回 true，否则返回 false
 template <typename Key, typename Compare, typename Allocator>
 inline bool operator==(const set<Key, Compare, Allocator>& lhs,
                        const set<Key, Compare, Allocator>& rhs)
@@ -1690,6 +2024,13 @@ inline bool operator==(const set<Key, Compare, Allocator>& lhs,
     return true;
 }
 
+/// @brief 比较两个 set 是否不相等
+/// @tparam Key 键类型
+/// @tparam Compare 比较函数对象类型
+/// @tparam Allocator 分配器类型
+/// @param lhs 左操作数
+/// @param rhs 右操作数
+/// @return 如果两个 set 不相等返回 true，否则返回 false
 template <typename Key, typename Compare, typename Allocator>
 inline bool operator!=(const set<Key, Compare, Allocator>& lhs,
                        const set<Key, Compare, Allocator>& rhs)
