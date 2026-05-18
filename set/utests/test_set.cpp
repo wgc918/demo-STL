@@ -106,6 +106,7 @@ TEST_SUITE("Set Constructors")
         demo::set<int> s2(s1);
 
         CHECK(s2.size() == 3);
+        CHECK(s1.size() == 3);
         assert_set_sorted(s2);
         CHECK(sets_equal(s1, s2));
     }
@@ -134,6 +135,8 @@ TEST_SUITE("Set Assignment Operators")
         s2 = s1;
 
         CHECK(s2.size() == 3);
+        CHECK(s1.size() == 3);
+        assert_set_sorted(s2);
         CHECK(sets_equal(s1, s2));
     }
 
@@ -144,9 +147,10 @@ TEST_SUITE("Set Assignment Operators")
         demo::set<int> s2;
 
         s2 = std::move(s1);
-
+        assert_set_sorted(s2);
         CHECK(s2.size() == size_before);
         CHECK(s1.empty());
+        CHECK(s1.size() == 0);
     }
 
     TEST_CASE("Initializer list assignment")
@@ -262,12 +266,15 @@ TEST_SUITE("Set Capacity")
 
         s.insert(1);
         CHECK(s.size() == 1);
+        assert_set_sorted(s);
 
         s.insert(2);
         CHECK(s.size() == 2);
-
+        assert_set_sorted(s);
+        
         s.erase(1);
         CHECK(s.size() == 1);
+        assert_set_sorted(s);
     }
 }
 
@@ -339,14 +346,25 @@ TEST_SUITE("Set Modifiers - Insert")
         CHECK(s.count("hello") == 1);
     }
 
-    TEST_CASE("emplace_hint() inserts element")
+    TEST_CASE("emplace_hint() inserts element successfully")
     {
         demo::set<int> s = {1, 3};
 
         auto hint = s.find(1);
-        auto result = s.emplace_hint(hint, 2);
-        CHECK(*result == 2);
+        auto result = s.emplace_hint(hint, 0);
+        CHECK(*result == 0);
         CHECK(s.size() == 3);
+        assert_set_sorted(s);
+    }
+
+    TEST_CASE("emplace_hint() inserts element failed")
+    {
+        demo::set<int> s = {1, 3};
+
+        auto hint   = s.find(1);
+        auto result = s.emplace_hint(hint, 2);
+        CHECK(*result == 1);
+        CHECK(s.size() == 2);
         assert_set_sorted(s);
     }
 }
@@ -410,6 +428,9 @@ TEST_SUITE("Set Modifiers - Erase")
 
         CHECK(s.empty());
         CHECK(s.size() == 0);
+        CHECK(s.find(1) == s.end());
+        CHECK(s.find(2) == s.end());
+        CHECK(s.find(3) == s.end());
     }
 
     TEST_CASE("erase non-existing key")
@@ -625,6 +646,10 @@ TEST_SUITE("Set Boundary Cases")
         s.insert(1);
         s.insert(2);
         s.insert(3);
+        for(int i = 145; i < 500; ++i)
+        {
+            s.insert(i+rand()%300);
+        }
 
         CHECK(s.validate_tree());
     }
