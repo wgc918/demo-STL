@@ -378,11 +378,159 @@ Size after erase: 5
 
 **详细文档跳转**：跳转至[demo::map容器开发文档](./map/map.md)
 
+### 2. demo::set（有序不重复集合容器）
+
+**核心定位**：基于红黑树实现的关联容器，仅存储唯一的键（key），键即元素值，自动按升序排序，支持 O(log n) 时间复杂度的插入、删除和查找操作，是实现集合运算、去重处理等场景的理想选择。
+
+**设计目标**：对齐 `std::set` 接口，实现红黑树的自平衡机制，提供高效的键查找和有序遍历能力，补充异常安全机制和迭代器稳定性。
+
+**核心特性**：
+
+- **红黑树实现**：底层基于红黑树数据结构，保证最坏情况下 O(log n) 的时间复杂度；
+- **键唯一存储**：仅存储键，元素类型与键类型相同（`value_type = key_type`），自动保证键的唯一性；
+- **有序遍历**：迭代器按中序遍历顺序访问元素（按键升序）；
+- **高效查找**：提供 `find()`、`count()`、`lower_bound()`、`upper_bound()`、`equal_range()` 等查找接口；
+- **双向迭代器**：支持双向迭代器（`std::bidirectional_iterator_tag`），支持前置/后置自增、自减操作；
+- **高效插入**：支持 `emplace()`（原地构造）、`emplace_hint()`（提示位置插入）等高效插入接口；
+- **移动语义优化**：支持移动构造、移动赋值，避免不必要的拷贝开销；
+- **异常安全**：内存分配失败抛 `std::bad_alloc` 异常；
+- **扩展接口**：支持从已排序的 `vector` 快速构建平衡树（`sorted_tag`），优化初始化效率。
+
+**核心数据结构设计原理**：
+
+`set` 采用红黑树（Red-Black Tree）实现，红黑树是一种自平衡二叉搜索树，通过维护节点颜色（红色/黑色）和旋转操作保持树的平衡，确保：
+
+1. 根节点为黑色；
+2. 每个红色节点的子节点均为黑色（红节点不相邻）；
+3. 从任意节点到其所有叶子节点的路径包含相同数量的黑色节点；
+4. 叶子节点（哨兵节点）为黑色。
+
+这些性质保证了树的高度为 O(log n)，从而实现高效的查找、插入和删除操作。
+
+**常用操作方法及时间复杂度**：
+
+| 操作方法                   | 功能描述         | 时间复杂度 | 说明              |
+| :------------------------- | :--------------- | :--------- | :---------------- |
+| `insert(const value_type&)` | 插入键           | O(log n)   | 键已存在则忽略    |
+| `insert(value_type&&)`      | 插入键（移动版本） | O(log n)  | 键已存在则忽略    |
+| `emplace(args...)`         | 原地构造键并插入 | O(log n)   | 避免拷贝开销      |
+| `emplace_hint(hint, args...)` | 在提示位置插入 | O(log n) 或 O(1) | 有效hint可优化为O(1) |
+| `erase(key)`               | 删除指定键的元素 | O(log n)   | 返回删除数量(0或1)|
+| `erase(iterator)`          | 删除迭代器指向元素 | O(log n)  | 返回下一个迭代器  |
+| `erase(first, last)`       | 删除范围元素     | O(m log n) | m为删除元素个数   |
+| `find(key)`                | 查找指定键       | O(log n)   | 返回迭代器        |
+| `count(key)`               | 统计键出现次数   | O(log n)   | set中返回0或1     |
+| `lower_bound(key)`         | 第一个不小于key的元素 | O(log n) | 返回迭代器        |
+| `upper_bound(key)`         | 第一个大于key的元素 | O(log n) | 返回迭代器        |
+| `equal_range(key)`         | 等于key的元素范围 | O(log n) | 返回迭代器对      |
+| `size()`                   | 返回元素个数     | O(1)       | 直接返回成员变量  |
+| `empty()`                  | 判断是否为空     | O(1)       | 比较根节点        |
+| `clear()`                  | 清空容器         | O(n)       | 销毁所有节点      |
+| `swap(set&)`               | 交换两个容器     | O(1)       | 交换内部指针      |
+
+**使用示例代码**：
+
+```cpp
+#include <iostream>
+#include "set/set.h"
+#include <string>
+
+int main() {
+    // 创建 set 容器
+    demo::set<std::string> s{"apple", "banana", "cherry"};
+
+    // 插入元素
+    s.insert("date");
+    s.emplace("elderberry");
+    
+    // 尝试插入重复元素（会被忽略）
+    auto [it, inserted] = s.insert("apple");
+    std::cout << "apple inserted: " << std::boolalpha << inserted << std::endl; // false
+
+    // 查找元素
+    auto find_it = s.find("cherry");
+    if (find_it != s.end()) {
+        std::cout << "Found: " << *find_it << std::endl;
+    }
+
+    // 统计元素数量
+    std::cout << "cherry count: " << s.count("cherry") << std::endl; // 1
+    std::cout << "grape count: " << s.count("grape") << std::endl;   // 0
+
+    // 有序遍历（按键升序）
+    std::cout << "Forward traversal: ";
+    for (const auto& key : s) {
+        std::cout << key << " ";
+    }
+    std::cout << std::endl;
+
+    // 反向遍历
+    std::cout << "Reverse traversal: ";
+    for (auto it = s.rbegin(); it != s.rend(); ++it) {
+        std::cout << *it << " ";
+    }
+    std::cout << std::endl;
+
+    // 使用 lower_bound 和 upper_bound
+    auto lower = s.lower_bound("banana");
+    auto upper = s.upper_bound("cherry");
+    std::cout << "Range [banana, cherry): ";
+    for (auto it = lower; it != upper; ++it) {
+        std::cout << *it << " ";
+    }
+    std::cout << std::endl;
+
+    // 删除元素
+    s.erase("banana");
+    std::cout << "Size after erase: " << s.size() << std::endl;
+
+    // 清空 set
+    s.clear();
+    std::cout << "Is empty after clear: " << std::boolalpha << s.empty() << std::endl;
+
+    return 0;
+}
+```
+
+**输出结果**：
+
+```
+apple inserted: false
+Found: cherry
+cherry count: 1
+grape count: 0
+Forward traversal: apple banana cherry date elderberry 
+Reverse traversal: elderberry date cherry banana apple 
+Range [banana, cherry): banana cherry 
+Size after erase: 4
+Is empty after clear: true
+```
+
+**适用场景**：
+
+| 场景             | 推荐使用 set 的原因                     |
+| :--------------- | :------------------------------------- |
+| 集合运算         | 支持交、并、差等集合操作                 |
+| 去重处理         | 自动去重，键唯一性保证                   |
+| 唯一性检查       | `count()` 快速判断键是否存在             |
+| 有序数据存储     | 自动排序，支持有序遍历                   |
+| 范围查询         | `lower_bound()`/`upper_bound()` 高效范围查找 |
+
+**与 demo::map 的区别**：
+
+| 特性              | demo::set               | demo::map               |
+| :---------------- | :---------------------- | :---------------------- |
+| **存储内容**      | 仅存储键（key）         | 存储键值对（key-value） |
+| **value_type**    | 等于 key_type           | `std::pair<const K, T>` |
+| **元素访问**      | 仅支持迭代器访问        | 支持 `operator[]`/`at()`|
+| **应用场景**      | 集合运算、去重          | 字典、配置管理          |
+
+**详细文档跳转**：跳转至[demo::set容器开发文档](./set/set.md)
+
 ### 待实现关联式容器
 
 后续将逐步实现以下关联式容器，实现后将同步更新本总览及对应详细文档：
 
-- demo::set（有序不重复集合）：基于红黑树实现，键值即元素值，不允许重复，支持快速查找；
 - demo::multiset（有序可重复集合）：set的扩展，允许键值重复；
 - demo::multimap（有序可重复键值对容器）：map的扩展，允许键值重复。
 
@@ -431,7 +579,8 @@ Size after erase: 5
 | v1.4   | 1. 更新 demo::deque 为已实现状态；2. 补充 deque 核心数据结构设计原理、关键成员函数实现逻辑与时间复杂度分析、与 vector 对比、内存管理机制、迭代器实现原理及失效情况、异常安全保证级别、完整使用示例；3. 更新版本历史记录                | 2026-04-27 |
 | v1.5   | 1. 完善 demo::deque 文档，添加常用操作方法及时间复杂度表格；2. 补充 deque 与 vector、list 的三容器对比分析；3. 添加适用场景建议表格；4. 详细说明迭代器实现原理和异常安全保证；5. 更新 README.md 中 deque 相关内容；6. 更新版本历史记录 | 2026-05-05 |
 | v1.6   | 1. 更新 demo::map 为已实现状态；2. 补充 map 核心特性、核心数据结构设计原理、常用操作方法及时间复杂度、完整使用示例和输出结果；3. 添加适用场景建议表格；4. 更新 README.md 中 map 相关内容；5. 更新版本历史记录 | 2026-05-17 |
-| 待更新 | 1. 扩展关联式容器（set、multiset、multimap）、容器适配器的框架内容                                                                                                                                                                        | -          |
+| v1.7   | 1. 更新 demo::set 为已实现状态；2. 补充 set 核心特性、核心数据结构设计原理、常用操作方法及时间复杂度、完整使用示例和输出结果；3. 添加适用场景建议表格；4. 添加与 demo::map 的对比表格；5. 更新 README.md 中 set 相关内容；6. 更新版本历史记录 | 2026-05-20 |
+| 待更新 | 1. 扩展关联式容器（multiset、multimap）、容器适配器的框架内容                                                                                                                                                                          | -          |
 
 # 注意事项
 
