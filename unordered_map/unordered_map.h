@@ -288,8 +288,52 @@ public:
         const unordered_map* m_container;  ///< 所属容器指针（const）
     };
 
-    using local_iterator       = iterator;        ///< 桶内迭代器类型
-    using const_local_iterator = const_iterator;  ///< 桶内常量迭代器类型
+    class local_iterator : public iterator
+    {
+        friend class unordered_map;
+
+    public:
+        /// @brief 默认构造函数，创建空迭代器
+        local_iterator();
+
+        /// @brief 构造函数，从节点指针和容器指针创建迭代器
+        /// @param node 节点指针
+        /// @param container unordered_map 容器指针
+        local_iterator(Node* node, unordered_map* container);
+        local_iterator(const local_iterator& other);
+
+        pointer operator->() const;
+        reference operator*() const;
+        local_iterator& operator++();
+        local_iterator operator++(int);
+        bool operator==(const local_iterator& other) const;
+        bool operator!=(const local_iterator& other) const;
+    };
+
+    class const_local_iterator : public const_iterator
+
+    {
+        friend class unordered_map;
+
+    public:
+        /// @brief 默认构造函数，创建空迭代器
+        const_local_iterator();
+
+        /// @brief 构造函数，从节点指针和容器指针创建迭代器
+        /// @param node 节点指针
+        /// @param container unordered_map 容器指针（const）
+        const_local_iterator(Node* node, const unordered_map* container);
+        const_local_iterator(const const_local_iterator& other);
+        /// @brief 从非 const 迭代器构造
+        /// @param other 非 const 迭代器
+        const_local_iterator(const local_iterator& other);
+        pointer operator->() const;
+        reference operator*() const;
+        const_local_iterator& operator++();
+        const_local_iterator operator++(int);
+        bool operator==(const const_local_iterator& other) const;
+        bool operator!=(const const_local_iterator& other) const;
+    };
 
 public:
     /// @brief 默认构造函数
