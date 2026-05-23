@@ -1205,4 +1205,77 @@ operator!=(const local_iterator& other) const
 {
     return this->m_node != other.m_node;
 }
+
+//------------------------const_local_iterator 实现------------------------
+template <typename Key, typename T, typename Hash, typename KeyEqual,
+          typename Allocator>
+unordered_map<Key, T, Hash, KeyEqual,
+              Allocator>::const_local_iterator::const_local_iterator()
+    : const_iterator()
+{
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual,
+          typename Allocator>
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::const_local_iterator::
+    const_local_iterator(Node* node, const unordered_map* container)
+    : const_iterator(node, container)
+{
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual,
+          typename Allocator>
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::const_local_iterator::
+    const_local_iterator(const const_local_iterator& other)
+    : const_iterator(other)
+{
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual,
+          typename Allocator>
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::const_local_iterator::
+    const_local_iterator(const local_iterator& other)
+    : const_iterator(other)
+{
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual,
+          typename Allocator>
+inline typename unordered_map<Key, T, Hash, KeyEqual,
+                              Allocator>::const_local_iterator&
+unordered_map<Key, T, Hash, KeyEqual,
+              Allocator>::const_local_iterator::operator++()
+{
+    this->m_node = this->m_node->next;
+    return *this;
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual,
+          typename Allocator>
+inline typename unordered_map<Key, T, Hash, KeyEqual,
+                              Allocator>::const_local_iterator
+unordered_map<Key, T, Hash, KeyEqual,
+              Allocator>::const_local_iterator::operator++(int)
+{
+    const_local_iterator temp(*this);
+    ++(*this);
+    return temp;
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual,
+          typename Allocator>
+bool unordered_map<Key, T, Hash, KeyEqual, Allocator>::const_local_iterator::
+operator==(const const_local_iterator& other) const
+{
+    return this->m_node == other.m_node;
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual,
+          typename Allocator>
+bool unordered_map<Key, T, Hash, KeyEqual, Allocator>::const_local_iterator::
+operator!=(const const_local_iterator& other) const
+{
+    return this->m_node != other.m_node;
+}
+
 }  // namespace demo
