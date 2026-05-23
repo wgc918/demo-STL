@@ -350,7 +350,6 @@ public:
     /// 继承自 const_iterator，复用了大部分操作。
     /// @note 迭代器在迭代过程中，如果容器被修改（插入或删除），迭代器可能失效。
     class const_local_iterator : public const_iterator
-
     {
         friend class unordered_map;
 
@@ -1276,6 +1275,196 @@ bool unordered_map<Key, T, Hash, KeyEqual, Allocator>::const_local_iterator::
 operator!=(const const_local_iterator& other) const
 {
     return this->m_node != other.m_node;
+}
+
+// ---------------------------- unordered_map 实现 ------------------------
+template <typename Key, typename T, typename Hash, typename KeyEqual,
+          typename Allocator>
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::unordered_map()
+    : m_table(nullptr),
+      m_mask(UNORDERED_MAP_DEFAULT_BUCKET_COUNT - 1),
+      m_bucket_count(UNORDERED_MAP_DEFAULT_BUCKET_COUNT),
+      m_size(0),
+      m_max_load_factor(UNORDERED_MAP_DEFAULT_LOAD_FACTOR),
+      m_hash_function(),
+      m_key_eq(),
+      m_node_allocator()
+{
+    m_table = alloc_traits::allocate(m_node_allocator, m_bucket_count);
+    for (size_type i = 0; i < m_bucket_count; ++i)
+    {
+        m_table[i] = nullptr;
+    }
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual,
+          typename Allocator>
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::unordered_map(
+    size_type bucket_count)
+    : m_table(nullptr),
+      m_mask(bucket_count - 1),
+      m_bucket_count(bucket_count),
+      m_size(0),
+      m_max_load_factor(UNORDERED_MAP_DEFAULT_LOAD_FACTOR),
+      m_hash_function(),
+      m_key_eq(),
+      m_node_allocator()
+{
+    m_table = alloc_traits::allocate(m_node_allocator, m_bucket_count);
+    for (size_type i = 0; i < m_bucket_count; ++i)
+    {
+        m_table[i] = nullptr;
+    }
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual,
+          typename Allocator>
+template <typename InputIt>
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::unordered_map(
+    InputIt first, InputIt last, size_type bucket_count)
+    : m_table(nullptr),
+      m_mask(bucket_count - 1),
+      m_bucket_count(bucket_count),
+      m_size(0),
+      m_max_load_factor(UNORDERED_MAP_DEFAULT_LOAD_FACTOR),
+      m_hash_function(),
+      m_key_eq(),
+      m_node_allocator()
+{
+    m_table = alloc_traits::allocate(m_node_allocator, m_bucket_count);
+    for (size_type i = 0; i < m_bucket_count; ++i)
+    {
+        m_table[i] = nullptr;
+    }
+    insert(first, last);
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual,
+          typename Allocator>
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::unordered_map(
+    std::initializer_list<value_type> ilist, size_type bucket_count)
+    : m_table(nullptr),
+      m_mask(bucket_count - 1),
+      m_bucket_count(bucket_count),
+      m_size(0),
+      m_max_load_factor(UNORDERED_MAP_DEFAULT_LOAD_FACTOR),
+      m_hash_function(),
+      m_key_eq(),
+      m_node_allocator()
+{
+    m_table = alloc_traits::allocate(m_node_allocator, m_bucket_count);
+    for (size_type i = 0; i < m_bucket_count; ++i)
+    {
+        m_table[i] = nullptr;
+    }
+    insert(ilist);
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual,
+          typename Allocator>
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::unordered_map(
+    const unordered_map& other)
+    : m_table(nullptr),
+      m_mask(other.m_mask),
+      m_bucket_count(other.m_bucket_count),
+      m_size(other.m_size),
+      m_max_load_factor(other.m_max_load_factor),
+      m_hash_function(other.m_hash_function),
+      m_key_eq(other.m_key_eq),
+      m_node_allocator(other.m_node_allocator)
+{
+    m_table = alloc_traits::allocate(m_node_allocator, m_bucket_count);
+    for (size_type i = 0; i < m_bucket_count; ++i)
+    {
+        m_table[i] = nullptr;
+    }
+    insert(other.begin(), other.end());
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual,
+          typename Allocator>
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::unordered_map(
+    unordered_map&& other) noexcept
+    : m_table(other.m_table),
+      m_mask(other.m_mask),
+      m_bucket_count(other.m_bucket_count),
+      m_size(other.m_size),
+      m_max_load_factor(other.m_max_load_factor),
+      m_hash_function(other.m_hash_function),
+      m_key_eq(other.m_key_eq),
+      m_node_allocator(other.m_node_allocator)
+{
+    other.m_table =
+        alloc_traits::allocate(other.m_node_allocator, other.m_bucket_count);
+    for (size_type i = 0; i < other.m_bucket_count; i++)
+    {
+        other.m_table[i] = nullptr;
+    }
+    other.m_mask            = UNORDERED_MAP_DEFAULT_BUCKET_COUNT - 1;
+    other.m_bucket_count    = UNORDERED_MAP_DEFAULT_BUCKET_COUNT;
+    other.m_size            = 0;
+    other.m_max_load_factor = UNORDERED_MAP_DEFAULT_LOAD_FACTOR;
+    other.m_hash_function   = hash_type();
+    other.m_key_eq          = key_equal();
+    other.m_node_allocator  = allocator_type();
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual,
+          typename Allocator>
+inline unordered_map<Key, T, Hash, KeyEqual, Allocator>&
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::operator=(
+    const unordered_map& other)
+{
+    if (this == &other)
+        return *this;
+
+    clear();
+    insert(other.begin(), other.end());
+    return *this;
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual,
+          typename Allocator>
+inline unordered_map<Key, T, Hash, KeyEqual, Allocator>&
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::operator=(
+    unordered_map&& other) noexcept
+{
+    if (this == &other)
+        return *this;
+
+    clear();
+    alloc_traits::deallocate(m_node_allocator, m_table, m_bucket_count);
+    m_table           = other.m_table;
+    m_mask            = other.m_mask;
+    m_bucket_count    = other.m_bucket_count;
+    m_size            = other.m_size;
+    m_max_load_factor = other.m_max_load_factor;
+    m_hash_function   = other.m_hash_function;
+    m_key_eq          = other.m_key_eq;
+    m_node_allocator  = other.m_node_allocator;
+
+    other.m_table =
+        alloc_traits::allocate(other.m_node_allocator, other.m_bucket_count);
+    for (size_type i = 0; i < other.m_bucket_count; i++)
+    {
+        other.m_table[i] = nullptr;
+    }
+    other.m_mask            = UNORDERED_MAP_DEFAULT_BUCKET_COUNT - 1;
+    other.m_bucket_count    = UNORDERED_MAP_DEFAULT_BUCKET_COUNT;
+    other.m_size            = 0;
+    other.m_max_load_factor = UNORDERED_MAP_DEFAULT_LOAD_FACTOR;
+    other.m_hash_function   = hash_type();
+    other.m_key_eq          = key_equal();
+    other.m_node_allocator  = allocator_type();
+    return *this;
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual,
+          typename Allocator>
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::~unordered_map()
+{
+    clear();
+    alloc_traits::deallocate(m_node_allocator, m_table, m_bucket_count);
 }
 
 }  // namespace demo
