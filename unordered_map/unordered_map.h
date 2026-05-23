@@ -219,7 +219,7 @@ public:
         /// @return 如果不相等返回 true，否则返回 false
         bool operator!=(const iterator& other) const;
 
-    private:
+    protected:
         Node*          m_node;       ///< 当前节点指针
         unordered_map* m_container;  ///< 所属容器指针
     };
@@ -283,11 +283,17 @@ public:
         /// @return 如果不相等返回 true，否则返回 false
         bool operator!=(const const_iterator& other) const;
 
-    private:
+    protected:
         Node*                m_node;       ///< 当前节点指针
         const unordered_map* m_container;  ///< 所属容器指针（const）
     };
 
+    /// @brief 桶内前向迭代器类
+    /// @details
+    /// unordered_map 的桶内迭代器，用于遍历单个桶中的所有元素。
+    /// 该迭代器只能在当前桶内移动，不能跨越到其他桶。
+    /// 继承自 iterator，复用了大部分操作。
+    /// @note 迭代器在迭代过程中，如果容器被修改（插入或删除），迭代器可能失效。
     class local_iterator : public iterator
     {
         friend class unordered_map;
@@ -296,20 +302,53 @@ public:
         /// @brief 默认构造函数，创建空迭代器
         local_iterator();
 
-        /// @brief 构造函数，从节点指针和容器指针创建迭代器
+        /// @brief 构造函数，从节点指针创建迭代器
         /// @param node 节点指针
-        /// @param container unordered_map 容器指针
+        /// @param container unordered_map 容器指针（当前实现中未使用）
+        /// @details
+        /// 创建一个指向指定节点的桶内迭代器。
+        /// container 参数仅为兼容性保留，桶内迭代器不跨桶移动。
         local_iterator(Node* node, unordered_map* container);
+
+        /// @brief 拷贝构造函数
+        /// @param other 要拷贝的迭代器
         local_iterator(const local_iterator& other);
 
-        pointer operator->() const;
-        reference operator*() const;
+        /// @brief 前置自增，移动到桶内下一个元素
+        /// @return 自增后的迭代器引用
+        /// @details
+        /// 将迭代器移动到当前桶内的下一个节点。
+        /// 如果已经到达桶末尾（链表尾部），则变为尾后迭代器。
+        /// @note 该操作不会跨越到其他桶，与普通迭代器不同。
         local_iterator& operator++();
+
+        /// @brief 后置自增，移动到桶内下一个元素
+        /// @return 自增前的迭代器副本
+        /// @details
+        /// 将迭代器移动到当前桶内的下一个节点，返回自增前的状态。
+        /// 如果已经到达桶末尾，则变为尾后迭代器。
+        /// @note 该操作不会跨越到其他桶，与普通迭代器不同。
         local_iterator operator++(int);
+
+        /// @brief 比较两个桶内迭代器是否相等
+        /// @param other 要比较的另一个迭代器
+        /// @return 如果相等返回 true，否则返回 false
+        /// @details
+        /// 两个迭代器相等当且仅当它们指向同一个节点。
         bool operator==(const local_iterator& other) const;
+
+        /// @brief 比较两个桶内迭代器是否不相等
+        /// @param other 要比较的另一个迭代器
+        /// @return 如果不相等返回 true，否则返回 false
         bool operator!=(const local_iterator& other) const;
     };
 
+    /// @brief 桶内常量前向迭代器类
+    /// @details
+    /// unordered_map 的桶内常量迭代器，用于遍历单个桶中的所有元素，
+    /// 且不允许修改元素。该迭代器只能在当前桶内移动，不能跨越到其他桶。
+    /// 继承自 const_iterator，复用了大部分操作。
+    /// @note 迭代器在迭代过程中，如果容器被修改（插入或删除），迭代器可能失效。
     class const_local_iterator : public const_iterator
 
     {
@@ -319,19 +358,50 @@ public:
         /// @brief 默认构造函数，创建空迭代器
         const_local_iterator();
 
-        /// @brief 构造函数，从节点指针和容器指针创建迭代器
+        /// @brief 构造函数，从节点指针创建迭代器
         /// @param node 节点指针
         /// @param container unordered_map 容器指针（const）
+        /// @details
+        /// 创建一个指向指定节点的桶内常量迭代器。
+        /// container 参数仅为兼容性保留，桶内迭代器不跨桶移动。
         const_local_iterator(Node* node, const unordered_map* container);
+
+        /// @brief 拷贝构造函数
+        /// @param other 要拷贝的迭代器
         const_local_iterator(const const_local_iterator& other);
-        /// @brief 从非 const 迭代器构造
-        /// @param other 非 const 迭代器
+
+        /// @brief 从非 const 桶内迭代器构造
+        /// @param other 非 const 桶内迭代器
+        /// @details
+        /// 从非 const 的 local_iterator 构造一个对应的常量迭代器。
         const_local_iterator(const local_iterator& other);
-        pointer operator->() const;
-        reference operator*() const;
+
+        /// @brief 前置自增，移动到桶内下一个元素
+        /// @return 自增后的迭代器引用
+        /// @details
+        /// 将迭代器移动到当前桶内的下一个节点。
+        /// 如果已经到达桶末尾（链表尾部），则变为尾后迭代器。
+        /// @note 该操作不会跨越到其他桶，与普通迭代器不同。
         const_local_iterator& operator++();
+
+        /// @brief 后置自增，移动到桶内下一个元素
+        /// @return 自增前的迭代器副本
+        /// @details
+        /// 将迭代器移动到当前桶内的下一个节点，返回自增前的状态。
+        /// 如果已经到达桶末尾，则变为尾后迭代器。
+        /// @note 该操作不会跨越到其他桶，与普通迭代器不同。
         const_local_iterator operator++(int);
+
+        /// @brief 比较两个桶内常量迭代器是否相等
+        /// @param other 要比较的另一个迭代器
+        /// @return 如果相等返回 true，否则返回 false
+        /// @details
+        /// 两个迭代器相等当且仅当它们指向同一个节点。
         bool operator==(const const_local_iterator& other) const;
+
+        /// @brief 比较两个桶内常量迭代器是否不相等
+        /// @param other 要比较的另一个迭代器
+        /// @return 如果不相等返回 true，否则返回 false
         bool operator!=(const const_local_iterator& other) const;
     };
 
@@ -719,31 +789,55 @@ public:
     /// @brief 返回指定桶的开始迭代器
     /// @param n 桶索引
     /// @return 指向桶中第一个元素的迭代器
+    /// @details
+    /// 返回一个 local_iterator，指向桶 n 中的第一个元素。
+    /// 如果桶为空，返回的迭代器等于 end(n)。
+    /// @pre n < bucket_count()
     local_iterator begin(size_type n);
 
     /// @brief 返回指定桶的开始迭代器（const 版本）
     /// @param n 桶索引
     /// @return 指向桶中第一个元素的常量迭代器
+    /// @details
+    /// 返回一个 const_local_iterator，指向桶 n 中的第一个元素。
+    /// 如果桶为空，返回的迭代器等于 cend(n)。
+    /// @pre n < bucket_count()
     const_local_iterator begin(size_type n) const;
 
     /// @brief 返回指定桶的开始迭代器（const 版本）
     /// @param n 桶索引
     /// @return 指向桶中第一个元素的常量迭代器
+    /// @details
+    /// 返回一个 const_local_iterator，指向桶 n 中的第一个元素。
+    /// 如果桶为空，返回的迭代器等于 cend(n)。
+    /// @pre n < bucket_count()
     const_local_iterator cbegin(size_type n) const;
 
     /// @brief 返回指定桶的结束迭代器
     /// @param n 桶索引
-    /// @return 指向桶中末尾的迭代器
+    /// @return 指向桶中末尾的迭代器（尾后迭代器）
+    /// @details
+    /// 返回一个 local_iterator，表示桶 n 的尾后位置。
+    /// 该迭代器不指向任何有效元素，仅作为遍历结束标记。
+    /// @pre n < bucket_count()
     local_iterator end(size_type n);
 
     /// @brief 返回指定桶的结束迭代器（const 版本）
     /// @param n 桶索引
-    /// @return 指向桶中末尾的常量迭代器
+    /// @return 指向桶中末尾的常量迭代器（尾后迭代器）
+    /// @details
+    /// 返回一个 const_local_iterator，表示桶 n 的尾后位置。
+    /// 该迭代器不指向任何有效元素，仅作为遍历结束标记。
+    /// @pre n < bucket_count()
     const_local_iterator end(size_type n) const;
 
     /// @brief 返回指定桶的结束迭代器（const 版本）
     /// @param n 桶索引
-    /// @return 指向桶中末尾的常量迭代器
+    /// @return 指向桶中末尾的常量迭代器（尾后迭代器）
+    /// @details
+    /// 返回一个 const_local_iterator，表示桶 n 的尾后位置。
+    /// 该迭代器不指向任何有效元素，仅作为遍历结束标记。
+    /// @pre n < bucket_count()
     const_local_iterator cend(size_type n) const;
 
     /// @brief 返回桶数量
@@ -866,4 +960,249 @@ private:
     key_equal           m_key_eq;           ///< 键比较函数对象
     node_allocator_type m_node_allocator;   ///< 节点分配器
 };
+
+//------------------------iterator 实现------------------------
+template <typename Key, typename T, typename Hash, typename KeyEqual,
+          typename Allocator>
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::iterator::iterator()
+    : m_node(nullptr), m_container(nullptr)
+{
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual,
+          typename Allocator>
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::iterator::iterator(
+    Node* node, unordered_map* container)
+    : m_node(node), m_container(container)
+{
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual,
+          typename Allocator>
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::iterator::iterator(
+    const iterator& other)
+    : m_node(other.m_node), m_container(other.m_container)
+{
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual,
+          typename Allocator>
+inline
+    typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::iterator::pointer
+    unordered_map<Key, T, Hash, KeyEqual, Allocator>::iterator::operator->()
+        const
+{
+    return &m_node->value;
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual,
+          typename Allocator>
+inline typename unordered_map<Key, T, Hash, KeyEqual,
+                              Allocator>::iterator::reference
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::iterator::operator*() const
+{
+    return m_node->value;
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual,
+          typename Allocator>
+inline typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::iterator&
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::iterator::operator++()
+{
+    m_node               = m_node->next;
+    size_type bucket_idx = 0;
+    while (m_node == nullptr && bucket_idx < m_container->m_bucket_count)
+    {
+        bucket_idx++;
+        m_node = m_container->m_table[bucket_idx];
+    }
+    return *this;
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual,
+          typename Allocator>
+inline typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::iterator
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::iterator::operator++(int)
+{
+    iterator temp(*this);
+    ++(*this);
+    return temp;
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual,
+          typename Allocator>
+inline bool
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::iterator::operator==(
+    const iterator& other) const
+{
+    return m_node == other.m_node;
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual,
+          typename Allocator>
+inline bool
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::iterator::operator!=(
+    const iterator& other) const
+{
+    return m_node != other.m_node;
+}
+
+//------------------------const_iterator 实现------------------------
+template <typename Key, typename T, typename Hash, typename KeyEqual,
+          typename Allocator>
+unordered_map<Key, T, Hash, KeyEqual,
+              Allocator>::const_iterator::const_iterator()
+    : m_node(nullptr), m_container(nullptr)
+{
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual,
+          typename Allocator>
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::const_iterator::
+    const_iterator(Node* node, const unordered_map* container)
+    : m_node(node), m_container(container)
+{
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual,
+          typename Allocator>
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::const_iterator::
+    const_iterator(const const_iterator& other)
+    : m_node(other.m_node), m_container(other.m_container)
+{
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual,
+          typename Allocator>
+unordered_map<Key, T, Hash, KeyEqual,
+              Allocator>::const_iterator::const_iterator(const iterator& other)
+    : m_node(other.m_node), m_container(other.m_container)
+{
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual,
+          typename Allocator>
+inline typename unordered_map<Key, T, Hash, KeyEqual,
+                              Allocator>::const_iterator::pointer
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::const_iterator::operator->()
+    const
+{
+    return &m_node->value;
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual,
+          typename Allocator>
+typename unordered_map<Key, T, Hash, KeyEqual,
+                       Allocator>::const_iterator::reference
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::const_iterator::operator*()
+    const
+{
+    return m_node->value;
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual,
+          typename Allocator>
+inline typename unordered_map<Key, T, Hash, KeyEqual,
+                              Allocator>::const_iterator&
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::const_iterator::operator++()
+{
+    m_node               = m_node->next;
+    size_type bucket_idx = 0;
+    while (m_node == nullptr && bucket_idx < m_container->m_bucket_count)
+    {
+        bucket_idx++;
+        m_node = m_container->m_table[bucket_idx];
+    }
+    return *this;
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual,
+          typename Allocator>
+inline typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::const_iterator
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::const_iterator::operator++(
+    int)
+{
+    const_iterator temp(*this);
+    ++(*this);
+    return temp;
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual,
+          typename Allocator>
+inline bool
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::const_iterator::operator==(
+    const const_iterator& other) const
+{
+    return m_node == other.m_node;
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual,
+          typename Allocator>
+inline bool
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::const_iterator::operator!=(
+    const const_iterator& other) const
+{
+    return m_node != other.m_node;
+}
+
+//------------------------local_iterator 实现------------------------
+template <typename Key, typename T, typename Hash, typename KeyEqual,
+          typename Allocator>
+unordered_map<Key, T, Hash, KeyEqual,
+              Allocator>::local_iterator::local_iterator()
+    : iterator()
+{
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual,
+          typename Allocator>
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::local_iterator::
+    local_iterator(Node* node, unordered_map* container)
+    : iterator(node, container)
+{
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual,
+          typename Allocator>
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::local_iterator::
+    local_iterator(const local_iterator& other)
+    : iterator(other)
+{
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual,
+          typename Allocator>
+typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::local_iterator&
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::local_iterator::operator++()
+{
+    this->m_node = this->m_node->next;
+    return *this;
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual,
+          typename Allocator>
+typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::local_iterator
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::local_iterator::operator++(
+    int)
+{
+    local_iterator temp(*this);
+    ++(*this);
+    return temp;
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual,
+          typename Allocator>
+bool unordered_map<Key, T, Hash, KeyEqual, Allocator>::local_iterator::
+operator==(const local_iterator& other) const
+{
+    return this->m_node == other.m_node;
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual,
+          typename Allocator>
+bool unordered_map<Key, T, Hash, KeyEqual, Allocator>::local_iterator::
+operator!=(const local_iterator& other) const
+{
+    return this->m_node != other.m_node;
+}
 }  // namespace demo
