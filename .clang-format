@@ -516,7 +516,7 @@ BreakTemplateDeclarations: Yes
 # 取值：正整数，0（无限制）
 # 默认值：80
 # 用途：80 列用于传统可读性和兼容性。
-ColumnLimit: 80
+ColumnLimit: 100
 
 # 不应重新格式化的特殊注释的正则表达式。
 # 用途：保留 IWYU（Include What You Use）编译指示。
