@@ -1569,4 +1569,97 @@ void unordered_map<Key, T, Hash, KeyEqual, Allocator>::insert(
         insert(value);
 }
 
+template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
+template <typename M>
+inline std::pair<typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::iterator, bool>
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::insert_or_assign(const Key& k, M&& obj)
+{
+    const Key key = k;
+    return insert_or_assign(std::move(key), std::forward<M>(obj));
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
+template <typename M>
+inline std::pair<typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::iterator, bool>
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::insert_or_assign(Key&& k, M&& obj)
+{
+    iterator it = find(k);
+    if (it != end())
+    {
+        it->second = std::forward<M>(obj);
+        return std::make_pair(it, false);
+    }
+    return insert(value_type(std::forward<Key>(k), std::forward<M>(obj)));
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
+template <typename M>
+typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::iterator
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::insert_or_assign(const_iterator hint,
+                                                                   const Key& k, M&& obj)
+{
+    (void)hint;
+    return insert_or_assign(k, std::forward<M>(obj));
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
+template <typename M>
+typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::iterator
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::insert_or_assign(const_iterator hint, Key&& k,
+                                                                   M&& obj)
+{
+    (void)hint;
+    return insert_or_assign(std::forward<Key>(k), std::forward<M>(obj));
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
+template <typename... Args>
+std::pair<typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::iterator, bool>
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::emplace(Args&&... args)
+{
+    return insert(value_type(std::forward<Args>(args)...));
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
+template <typename... Args>
+typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::iterator
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::emplace_hint(const_iterator hint, Args&&... args)
+{
+    return insert(hint, value_type(std::forward<Args>(args)...));
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
+template <typename... Args>
+std::pair<typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::iterator, bool>
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::try_emplace(const Key& k, Args&&... args)
+{
+    return insert_or_assign(k, std::forward<Args>(args)...);
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
+template <typename... Args>
+std::pair<typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::iterator, bool>
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::try_emplace(Key&& k, Args&&... args)
+{
+    return insert_or_assign(std::forward<Key>(k), std::forward<Args>(args)...);
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
+template <typename... Args>
+typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::iterator
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::try_emplace(const_iterator hint, const Key& k,
+                                                              Args&&... args)
+{
+    return insert_or_assign(hint, k, std::forward<Args>(args)...);
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
+template <typename... Args>
+typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::iterator
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::try_emplace(const_iterator hint, Key&& k,
+                                                              Args&&... args)
+{
+    return insert_or_assign(hint, std::move(k), std::forward<Args>(args)...);
+}
+
 }  // namespace demo
