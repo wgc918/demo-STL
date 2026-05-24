@@ -692,14 +692,6 @@ public:
     /// @return 被删除的元素数量（0 或 1）
     size_type erase(const Key& key);
 
-    /// @brief 合并另一个 unordered_map 的元素
-    /// @param other 要合并的 unordered_map
-    /// @details
-    /// 将 other 中的所有元素移动到当前容器。
-    /// 如果某个键在两个容器中都存在，则保留当前容器的元素，跳过来自 other
-    /// 的元素。 合并后 other 变为空。
-    void merge(const unordered_map& other);
-
     /// @brief 合并异类型 unordered_map 的元素
     /// @tparam H2 另一个 map 的哈希函数类型
     /// @tparam P2 另一个 map 的键比较函数类型
@@ -1660,6 +1652,119 @@ unordered_map<Key, T, Hash, KeyEqual, Allocator>::try_emplace(const_iterator hin
                                                               Args&&... args)
 {
     return insert_or_assign(hint, std::move(k), std::forward<Args>(args)...);
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
+inline typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::iterator
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::erase(iterator pos)
+{
+    if (pos == end())
+        return pos;
+
+    Node*    del_node     = pos.m_node;
+    uint64_t bucket_index = del_node->hash_code;
+    Node*    bucket       = m_table[bucket_index];
+    Node*    next_node    = del_node->next;
+
+    if (del_node == bucket)
+    {
+        bucket = bucket->next;
+    }
+    else
+    {
+        Node* prev = bucket;
+        while (prev->next != del_node)
+        {
+            prev = prev->next;
+        }
+        prev->next = del_node->next;
+    }
+
+    alloc_traits::destroy(m_node_allocator, del_node);
+    alloc_traits::deallocate(m_node_allocator, del_node, 1);
+    m_size--;
+
+    return iterator(next_node, this);
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
+typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::iterator
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::erase(const_iterator pos)
+{
+    if (pos == cend())
+        return pos;
+
+    Node*    del_node     = pos.m_node;
+    uint64_t bucket_index = del_node->hash_code;
+    Node*    bucket       = m_table[bucket_index];
+    Node*    next_node    = del_node->next;
+
+    if (del_node == bucket)
+    {
+        bucket = bucket->next;
+    }
+    else
+    {
+        Node* prev = bucket;
+        while (prev->next != del_node)
+        {
+            prev = prev->next;
+        }
+        prev->next = del_node->next;
+    }
+
+    alloc_traits::destroy(m_node_allocator, del_node);
+    alloc_traits::deallocate(m_node_allocator, del_node, 1);
+    m_size--;
+
+    return const_iterator(next_node, this);
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
+inline typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::iterator
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::erase(const_iterator first, const_iterator last)
+{
+    while (first != last)
+    {
+        first = erase(first);
+    }
+    return last;
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
+inline typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::size_type
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::erase(const Key& key)
+{
+    iterator pos = find(key);
+    if (pos != end())
+    {
+        erase(pos);
+        return 1;
+    }
+    return 0;
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
+template <typename H2, typename P2>
+inline void unordered_map<Key, T, Hash, KeyEqual, Allocator>::merge(
+    unordered_map<Key, T, H2, P2, Allocator>& source)
+{
+    // 合并后，source 状态？？？？？？？？？？
+    for (auto& [k, v] : source)
+    {
+        insert_or_assign(std::move(k), std::move(v));
+    }
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
+template <typename H2, typename P2>
+inline void unordered_map<Key, T, Hash, KeyEqual, Allocator>::merge(
+    unordered_map<Key, T, H2, P2, Allocator>&& source)
+{
+    for (auto& [k, v] : source)
+    {
+        insert_or_assign(std::move(k), std::move(v));
+    }
 }
 
 }  // namespace demo
