@@ -151,7 +151,7 @@ public:
         /// @brief 从键值对构造节点
         /// @param val 键值对
         /// @param hash 哈希值
-        Node(value_type val, uint64_t hash) : value(std::move(val)), next(nullptr), hash_code(hash)
+        Node(const value_type& val, uint64_t hash) : value(val), next(nullptr), hash_code(hash)
         {
         }
 
@@ -177,11 +177,11 @@ public:
         friend class unordered_map;
 
     public:
-        using iterator_category = std::forward_iterator_tag;  ///< 迭代器类别（前向迭代器）
-        using value_type        = value_type;                 ///< 元素类型
-        using pointer           = pointer;                    ///< 元素指针类型
-        using reference         = reference;                  ///< 元素引用类型
-        using difference_type   = difference_type;            ///< 差值类型
+        using iterator_category = std::forward_iterator_tag;       ///< 迭代器类别（前向迭代器）
+        using value_type        = unordered_map::value_type;       ///< 元素类型
+        using pointer           = unordered_map::pointer;          ///< 元素指针类型
+        using reference         = unordered_map::reference;        ///< 元素引用类型
+        using difference_type   = unordered_map::difference_type;  ///< 差值类型
 
     public:
         /// @brief 默认构造函数，创建空迭代器
@@ -236,11 +236,11 @@ public:
         friend class unordered_map;
 
     public:
-        using iterator_category = std::forward_iterator_tag;  ///< 迭代器类别（前向迭代器）
-        using value_type        = value_type;                 ///< 元素类型
-        using pointer           = const_pointer;              ///< 常量元素指针类型
-        using reference         = const_reference;            ///< 常量元素引用类型
-        using difference_type   = difference_type;            ///< 差值类型
+        using iterator_category = std::forward_iterator_tag;       ///< 迭代器类别（前向迭代器）
+        using value_type        = unordered_map::value_type;       ///< 元素类型
+        using pointer           = unordered_map::const_pointer;    ///< 常量元素指针类型
+        using reference         = unordered_map::const_reference;  ///< 常量元素引用类型
+        using difference_type   = unordered_map::difference_type;  ///< 差值类型
 
     public:
         /// @brief 默认构造函数，创建空迭代器
@@ -904,6 +904,11 @@ private:
     using alloc_traits = std::allocator_traits<node_allocator_type>;  ///< 分配器 traits 类型
 
 private:
+    /// @brief 计算大于等于给定值的最小 2 的幂
+    /// @param n 给定值
+    /// @return 大于等于 n 的最小 2 的幂
+    static size_type next_power_of_two(size_type n) noexcept;
+
     /// @brief 计算键的桶索引
     /// @param key 键
     /// @return 桶索引
@@ -1214,7 +1219,7 @@ unordered_map<Key, T, Hash, KeyEqual, Allocator>::unordered_map()
       m_node_allocator()
 {
     m_table = alloc_traits::allocate(m_node_allocator, m_bucket_count);
-    for (size_type i = 0; i < m_bucket_count; ++i)
+    for (size_type i = 0; i < m_bucket_count; i++)
     {
         m_table[i] = nullptr;
     }
@@ -1223,16 +1228,18 @@ unordered_map<Key, T, Hash, KeyEqual, Allocator>::unordered_map()
 template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
 unordered_map<Key, T, Hash, KeyEqual, Allocator>::unordered_map(size_type bucket_count)
     : m_table(nullptr),
-      m_mask(bucket_count - 1),
-      m_bucket_count(bucket_count),
+      m_mask(0),
+      m_bucket_count(0),
       m_size(0),
       m_max_load_factor(UNORDERED_MAP_DEFAULT_LOAD_FACTOR),
       m_hash_function(),
       m_key_eq(),
       m_node_allocator()
 {
-    m_table = alloc_traits::allocate(m_node_allocator, m_bucket_count);
-    for (size_type i = 0; i < m_bucket_count; ++i)
+    m_bucket_count = next_power_of_two(bucket_count);
+    m_mask         = m_bucket_count - 1;
+    m_table        = alloc_traits::allocate(m_node_allocator, m_bucket_count);
+    for (size_type i = 0; i < m_bucket_count; i++)
     {
         m_table[i] = nullptr;
     }
@@ -1243,16 +1250,18 @@ template <typename InputIt>
 unordered_map<Key, T, Hash, KeyEqual, Allocator>::unordered_map(InputIt first, InputIt last,
                                                                 size_type bucket_count)
     : m_table(nullptr),
-      m_mask(bucket_count - 1),
-      m_bucket_count(bucket_count),
+      m_mask(0),
+      m_bucket_count(0),
       m_size(0),
       m_max_load_factor(UNORDERED_MAP_DEFAULT_LOAD_FACTOR),
       m_hash_function(),
       m_key_eq(),
       m_node_allocator()
 {
-    m_table = alloc_traits::allocate(m_node_allocator, m_bucket_count);
-    for (size_type i = 0; i < m_bucket_count; ++i)
+    m_bucket_count = next_power_of_two(bucket_count);
+    m_mask         = m_bucket_count - 1;
+    m_table        = alloc_traits::allocate(m_node_allocator, m_bucket_count);
+    for (size_type i = 0; i < m_bucket_count; i++)
     {
         m_table[i] = nullptr;
     }
@@ -1263,16 +1272,18 @@ template <typename Key, typename T, typename Hash, typename KeyEqual, typename A
 unordered_map<Key, T, Hash, KeyEqual, Allocator>::unordered_map(
     std::initializer_list<value_type> ilist, size_type bucket_count)
     : m_table(nullptr),
-      m_mask(bucket_count - 1),
-      m_bucket_count(bucket_count),
+      m_mask(0),
+      m_bucket_count(0),
       m_size(0),
       m_max_load_factor(UNORDERED_MAP_DEFAULT_LOAD_FACTOR),
       m_hash_function(),
       m_key_eq(),
       m_node_allocator()
 {
-    m_table = alloc_traits::allocate(m_node_allocator, m_bucket_count);
-    for (size_type i = 0; i < m_bucket_count; ++i)
+    m_bucket_count = next_power_of_two(bucket_count);
+    m_mask         = m_bucket_count - 1;
+    m_table        = alloc_traits::allocate(m_node_allocator, m_bucket_count);
+    for (size_type i = 0; i < m_bucket_count; i++)
     {
         m_table[i] = nullptr;
     }
@@ -1291,7 +1302,7 @@ unordered_map<Key, T, Hash, KeyEqual, Allocator>::unordered_map(const unordered_
       m_node_allocator(other.m_node_allocator)
 {
     m_table = alloc_traits::allocate(m_node_allocator, m_bucket_count);
-    for (size_type i = 0; i < m_bucket_count; ++i)
+    for (size_type i = 0; i < m_bucket_count; i++)
     {
         m_table[i] = nullptr;
     }
@@ -1309,11 +1320,6 @@ unordered_map<Key, T, Hash, KeyEqual, Allocator>::unordered_map(unordered_map&& 
       m_key_eq(other.m_key_eq),
       m_node_allocator(other.m_node_allocator)
 {
-    other.m_table = alloc_traits::allocate(other.m_node_allocator, other.m_bucket_count);
-    for (size_type i = 0; i < other.m_bucket_count; i++)
-    {
-        other.m_table[i] = nullptr;
-    }
     other.m_mask            = UNORDERED_MAP_DEFAULT_BUCKET_COUNT - 1;
     other.m_bucket_count    = UNORDERED_MAP_DEFAULT_BUCKET_COUNT;
     other.m_size            = 0;
@@ -1321,6 +1327,11 @@ unordered_map<Key, T, Hash, KeyEqual, Allocator>::unordered_map(unordered_map&& 
     other.m_hash_function   = hash_type();
     other.m_key_eq          = key_equal();
     other.m_node_allocator  = allocator_type();
+    other.m_table           = alloc_traits::allocate(other.m_node_allocator, other.m_bucket_count);
+    for (size_type i = 0; i < other.m_bucket_count; i++)
+    {
+        other.m_table[i] = nullptr;
+    }
 }
 
 template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
@@ -1353,11 +1364,6 @@ unordered_map<Key, T, Hash, KeyEqual, Allocator>::operator=(unordered_map&& othe
     m_key_eq          = other.m_key_eq;
     m_node_allocator  = other.m_node_allocator;
 
-    other.m_table = alloc_traits::allocate(other.m_node_allocator, other.m_bucket_count);
-    for (size_type i = 0; i < other.m_bucket_count; i++)
-    {
-        other.m_table[i] = nullptr;
-    }
     other.m_mask            = UNORDERED_MAP_DEFAULT_BUCKET_COUNT - 1;
     other.m_bucket_count    = UNORDERED_MAP_DEFAULT_BUCKET_COUNT;
     other.m_size            = 0;
@@ -1365,6 +1371,12 @@ unordered_map<Key, T, Hash, KeyEqual, Allocator>::operator=(unordered_map&& othe
     other.m_hash_function   = hash_type();
     other.m_key_eq          = key_equal();
     other.m_node_allocator  = allocator_type();
+    other.m_table           = alloc_traits::allocate(other.m_node_allocator, other.m_bucket_count);
+    for (size_type i = 0; i < other.m_bucket_count; i++)
+    {
+        other.m_table[i] = nullptr;
+    }
+
     return *this;
 }
 
@@ -1386,7 +1398,7 @@ template <typename Key, typename T, typename Hash, typename KeyEqual, typename A
 inline typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::iterator
 unordered_map<Key, T, Hash, KeyEqual, Allocator>::begin() noexcept
 {
-    for (size_type i = 0; i < m_bucket_count; ++i)
+    for (size_type i = 0; i < m_bucket_count; i++)
     {
         if (m_table[i] != nullptr)
             return iterator(m_table[i], this);
@@ -1398,7 +1410,7 @@ template <typename Key, typename T, typename Hash, typename KeyEqual, typename A
 inline typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::const_iterator
 unordered_map<Key, T, Hash, KeyEqual, Allocator>::begin() const noexcept
 {
-    for (size_type i = 0; i < m_bucket_count; ++i)
+    for (size_type i = 0; i < m_bucket_count; i++)
     {
         if (m_table[i] != nullptr)
             return const_iterator(m_table[i], this);
@@ -1484,6 +1496,10 @@ unordered_map<Key, T, Hash, KeyEqual, Allocator>::insert(value_type&& value)
     new_node->next  = m_table[index];
     m_table[index]  = new_node;
     m_size++;
+
+    if (need_rehash())
+        do_rehash(m_bucket_count * 2);
+
     return std::make_pair(iterator(new_node, this), true);
 }
 
@@ -1505,7 +1521,7 @@ unordered_map<Key, T, Hash, KeyEqual, Allocator>::insert(const_iterator    hint,
                                                          const value_type& value)
 {
     (void)hint;
-    return insert(value);
+    return insert(value).first;
 }
 
 template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
@@ -1513,7 +1529,7 @@ typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::iterator
 unordered_map<Key, T, Hash, KeyEqual, Allocator>::insert(const_iterator hint, value_type&& value)
 {
     (void)hint;
-    return insert(std::move(value));
+    return insert(std::move(value)).first;
 }
 
 template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
@@ -1526,7 +1542,7 @@ typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::iterator
 unordered_map<Key, T, Hash, KeyEqual, Allocator>::insert(const_iterator hint, P&& value)
 {
     (void)hint;
-    return insert(std::forward<P>(value));
+    return insert(std::forward<P>(value)).first;
 }
 
 template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
@@ -1635,7 +1651,7 @@ typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::iterator
 unordered_map<Key, T, Hash, KeyEqual, Allocator>::try_emplace(const_iterator hint, Key&& k,
                                                               Args&&... args)
 {
-    return insert_or_assign(hint, std::move(k), std::forward<Args>(args)...);
+    return insert_or_assign(hint, std::forward<Key>(k), std::forward<Args>(args)...);
 }
 
 template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
@@ -1652,7 +1668,7 @@ unordered_map<Key, T, Hash, KeyEqual, Allocator>::erase(iterator pos)
 
     if (del_node == bucket)
     {
-        bucket = bucket->next;
+        bucket = next_node;
     }
     else
     {
@@ -1685,7 +1701,7 @@ unordered_map<Key, T, Hash, KeyEqual, Allocator>::erase(const_iterator pos)
 
     if (del_node == bucket)
     {
-        bucket = bucket->next;
+        bucket = next_node;
     }
     else
     {
@@ -1733,10 +1749,18 @@ template <typename H2, typename P2>
 inline void unordered_map<Key, T, Hash, KeyEqual, Allocator>::merge(
     unordered_map<Key, T, H2, P2, Allocator>& source)
 {
-    // 合并后，source 状态？？？？？？？？？？
-    for (auto& [k, v] : source)
+    auto it = source.begin();
+    while (it != source.end())
     {
-        insert_or_assign(std::move(k), std::move(v));
+        if (find(it->first) == end())
+        {
+            insert(*it);
+            it = source.erase(it);
+        }
+        else
+        {
+            ++it;
+        }
     }
 }
 
@@ -1745,9 +1769,18 @@ template <typename H2, typename P2>
 inline void unordered_map<Key, T, Hash, KeyEqual, Allocator>::merge(
     unordered_map<Key, T, H2, P2, Allocator>&& source)
 {
-    for (auto& [k, v] : source)
+    auto it = source.begin();
+    while (it != source.end())
     {
-        insert_or_assign(std::move(k), std::move(v));
+        if (find(it->first) == end())
+        {
+            insert(value_type(std::move(it->first), std::move(it->second)));
+            it = source.erase(it);
+        }
+        else
+        {
+            ++it;
+        }
     }
 }
 
@@ -1946,7 +1979,7 @@ inline void unordered_map<Key, T, Hash, KeyEqual, Allocator>::max_load_factor(
     float new_max_load_factor)
 {
     m_max_load_factor = new_max_load_factor;
-    if (load_factor() > max_load_factor())
+    if (need_rehash())
     {
         size_type new_bucket_count = static_cast<size_type>(std::ceil(size() / max_load_factor()));
         rehash(new_bucket_count);
@@ -1963,13 +1996,8 @@ void unordered_map<Key, T, Hash, KeyEqual, Allocator>::rehash(size_type new_buck
     if (new_bucket_count < m_size)
         new_bucket_count = m_size;
 
-    size_type actual_bucket_count = UNORDERED_MAP_DEFAULT_BUCKET_COUNT;
-    while (actual_bucket_count < new_bucket_count)
-    {
-        actual_bucket_count *= 2;
-    }
-
-    do_rehash(actual_bucket_count);
+    new_bucket_count = next_power_of_two(new_bucket_count);
+    do_rehash(new_bucket_count);
 }
 
 template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
@@ -1991,6 +2019,23 @@ inline typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::key_equal
 unordered_map<Key, T, Hash, KeyEqual, Allocator>::key_eq() const
 {
     return m_key_eq;
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
+typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::size_type
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::next_power_of_two(size_type n) noexcept
+{
+    if (n == 0)
+        return UNORDERED_MAP_DEFAULT_BUCKET_COUNT;
+
+    n--;
+    n |= n >> 1;
+    n |= n >> 2;
+    n |= n >> 4;
+    n |= n >> 8;
+    n |= n >> 16;
+    n |= n >> 32;
+    return n + 1;
 }
 
 template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
