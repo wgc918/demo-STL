@@ -52,6 +52,7 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <stdexcept>
 #include <type_traits>
 
 namespace demo
@@ -718,13 +719,13 @@ public:
     /// @details
     /// 如果键存在，返回对应值的引用。
     /// 如果键不存在，抛出 std::out_of_range 异常。
-    T& at(const Key& key);
+    reference at(const Key& key);
 
     /// @brief 获取指定键对应的值常量引用（带边界检查）
     /// @param key 键
     /// @return 指定键对应的值常量引用
     /// @throw std::out_of_range 如果键不存在
-    const T& at(const Key& key) const;
+    const_reference at(const Key& key) const;
 
     /// @brief 获取或插入指定键对应的值引用（无边界检查）
     /// @param key 键（左值）
@@ -733,7 +734,7 @@ public:
     /// 如果键存在，返回对应值的引用。
     /// 如果键不存在，则插入默认构造的值，并返回其引用。
     /// @note 如果 T 没有默认构造函数，此操作可能导致未定义行为。
-    T& operator[](const Key& key);
+    reference operator[](const Key& key);
 
     /// @brief 获取或插入指定键对应的值引用（移动版本）
     /// @param key 键（右值）
@@ -741,7 +742,7 @@ public:
     /// @details
     /// 如果键存在，返回对应值的引用。
     /// 如果键不存在，则移动 key 构造新键，并插入默认构造的值，返回其引用。
-    T& operator[](Key&& key);
+    reference operator[](Key&& key);
 
     // 查找
 
@@ -1765,6 +1766,107 @@ inline void unordered_map<Key, T, Hash, KeyEqual, Allocator>::merge(
     {
         insert_or_assign(std::move(k), std::move(v));
     }
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
+inline typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::reference
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::at(const Key& key)
+{
+    iterator pos = find(key);
+    if (pos == end())
+        throw std::out_of_range("unordered_map::at: key not found");
+    return pos->second;
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
+inline typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::const_reference
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::at(const Key& key) const
+{
+    const_iterator pos = find(key);
+    if (pos == cend())
+        throw std::out_of_range("unordered_map::at: key not found");
+    return pos->second;
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
+inline typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::reference
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::operator[](const Key& key)
+{
+    iterator it = find(key);
+    if (it == end())
+        it = insert(value_type(key, T())).first;
+    return it->second;
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
+inline typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::reference
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::operator[](Key&& key)
+{
+    iterator it = find(key);
+    if (it == end())
+        it = insert(value_type(std::move(key), T())).first;
+    return it->second;
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
+inline typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::size_type
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::count(const Key& key) const
+{
+    return find(key) != end() ? 1 : 0;
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
+inline typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::iterator
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::find(const Key& key)
+{
+    Node* node = find_node(key);
+    return iterator(node, this);
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
+inline typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::const_iterator
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::find(const Key& key) const
+{
+    Node* node = find_node(key);
+    return const_iterator(node, this);
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
+inline std::pair<typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::iterator,
+                 typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::iterator>
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::equal_range(const Key& key)
+{
+    size_type bucket_idx = bucket_index(key);
+    Node*     head       = m_table[bucket_idx];
+
+    while (head != nullptr)
+    {
+        if (key_equal(head->first, key))
+        {
+            return {iterator(head, this), iterator(nullptr, this)};
+        }
+        head = head->next;
+    }
+    return {iterator(nullptr, this), iterator(nullptr, this)};
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
+inline std::pair<typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::const_iterator,
+                 typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::const_iterator>
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::equal_range(const Key& key) const
+{
+    size_type bucket_idx = bucket_index(key);
+    Node*     head       = m_table[bucket_idx];
+
+    while (head != nullptr)
+    {
+        if (key_equal(head->first, key))
+        {
+            return {const_iterator(head, this), const_iterator(nullptr, this)};
+        }
+        head = head->next;
+    }
+    return {const_iterator(nullptr, this), const_iterator(nullptr, this)};
 }
 
 }  // namespace demo
