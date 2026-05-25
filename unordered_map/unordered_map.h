@@ -1869,4 +1869,81 @@ unordered_map<Key, T, Hash, KeyEqual, Allocator>::equal_range(const Key& key) co
     return {const_iterator(nullptr, this), const_iterator(nullptr, this)};
 }
 
+template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
+inline typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::local_iterator
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::begin(size_type n)
+{
+    return local_iterator(m_table[n], this);
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
+inline typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::const_local_iterator
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::begin(size_type n) const
+{
+    return const_local_iterator(m_table[n], this);
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
+inline typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::const_local_iterator
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::cbegin(size_type n) const
+{
+    return const_local_iterator(m_table[n], this);
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
+inline typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::local_iterator
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::end(size_type n)
+{
+    return local_iterator(nullptr, this);
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
+inline typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::const_local_iterator
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::end(size_type n) const
+{
+    return const_local_iterator(nullptr, this);
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
+inline typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::const_local_iterator
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::cend(size_type n) const
+{
+    return const_local_iterator(nullptr, this);
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
+inline typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::size_type
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::bucket_count() const
+{
+    return m_bucket_count;
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
+inline typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::size_type
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::max_bucket_count() const
+{
+    return static_cast<size_type>(max_size() / max_load_factor());
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
+inline typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::size_type
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::bucket_size(size_type n) const
+{
+    size_type size = 0;
+    Node*     head = m_table[n];
+    while (head != nullptr)
+    {
+        size++;
+        head = head->next;
+    }
+    return size;
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
+inline typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::size_type
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::bucket(const Key& k) const
+{
+    return bucket_index(k);
+}
+
 }  // namespace demo
