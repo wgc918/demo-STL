@@ -1457,17 +1457,7 @@ unordered_map<Key, T, Hash, KeyEqual, Allocator>::max_size() const noexcept
 template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
 inline void unordered_map<Key, T, Hash, KeyEqual, Allocator>::clear() noexcept
 {
-    for (size_type i = 0; i < m_bucket_count; i++)
-    {
-        Node* node = m_table[i];
-        while (node != nullptr)
-        {
-            Node* next = node->next;
-            alloc_traits::destroy(m_node_allocator, node);
-            alloc_traits::deallocate(m_node_allocator, node, 1);
-            node = next;
-        }
-    }
+    destroy_all_nodes();
     m_size = 0;
 }
 
@@ -2089,6 +2079,29 @@ void unordered_map<Key, T, Hash, KeyEqual, Allocator>::destroy_all_nodes()
             node = next;
         }
     }
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
+bool operator==(const unordered_map<Key, T, Hash, KeyEqual, Allocator>& lhs,
+                const unordered_map<Key, T, Hash, KeyEqual, Allocator>& rhs)
+{
+    if (lhs.size() != rhs.size())
+        return false;
+    for (auto& item : lhs)
+    {
+        if (rhs.find(item.first) == rhs.end())
+            return false;
+        if (item.second != rhs[item.first])
+            return false;
+    }
+    return true;
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
+bool operator!=(const unordered_map<Key, T, Hash, KeyEqual, Allocator>& lhs,
+                const unordered_map<Key, T, Hash, KeyEqual, Allocator>& rhs)
+{
+    return !(lhs == rhs);
 }
 
 }  // namespace demo
