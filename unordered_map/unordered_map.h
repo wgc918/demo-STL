@@ -52,6 +52,7 @@
 #include <cmath>
 #include <cstdint>
 #include <functional>
+#include <iostream>
 #include <memory>
 #include <stdexcept>
 #include <type_traits>
@@ -127,10 +128,10 @@ public:
     using value_type      = std::pair<const Key, T>;  ///< 元素类型（键值对）
     using size_type       = std::size_t;              ///< 大小类型
     using difference_type = std::ptrdiff_t;           ///< 差值类型
-    using pointer         = T*;                       ///< 元素指针类型
-    using const_pointer   = const T*;                 ///< 常量元素指针类型
-    using reference       = T&;                       ///< 元素引用类型
-    using const_reference = const T&;                 ///< 常量元素引用类型
+    using pointer         = value_type*;              ///< 元素指针类型
+    using const_pointer   = const value_type*;        ///< 常量元素指针类型
+    using reference       = value_type&;              ///< 元素引用类型
+    using const_reference = const value_type&;        ///< 常量元素引用类型
 
 public:
     /// @brief 哈希桶节点结构体
@@ -418,7 +419,7 @@ public:
     /// @details
     /// 创建一个空的 unordered_map，使用指定的初始桶数量。
     /// 如果 bucket_count 为 0，则使用默认桶数量。
-    explicit unordered_map(size_type bucket_count = UNORDERED_MAP_DEFAULT_BUCKET_COUNT);
+    explicit unordered_map(size_type bucket_count);
 
     /// @brief 范围构造函数
     /// @tparam InputIt 输入迭代器类型
@@ -538,8 +539,8 @@ public:
     ///         布尔值表示是否成功插入
     /// @details
     /// 使用 SFINAE 启用，只有当 value_type 可以从 P 构造时才启用。
-    template <typename P, std::enable_if_t<std::is_constructible_v<value_type, P>, int> = 0>
-    std::pair<iterator, bool> insert(P&& value);
+    // template <typename P, std::enable_if_t<std::is_constructible_v<value_type, P>, int> = 0>
+    // std::pair<iterator, bool> insert(P&& value);
 
     /// @brief 在指定位置附近插入元素（拷贝版本）
     /// @param hint 提示位置（当前实现中 hint 仅用于兼容性，不提供优化）
@@ -558,8 +559,8 @@ public:
     /// @param hint 提示位置
     /// @param value 要插入的元素
     /// @return 指向插入元素的迭代器，如果键已存在则返回指向现有元素的迭代器
-    template <typename P, std::enable_if_t<std::is_constructible_v<value_type, P>, int> = 0>
-    iterator insert(const_iterator hint, P&& value);
+    // template <typename P, std::enable_if_t<std::is_constructible_v<value_type, P>, int> = 0>
+    // iterator insert(const_iterator hint, P&& value);
 
     /// @brief 插入 [first, last) 范围内的元素
     /// @tparam InputIt 输入迭代器类型
@@ -711,6 +712,13 @@ public:
     template <typename H2, typename P2>
     void merge(unordered_map<Key, T, H2, P2, Allocator>&& source);
 
+    /// @brief 交换两个 unordered_map 的内容
+    /// @param other 要交换的 unordered_map
+    /// @details
+    /// 交换当前容器和 other 的所有元素。
+    /// 元素的键和值类型必须与当前容器兼容。
+    void swap(unordered_map& other);
+
     // 元素访问
 
     /// @brief 获取指定键对应的值引用（带边界检查）
@@ -720,13 +728,13 @@ public:
     /// @details
     /// 如果键存在，返回对应值的引用。
     /// 如果键不存在，抛出 std::out_of_range 异常。
-    reference at(const Key& key);
+    mapped_type& at(const Key& key);
 
     /// @brief 获取指定键对应的值常量引用（带边界检查）
     /// @param key 键
     /// @return 指定键对应的值常量引用
     /// @throw std::out_of_range 如果键不存在
-    const_reference at(const Key& key) const;
+    const mapped_type& at(const Key& key) const;
 
     /// @brief 获取或插入指定键对应的值引用（无边界检查）
     /// @param key 键（左值）
@@ -735,7 +743,7 @@ public:
     /// 如果键存在，返回对应值的引用。
     /// 如果键不存在，则插入默认构造的值，并返回其引用。
     /// @note 如果 T 没有默认构造函数，此操作可能导致未定义行为。
-    reference operator[](const Key& key);
+    mapped_type& operator[](const Key& key);
 
     /// @brief 获取或插入指定键对应的值引用（移动版本）
     /// @param key 键（右值）
@@ -743,7 +751,7 @@ public:
     /// @details
     /// 如果键存在，返回对应值的引用。
     /// 如果键不存在，则移动 key 构造新键，并插入默认构造的值，返回其引用。
-    reference operator[](Key&& key);
+    mapped_type& operator[](Key&& key);
 
     // 查找
 
@@ -898,10 +906,15 @@ public:
     key_equal key_eq() const;
 
 private:
-    using node_allocator_type =
-        typename std::allocator_traits<allocator_type>::template rebind<Node>;  ///< 节点分配器类型
+    using node_allocator_type = typename std::allocator_traits<
+        allocator_type>::template rebind_alloc<Node>;  ///< 节点分配器类型
+
+    using bucket_allocator_type = typename std::allocator_traits<
+        allocator_type>::template rebind_alloc<Node*>;  ///< 桶分配器类型
 
     using alloc_traits = std::allocator_traits<node_allocator_type>;  ///< 分配器 traits 类型
+    using bucket_alloc_traits =
+        std::allocator_traits<bucket_allocator_type>;  ///< 桶分配器 traits 类型
 
 private:
     /// @brief 计算大于等于给定值的最小 2 的幂
@@ -936,14 +949,15 @@ private:
     void destroy_all_nodes();
 
 private:
-    Node**              m_table;            ///< 桶数组指针
-    size_type           m_mask;             ///< 桶数组掩码
-    size_type           m_bucket_count;     ///< 桶数量
-    size_type           m_size;             ///< 元素数量
-    float               m_max_load_factor;  ///< 最大负载因子
-    hash_type           m_hash_function;    ///< 哈希函数对象
-    key_equal           m_key_eq;           ///< 键比较函数对象
-    node_allocator_type m_node_allocator;   ///< 节点分配器
+    Node**                m_table;             ///< 桶数组指针
+    size_type             m_mask;              ///< 桶数组掩码
+    size_type             m_bucket_count;      ///< 桶数量
+    size_type             m_size;              ///< 元素数量
+    float                 m_max_load_factor;   ///< 最大负载因子
+    hash_type             m_hash_function;     ///< 哈希函数对象
+    key_equal             m_key_eq;            ///< 键比较函数对象
+    node_allocator_type   m_node_allocator;    ///< 节点分配器
+    bucket_allocator_type m_bucket_allocator;  ///< 桶分配器
 };
 
 //------------------------iterator 实现------------------------
@@ -984,12 +998,21 @@ template <typename Key, typename T, typename Hash, typename KeyEqual, typename A
 inline typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::iterator&
 unordered_map<Key, T, Hash, KeyEqual, Allocator>::iterator::operator++()
 {
-    m_node               = m_node->next;
-    size_type bucket_idx = 0;
-    while (m_node == nullptr && bucket_idx < m_container->m_bucket_count)
+    if (m_node == nullptr)
+        return *this;
+
+    m_node = m_node->next;
+    if (m_node == nullptr)
     {
-        bucket_idx++;
-        m_node = m_container->m_table[bucket_idx];
+        size_type bucket_idx = m_container->bucket_index(m_node->hash_code) + 1;
+        while (bucket_idx < m_container->m_bucket_count)
+        {
+            m_node = m_container->m_table[bucket_idx];
+            if (m_node != nullptr)
+                break;
+
+            bucket_idx++;
+        }
     }
     return *this;
 }
@@ -1063,12 +1086,21 @@ template <typename Key, typename T, typename Hash, typename KeyEqual, typename A
 inline typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::const_iterator&
 unordered_map<Key, T, Hash, KeyEqual, Allocator>::const_iterator::operator++()
 {
-    m_node               = m_node->next;
-    size_type bucket_idx = 0;
-    while (m_node == nullptr && bucket_idx < m_container->m_bucket_count)
+    if (m_node == nullptr)
+        return *this;
+
+    m_node = m_node->next;
+    if (m_node == nullptr)
     {
-        bucket_idx++;
-        m_node = m_container->m_table[bucket_idx];
+        size_type bucket_idx = m_container->bucket_index(m_node->hash_code) + 1;
+        while (bucket_idx < m_container->m_bucket_count)
+        {
+            m_node = m_container->m_table[bucket_idx];
+            if (m_node != nullptr)
+                break;
+
+            bucket_idx++;
+        }
     }
     return *this;
 }
@@ -1216,9 +1248,10 @@ unordered_map<Key, T, Hash, KeyEqual, Allocator>::unordered_map()
       m_max_load_factor(UNORDERED_MAP_DEFAULT_LOAD_FACTOR),
       m_hash_function(),
       m_key_eq(),
-      m_node_allocator()
+      m_node_allocator(),
+      m_bucket_allocator()
 {
-    m_table = alloc_traits::allocate(m_node_allocator, m_bucket_count);
+    m_table = bucket_alloc_traits::allocate(m_bucket_allocator, m_bucket_count);
     for (size_type i = 0; i < m_bucket_count; i++)
     {
         m_table[i] = nullptr;
@@ -1234,11 +1267,15 @@ unordered_map<Key, T, Hash, KeyEqual, Allocator>::unordered_map(size_type bucket
       m_max_load_factor(UNORDERED_MAP_DEFAULT_LOAD_FACTOR),
       m_hash_function(),
       m_key_eq(),
-      m_node_allocator()
+      m_node_allocator(),
+      m_bucket_allocator()
 {
+    if (bucket_count == 0)
+        bucket_count = UNORDERED_MAP_DEFAULT_BUCKET_COUNT;
+
     m_bucket_count = next_power_of_two(bucket_count);
     m_mask         = m_bucket_count - 1;
-    m_table        = alloc_traits::allocate(m_node_allocator, m_bucket_count);
+    m_table        = bucket_alloc_traits::allocate(m_bucket_allocator, m_bucket_count);
     for (size_type i = 0; i < m_bucket_count; i++)
     {
         m_table[i] = nullptr;
@@ -1256,11 +1293,12 @@ unordered_map<Key, T, Hash, KeyEqual, Allocator>::unordered_map(InputIt first, I
       m_max_load_factor(UNORDERED_MAP_DEFAULT_LOAD_FACTOR),
       m_hash_function(),
       m_key_eq(),
-      m_node_allocator()
+      m_node_allocator(),
+      m_bucket_allocator()
 {
     m_bucket_count = next_power_of_two(bucket_count);
     m_mask         = m_bucket_count - 1;
-    m_table        = alloc_traits::allocate(m_node_allocator, m_bucket_count);
+    m_table        = bucket_alloc_traits::allocate(m_bucket_allocator, m_bucket_count);
     for (size_type i = 0; i < m_bucket_count; i++)
     {
         m_table[i] = nullptr;
@@ -1278,11 +1316,12 @@ unordered_map<Key, T, Hash, KeyEqual, Allocator>::unordered_map(
       m_max_load_factor(UNORDERED_MAP_DEFAULT_LOAD_FACTOR),
       m_hash_function(),
       m_key_eq(),
-      m_node_allocator()
+      m_node_allocator(),
+      m_bucket_allocator()
 {
     m_bucket_count = next_power_of_two(bucket_count);
     m_mask         = m_bucket_count - 1;
-    m_table        = alloc_traits::allocate(m_node_allocator, m_bucket_count);
+    m_table        = bucket_alloc_traits::allocate(m_bucket_allocator, m_bucket_count);
     for (size_type i = 0; i < m_bucket_count; i++)
     {
         m_table[i] = nullptr;
@@ -1295,13 +1334,14 @@ unordered_map<Key, T, Hash, KeyEqual, Allocator>::unordered_map(const unordered_
     : m_table(nullptr),
       m_mask(other.m_mask),
       m_bucket_count(other.m_bucket_count),
-      m_size(other.m_size),
+      m_size(0),
       m_max_load_factor(other.m_max_load_factor),
       m_hash_function(other.m_hash_function),
       m_key_eq(other.m_key_eq),
-      m_node_allocator(other.m_node_allocator)
+      m_node_allocator(other.m_node_allocator),
+      m_bucket_allocator(other.m_bucket_allocator)
 {
-    m_table = alloc_traits::allocate(m_node_allocator, m_bucket_count);
+    m_table = bucket_alloc_traits::allocate(m_bucket_allocator, m_bucket_count);
     for (size_type i = 0; i < m_bucket_count; i++)
     {
         m_table[i] = nullptr;
@@ -1318,7 +1358,8 @@ unordered_map<Key, T, Hash, KeyEqual, Allocator>::unordered_map(unordered_map&& 
       m_max_load_factor(other.m_max_load_factor),
       m_hash_function(other.m_hash_function),
       m_key_eq(other.m_key_eq),
-      m_node_allocator(other.m_node_allocator)
+      m_node_allocator(other.m_node_allocator),
+      m_bucket_allocator(other.m_bucket_allocator)
 {
     other.m_mask            = UNORDERED_MAP_DEFAULT_BUCKET_COUNT - 1;
     other.m_bucket_count    = UNORDERED_MAP_DEFAULT_BUCKET_COUNT;
@@ -1327,7 +1368,7 @@ unordered_map<Key, T, Hash, KeyEqual, Allocator>::unordered_map(unordered_map&& 
     other.m_hash_function   = hash_type();
     other.m_key_eq          = key_equal();
     other.m_node_allocator  = allocator_type();
-    other.m_table           = alloc_traits::allocate(other.m_node_allocator, other.m_bucket_count);
+    other.m_table = bucket_alloc_traits::allocate(other.m_bucket_allocator, other.m_bucket_count);
     for (size_type i = 0; i < other.m_bucket_count; i++)
     {
         other.m_table[i] = nullptr;
@@ -1354,7 +1395,7 @@ unordered_map<Key, T, Hash, KeyEqual, Allocator>::operator=(unordered_map&& othe
         return *this;
 
     clear();
-    alloc_traits::deallocate(m_node_allocator, m_table, m_bucket_count);
+    bucket_alloc_traits::deallocate(m_bucket_allocator, m_table, m_bucket_count);
     m_table           = other.m_table;
     m_mask            = other.m_mask;
     m_bucket_count    = other.m_bucket_count;
@@ -1371,7 +1412,7 @@ unordered_map<Key, T, Hash, KeyEqual, Allocator>::operator=(unordered_map&& othe
     other.m_hash_function   = hash_type();
     other.m_key_eq          = key_equal();
     other.m_node_allocator  = allocator_type();
-    other.m_table           = alloc_traits::allocate(other.m_node_allocator, other.m_bucket_count);
+    other.m_table = bucket_alloc_traits::allocate(other.m_bucket_allocator, other.m_bucket_count);
     for (size_type i = 0; i < other.m_bucket_count; i++)
     {
         other.m_table[i] = nullptr;
@@ -1384,14 +1425,14 @@ template <typename Key, typename T, typename Hash, typename KeyEqual, typename A
 unordered_map<Key, T, Hash, KeyEqual, Allocator>::~unordered_map()
 {
     clear();
-    alloc_traits::deallocate(m_node_allocator, m_table, m_bucket_count);
+    bucket_alloc_traits::deallocate(m_bucket_allocator, m_table, m_bucket_count);
 }
 
 template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
 typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::allocator_type
 unordered_map<Key, T, Hash, KeyEqual, Allocator>::get_allocator() const noexcept
 {
-    return m_node_allocator;
+    return allocator_type();
 }
 
 template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
@@ -1503,17 +1544,18 @@ unordered_map<Key, T, Hash, KeyEqual, Allocator>::insert(value_type&& value)
     return std::make_pair(iterator(new_node, this), true);
 }
 
-template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
-template <
-    typename P,
-    std::enable_if_t<std::is_constructible_v<
-                         typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::value_type, P>,
-                     int>>
-inline std::pair<typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::iterator, bool>
-unordered_map<Key, T, Hash, KeyEqual, Allocator>::insert(P&& value)
-{
-    return insert(std::forward<P>(value));
-}
+// template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
+// template <
+//     typename P,
+//     std::enable_if_t<std::is_constructible_v<
+//                          typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::value_type,
+//                          P>,
+//                      int>>
+// inline std::pair<typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::iterator, bool>
+// unordered_map<Key, T, Hash, KeyEqual, Allocator>::insert(P&& value)
+// {
+//     return insert(value_type(std::forward<P>(value)));
+// }
 
 template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
 typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::iterator
@@ -1532,18 +1574,19 @@ unordered_map<Key, T, Hash, KeyEqual, Allocator>::insert(const_iterator hint, va
     return insert(std::move(value)).first;
 }
 
-template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
-template <
-    typename P,
-    std::enable_if_t<std::is_constructible_v<
-                         typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::value_type, P>,
-                     int>>
-typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::iterator
-unordered_map<Key, T, Hash, KeyEqual, Allocator>::insert(const_iterator hint, P&& value)
-{
-    (void)hint;
-    return insert(std::forward<P>(value)).first;
-}
+// template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
+// template <
+//     typename P,
+//     std::enable_if_t<std::is_constructible_v<
+//                          typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::value_type,
+//                          P>,
+//                      int>>
+// typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::iterator
+// unordered_map<Key, T, Hash, KeyEqual, Allocator>::insert(const_iterator hint, P&& value)
+// {
+//     (void)hint;
+//     return insert(value_type(std::forward<P>(value))).first;
+// }
 
 template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
 template <typename InputIt>
@@ -1625,7 +1668,7 @@ template <typename... Args>
 std::pair<typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::iterator, bool>
 unordered_map<Key, T, Hash, KeyEqual, Allocator>::try_emplace(const Key& k, Args&&... args)
 {
-    return insert_or_assign(k, std::forward<Args>(args)...);
+    return insert(value_type(k, std::forward<Args>(args)...));
 }
 
 template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
@@ -1633,7 +1676,7 @@ template <typename... Args>
 std::pair<typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::iterator, bool>
 unordered_map<Key, T, Hash, KeyEqual, Allocator>::try_emplace(Key&& k, Args&&... args)
 {
-    return insert_or_assign(std::forward<Key>(k), std::forward<Args>(args)...);
+    return insert(value_type(std::forward<Key>(k), std::forward<Args>(args)...));
 }
 
 template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
@@ -1642,7 +1685,7 @@ typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::iterator
 unordered_map<Key, T, Hash, KeyEqual, Allocator>::try_emplace(const_iterator hint, const Key& k,
                                                               Args&&... args)
 {
-    return insert_or_assign(hint, k, std::forward<Args>(args)...);
+    return insert(hint, value_type(k, std::forward<Args>(args)...));
 }
 
 template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
@@ -1651,7 +1694,7 @@ typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::iterator
 unordered_map<Key, T, Hash, KeyEqual, Allocator>::try_emplace(const_iterator hint, Key&& k,
                                                               Args&&... args)
 {
-    return insert_or_assign(hint, std::forward<Key>(k), std::forward<Args>(args)...);
+    return insert(hint, value_type(std::forward<Key>(k), std::forward<Args>(args)...));
 }
 
 template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
@@ -1659,16 +1702,16 @@ inline typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::iterator
 unordered_map<Key, T, Hash, KeyEqual, Allocator>::erase(iterator pos)
 {
     if (pos == end())
-        return pos;
-
-    Node*    del_node     = pos.m_node;
-    uint64_t bucket_index = del_node->hash_code;
-    Node*    bucket       = m_table[bucket_index];
-    Node*    next_node    = del_node->next;
+        return end();
+    Node*     del_node   = pos.m_node;
+    size_type bucket_idx = bucket_index(del_node->hash_code);
+    Node*     bucket     = m_table[bucket_idx];
+    Node*     next_node  = del_node->next;
+    iterator  ret        = ++pos;
 
     if (del_node == bucket)
     {
-        bucket = next_node;
+        m_table[bucket_idx] = next_node;
     }
     else
     {
@@ -1684,7 +1727,7 @@ unordered_map<Key, T, Hash, KeyEqual, Allocator>::erase(iterator pos)
     alloc_traits::deallocate(m_node_allocator, del_node, 1);
     m_size--;
 
-    return iterator(next_node, this);
+    return ret;
 }
 
 template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
@@ -1692,16 +1735,17 @@ typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::iterator
 unordered_map<Key, T, Hash, KeyEqual, Allocator>::erase(const_iterator pos)
 {
     if (pos == cend())
-        return pos;
+        return end();
 
-    Node*    del_node     = pos.m_node;
-    uint64_t bucket_index = del_node->hash_code;
-    Node*    bucket       = m_table[bucket_index];
-    Node*    next_node    = del_node->next;
+    Node*          del_node   = pos.m_node;
+    size_type      bucket_idx = bucket_index(del_node->hash_code);
+    Node*          bucket     = m_table[bucket_idx];
+    Node*          next_node  = del_node->next;
+    const_iterator ret        = ++pos;
 
     if (del_node == bucket)
     {
-        bucket = next_node;
+        m_table[bucket_idx] = next_node;
     }
     else
     {
@@ -1710,25 +1754,25 @@ unordered_map<Key, T, Hash, KeyEqual, Allocator>::erase(const_iterator pos)
         {
             prev = prev->next;
         }
-        prev->next = del_node->next;
+        prev->next = next_node;
     }
 
     alloc_traits::destroy(m_node_allocator, del_node);
     alloc_traits::deallocate(m_node_allocator, del_node, 1);
     m_size--;
 
-    return const_iterator(next_node, this);
+    return iterator(ret.m_node, this);
 }
 
 template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
 inline typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::iterator
 unordered_map<Key, T, Hash, KeyEqual, Allocator>::erase(const_iterator first, const_iterator last)
 {
-    while (first != last)
+    for (; first != last; ++first)
     {
         first = erase(first);
     }
-    return last;
+    return iterator(const_cast<Node*>(last.m_node), this);
 }
 
 template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
@@ -1736,6 +1780,7 @@ inline typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::size_type
 unordered_map<Key, T, Hash, KeyEqual, Allocator>::erase(const Key& key)
 {
     iterator pos = find(key);
+    std::cout << pos->first << std::endl;
     if (pos != end())
     {
         erase(pos);
@@ -1785,7 +1830,21 @@ inline void unordered_map<Key, T, Hash, KeyEqual, Allocator>::merge(
 }
 
 template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
-inline typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::reference
+void unordered_map<Key, T, Hash, KeyEqual, Allocator>::swap(unordered_map& other)
+{
+    using std::swap;
+    swap(m_table, other.m_table);
+    swap(m_size, other.m_size);
+    swap(m_bucket_count, other.m_bucket_count);
+    swap(m_mask, other.m_mask);
+    swap(m_max_load_factor, other.m_max_load_factor);
+    swap(m_hash_function, other.m_hash_function);
+    swap(m_key_eq, other.m_key_eq);
+    swap(m_node_allocator, other.m_node_allocator);
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
+inline typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::mapped_type&
 unordered_map<Key, T, Hash, KeyEqual, Allocator>::at(const Key& key)
 {
     iterator pos = find(key);
@@ -1795,7 +1854,7 @@ unordered_map<Key, T, Hash, KeyEqual, Allocator>::at(const Key& key)
 }
 
 template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
-inline typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::const_reference
+inline const typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::mapped_type&
 unordered_map<Key, T, Hash, KeyEqual, Allocator>::at(const Key& key) const
 {
     const_iterator pos = find(key);
@@ -1805,7 +1864,7 @@ unordered_map<Key, T, Hash, KeyEqual, Allocator>::at(const Key& key) const
 }
 
 template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
-inline typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::reference
+inline typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::mapped_type&
 unordered_map<Key, T, Hash, KeyEqual, Allocator>::operator[](const Key& key)
 {
     iterator it = find(key);
@@ -1815,7 +1874,7 @@ unordered_map<Key, T, Hash, KeyEqual, Allocator>::operator[](const Key& key)
 }
 
 template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
-inline typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::reference
+inline typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::mapped_type&
 unordered_map<Key, T, Hash, KeyEqual, Allocator>::operator[](Key&& key)
 {
     iterator it = find(key);
@@ -1857,7 +1916,7 @@ unordered_map<Key, T, Hash, KeyEqual, Allocator>::equal_range(const Key& key)
 
     while (head != nullptr)
     {
-        if (key_equal(head->first, key))
+        if (m_key_eq(head->value.first, key))
         {
             return {iterator(head, this), iterator(nullptr, this)};
         }
@@ -1876,7 +1935,7 @@ unordered_map<Key, T, Hash, KeyEqual, Allocator>::equal_range(const Key& key) co
 
     while (head != nullptr)
     {
-        if (key_equal(head->first, key))
+        if (m_key_eq(head->value.first, key))
         {
             return {const_iterator(head, this), const_iterator(nullptr, this)};
         }
@@ -1910,6 +1969,7 @@ template <typename Key, typename T, typename Hash, typename KeyEqual, typename A
 inline typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::local_iterator
 unordered_map<Key, T, Hash, KeyEqual, Allocator>::end(size_type n)
 {
+    (void)n;
     return local_iterator(nullptr, this);
 }
 
@@ -1917,6 +1977,7 @@ template <typename Key, typename T, typename Hash, typename KeyEqual, typename A
 inline typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::const_local_iterator
 unordered_map<Key, T, Hash, KeyEqual, Allocator>::end(size_type n) const
 {
+    (void)n;
     return const_local_iterator(nullptr, this);
 }
 
@@ -1924,6 +1985,7 @@ template <typename Key, typename T, typename Hash, typename KeyEqual, typename A
 inline typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::const_local_iterator
 unordered_map<Key, T, Hash, KeyEqual, Allocator>::cend(size_type n) const
 {
+    (void)n;
     return const_local_iterator(nullptr, this);
 }
 
@@ -2085,7 +2147,7 @@ void unordered_map<Key, T, Hash, KeyEqual, Allocator>::do_rehash(size_type new_b
         new_bucket_count = UNORDERED_MAP_DEFAULT_BUCKET_COUNT;
 
     size_type new_mask  = new_bucket_count - 1;
-    Node**    new_table = alloc_traits::allocate(m_node_allocator, new_bucket_count);
+    Node**    new_table = bucket_alloc_traits::allocate(m_bucket_allocator, new_bucket_count);
     for (size_type i = 0; i < new_bucket_count; ++i)
     {
         new_table[i] = nullptr;
@@ -2104,7 +2166,7 @@ void unordered_map<Key, T, Hash, KeyEqual, Allocator>::do_rehash(size_type new_b
         }
     }
 
-    alloc_traits::deallocate(m_node_allocator, m_table, m_bucket_count);
+    bucket_alloc_traits::deallocate(m_bucket_allocator, m_table, m_bucket_count);
     m_table        = new_table;
     m_bucket_count = new_bucket_count;
     m_mask         = new_mask;
@@ -2134,9 +2196,10 @@ bool operator==(const unordered_map<Key, T, Hash, KeyEqual, Allocator>& lhs,
         return false;
     for (auto& item : lhs)
     {
-        if (rhs.find(item.first) == rhs.end())
+        auto it = rhs.find(item.first);
+        if (it == rhs.end())
             return false;
-        if (item.second != rhs[item.first])
+        if (item.second != it->second)
             return false;
     }
     return true;
