@@ -49,6 +49,7 @@
 
 #pragma once
 
+#include <cmath>
 #include <cstdint>
 #include <functional>
 #include <memory>
@@ -863,12 +864,11 @@ public:
 
     /// @brief 设置最大负载因子
     /// @param new_max_load_factor 新的最大负载因子
-    /// @return 原来的最大负载因子
     /// @details
     /// 当 load_factor() > max_load_factor() 时，会自动触发 rehash。
     /// 较大的 max_load_factor 会减少内存使用，但可能增加查找时间。
     /// 较小的 max_load_factor 会提高查找性能，但增加内存使用。
-    float max_load_factor(float new_max_load_factor);
+    void max_load_factor(float new_max_load_factor);
 
     /// @brief 重新哈希，改变桶数量
     /// @param new_bucket_count 新的桶数量
@@ -918,13 +918,6 @@ private:
     /// @param key 键
     /// @return 找到的节点指针，如果未找到返回 nullptr
     Node* find_node(const Key& key) const;
-
-    /// @brief 在指定桶中查找键对应的节点
-    /// @param bucket_idx 桶索引
-    /// @param key 键
-    /// @param hash 哈希值
-    /// @return 找到的节点指针，如果未找到返回 nullptr
-    Node* find_node_in_bucket(size_type bucket_idx, const Key& key, uint64_t hash);
 
     /// @brief 检查是否需要进行重哈希
     /// @return 如果需要重哈希返回 true，否则返回 false
@@ -1944,6 +1937,158 @@ inline typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::size_type
 unordered_map<Key, T, Hash, KeyEqual, Allocator>::bucket(const Key& k) const
 {
     return bucket_index(k);
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
+inline float unordered_map<Key, T, Hash, KeyEqual, Allocator>::load_factor() const
+{
+    return static_cast<float>(size()) / m_bucket_count;
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
+inline float unordered_map<Key, T, Hash, KeyEqual, Allocator>::max_load_factor() const
+{
+    return m_max_load_factor;
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
+inline void unordered_map<Key, T, Hash, KeyEqual, Allocator>::max_load_factor(
+    float new_max_load_factor)
+{
+    m_max_load_factor = new_max_load_factor;
+    if (load_factor() > max_load_factor())
+    {
+        size_type new_bucket_count = static_cast<size_type>(std::ceil(size() / max_load_factor()));
+        rehash(new_bucket_count);
+    }
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
+void unordered_map<Key, T, Hash, KeyEqual, Allocator>::rehash(size_type new_bucket_count)
+{
+    // 边界检查 ：确保桶数量不小于当前元素数量，避免丢失数据
+    // 向上取整到 2 的幂次 ：因为哈希表使用位运算 hash& mask
+    // 来计算桶索引，要求桶数量必须是 2 的幂（这样 mask = bucket_count - 1 才能正确工作）
+
+    if (new_bucket_count < m_size)
+        new_bucket_count = m_size;
+
+    size_type actual_bucket_count = UNORDERED_MAP_DEFAULT_BUCKET_COUNT;
+    while (actual_bucket_count < new_bucket_count)
+    {
+        actual_bucket_count *= 2;
+    }
+
+    do_rehash(actual_bucket_count);
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
+void unordered_map<Key, T, Hash, KeyEqual, Allocator>::reserve(size_type count)
+{
+    size_type needed_bucket_count = static_cast<size_type>(std::ceil(count / max_load_factor()));
+    rehash(needed_bucket_count);
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
+inline typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::hash_type
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::hash_function() const
+{
+    return m_hash_function;
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
+inline typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::key_equal
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::key_eq() const
+{
+    return m_key_eq;
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
+inline typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::size_type
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::bucket_index(const Key& key) const
+{
+    return bucket_index(m_hash_function(key));
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
+inline typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::size_type
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::bucket_index(uint64_t hash) const
+{
+    return hash & m_mask;
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
+inline typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::Node*
+unordered_map<Key, T, Hash, KeyEqual, Allocator>::find_node(const Key& key) const
+{
+    uint64_t  hcode      = m_hash_function(key);
+    size_type bucket_idx = bucket_index(hcode);
+    Node*     head       = m_table[bucket_idx];
+
+    while (head != nullptr)
+    {
+        if (head->hash_code == hcode && m_key_eq(head->value.first, key))
+            return head;
+        head = head->next;
+    }
+    return nullptr;
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
+inline bool unordered_map<Key, T, Hash, KeyEqual, Allocator>::need_rehash() const
+{
+    return load_factor() > max_load_factor();
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
+void unordered_map<Key, T, Hash, KeyEqual, Allocator>::do_rehash(size_type new_bucket_count)
+{
+    if (new_bucket_count == m_bucket_count)
+        return;
+
+    if (new_bucket_count == 0)
+        new_bucket_count = UNORDERED_MAP_DEFAULT_BUCKET_COUNT;
+
+    size_type new_mask  = new_bucket_count - 1;
+    Node**    new_table = alloc_traits::allocate(m_node_allocator, new_bucket_count);
+    for (size_type i = 0; i < new_bucket_count; ++i)
+    {
+        new_table[i] = nullptr;
+    }
+
+    for (size_type i = 0; i < m_bucket_count; ++i)
+    {
+        Node* node = m_table[i];
+        while (node != nullptr)
+        {
+            Node*     next            = node->next;
+            size_type new_bucket_idx  = bucket_index(node->hash_code);
+            node->next                = new_table[new_bucket_idx];
+            new_table[new_bucket_idx] = node;
+            node                      = next;
+        }
+    }
+
+    alloc_traits::deallocate(m_node_allocator, m_table, m_bucket_count);
+    m_table        = new_table;
+    m_bucket_count = new_bucket_count;
+    m_mask         = new_mask;
+}
+
+template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
+void unordered_map<Key, T, Hash, KeyEqual, Allocator>::destroy_all_nodes()
+{
+    for (size_type i = 0; i < m_bucket_count; ++i)
+    {
+        Node* node = m_table[i];
+        while (node != nullptr)
+        {
+            Node* next = node->next;
+            alloc_traits::destroy(m_node_allocator, node);
+            alloc_traits::deallocate(m_node_allocator, node, 1);
+            node = next;
+        }
+    }
 }
 
 }  // namespace demo
