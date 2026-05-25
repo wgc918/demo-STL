@@ -1000,11 +1000,10 @@ unordered_map<Key, T, Hash, KeyEqual, Allocator>::iterator::operator++()
 {
     if (m_node == nullptr)
         return *this;
-
-    m_node = m_node->next;
+    size_type bucket_idx = m_container->bucket_index(m_node->hash_code) + 1;
+    m_node               = m_node->next;
     if (m_node == nullptr)
     {
-        size_type bucket_idx = m_container->bucket_index(m_node->hash_code) + 1;
         while (bucket_idx < m_container->m_bucket_count)
         {
             m_node = m_container->m_table[bucket_idx];
@@ -1089,10 +1088,10 @@ unordered_map<Key, T, Hash, KeyEqual, Allocator>::const_iterator::operator++()
     if (m_node == nullptr)
         return *this;
 
-    m_node = m_node->next;
+    size_type bucket_idx = m_container->bucket_index(m_node->hash_code) + 1;
+    m_node               = m_node->next;
     if (m_node == nullptr)
     {
-        size_type bucket_idx = m_container->bucket_index(m_node->hash_code) + 1;
         while (bucket_idx < m_container->m_bucket_count)
         {
             m_node = m_container->m_table[bucket_idx];
@@ -1707,7 +1706,8 @@ unordered_map<Key, T, Hash, KeyEqual, Allocator>::erase(iterator pos)
     size_type bucket_idx = bucket_index(del_node->hash_code);
     Node*     bucket     = m_table[bucket_idx];
     Node*     next_node  = del_node->next;
-    iterator  ret        = ++pos;
+    iterator  ret        = pos;
+    ret++;
 
     if (del_node == bucket)
     {
@@ -1768,7 +1768,7 @@ template <typename Key, typename T, typename Hash, typename KeyEqual, typename A
 inline typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::iterator
 unordered_map<Key, T, Hash, KeyEqual, Allocator>::erase(const_iterator first, const_iterator last)
 {
-    for (; first != last; ++first)
+    while (first != last)
     {
         first = erase(first);
     }
@@ -1780,7 +1780,6 @@ inline typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::size_type
 unordered_map<Key, T, Hash, KeyEqual, Allocator>::erase(const Key& key)
 {
     iterator pos = find(key);
-    std::cout << pos->first << std::endl;
     if (pos != end())
     {
         erase(pos);
@@ -2146,14 +2145,14 @@ void unordered_map<Key, T, Hash, KeyEqual, Allocator>::do_rehash(size_type new_b
     if (new_bucket_count == 0)
         new_bucket_count = UNORDERED_MAP_DEFAULT_BUCKET_COUNT;
 
-    size_type new_mask  = new_bucket_count - 1;
-    Node**    new_table = bucket_alloc_traits::allocate(m_bucket_allocator, new_bucket_count);
-    for (size_type i = 0; i < new_bucket_count; ++i)
+    m_mask           = new_bucket_count - 1;
+    Node** new_table = bucket_alloc_traits::allocate(m_bucket_allocator, new_bucket_count);
+    for (size_type i = 0; i < new_bucket_count; i++)
     {
         new_table[i] = nullptr;
     }
 
-    for (size_type i = 0; i < m_bucket_count; ++i)
+    for (size_type i = 0; i < m_bucket_count; i++)
     {
         Node* node = m_table[i];
         while (node != nullptr)
@@ -2169,13 +2168,12 @@ void unordered_map<Key, T, Hash, KeyEqual, Allocator>::do_rehash(size_type new_b
     bucket_alloc_traits::deallocate(m_bucket_allocator, m_table, m_bucket_count);
     m_table        = new_table;
     m_bucket_count = new_bucket_count;
-    m_mask         = new_mask;
 }
 
 template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
 void unordered_map<Key, T, Hash, KeyEqual, Allocator>::destroy_all_nodes()
 {
-    for (size_type i = 0; i < m_bucket_count; ++i)
+    for (size_type i = 0; i < m_bucket_count; i++)
     {
         Node* node = m_table[i];
         while (node != nullptr)
@@ -2185,6 +2183,7 @@ void unordered_map<Key, T, Hash, KeyEqual, Allocator>::destroy_all_nodes()
             alloc_traits::deallocate(m_node_allocator, node, 1);
             node = next;
         }
+        m_table[i] = nullptr;
     }
 }
 
