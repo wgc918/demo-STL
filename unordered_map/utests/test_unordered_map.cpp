@@ -14,7 +14,7 @@
 #include "doctest.h"
 
 // ============================================
-// 娴嬭瘯杈呭姪宸ュ叿
+// 测试unordered_map的equal_range方法
 // ============================================
 
 template <typename K, typename T>
@@ -58,7 +58,7 @@ size_t count_elements_in_buckets(const demo::unordered_map<K, T>& mp)
 #define UM_STR_INT demo::unordered_map<std::string, int>
 
 // ============================================
-// 娴嬭瘯濂椾欢: Node缁撴瀯娴嬭瘯
+// 测试套件: Node结构测试
 // ============================================
 
 TEST_SUITE("Unordered_Map Node Structure")
@@ -108,7 +108,7 @@ TEST_SUITE("Unordered_Map Node Structure")
 }
 
 // ============================================
-// 娴嬭瘯濂椾欢: 鏋勯€犲嚱鏁?
+// 测试套件: 构造函数
 // ============================================
 
 TEST_SUITE("Unordered_Map Constructors")
@@ -124,8 +124,12 @@ TEST_SUITE("Unordered_Map Constructors")
     TEST_CASE("Constructor with bucket count")
     {
         demo::unordered_map<int, int> m(32);
-        CHECK(m.bucket_count() >= 32);
+        CHECK(m.bucket_count() == 32);
         CHECK(m.empty());
+
+        demo::unordered_map<int, int> n(31);
+        CHECK(n.bucket_count() >= 31);
+        CHECK(n.empty());
     }
 
     TEST_CASE("Initializer list constructor")
@@ -189,7 +193,7 @@ TEST_SUITE("Unordered_Map Constructors")
 }
 
 // ============================================
-// 娴嬭瘯濂椾欢: 璧嬪€兼搷浣滅
+// 测试套件: 赋值运算符
 // ============================================
 
 TEST_SUITE("Unordered_Map Assignment Operators")
@@ -255,7 +259,7 @@ TEST_SUITE("Unordered_Map Assignment Operators")
 }
 
 // ============================================
-// 娴嬭瘯濂椾欢: 鍏冪礌璁块棶
+// 测试套件: 元素访问
 // ============================================
 
 TEST_SUITE("Unordered_Map Element Access")
@@ -332,7 +336,7 @@ TEST_SUITE("Unordered_Map Element Access")
 }
 
 // ============================================
-// 娴嬭瘯濂椾欢: 杩唬鍣?
+// 测试套件: 迭代器
 // ============================================
 
 TEST_SUITE("Unordered_Map Iterators")
@@ -463,7 +467,7 @@ TEST_SUITE("Unordered_Map Iterators")
 }
 
 // ============================================
-// 娴嬭瘯濂椾欢: 妗惰凯浠ｅ櫒
+// 测试套件: 桶迭代器
 // ============================================
 
 TEST_SUITE("Unordered_Map Bucket Iterators")
@@ -528,7 +532,7 @@ TEST_SUITE("Unordered_Map Bucket Iterators")
 }
 
 // ============================================
-// 娴嬭瘯濂椾欢: 瀹归噺鎿嶄綔
+// 测试套件: 容量操作
 // ============================================
 
 TEST_SUITE("Unordered_Map Capacity")
@@ -583,7 +587,7 @@ TEST_SUITE("Unordered_Map Capacity")
 }
 
 // ============================================
-// 娴嬭瘯濂椾欢: 淇敼鍣?- 鎻掑叆鎿嶄綔
+// 测试套件: 修改器 - 插入操作
 // ============================================
 
 TEST_SUITE("Unordered_Map Modifiers - Insert")
@@ -746,7 +750,7 @@ TEST_SUITE("Unordered_Map Modifiers - Insert")
 }
 
 // ============================================
-// 娴嬭瘯濂椾欢: 淇敼鍣?- 鍒犻櫎鎿嶄綔
+// 测试套件: 修改器 - 删除操作
 // ============================================
 
 TEST_SUITE("Unordered_Map Modifiers - Erase")
@@ -804,21 +808,30 @@ TEST_SUITE("Unordered_Map Modifiers - Erase")
             {4, 40},
             {5, 50}
         };
+        // for (auto it = m.begin(); it != m.end(); ++it)
+        // {
+        //     std::cout << it->first << std::endl;
+        // }
+        auto it = m.begin();  // 5
+        it++;                 // 4
+        auto first = it;      // 4
+        it++;                 // 1
+        it++;                 // 3
+        auto last = it;       // 3
+        // 会删除4,1这2个元素
+        m.erase(first, last);
 
-        auto first = m.find(2);
-        std::cout << "first: " << first->first << std::endl;
-        auto last  = m.find(4);
-        std::cout << "last: " << last->first << std::endl;
+        // std::cout<<"===================="<<std::endl;
+        // for (auto it = m.begin(); it != m.end(); ++it)
+        // {
+        //     std::cout << it->first << std::endl;
+        // }
 
-        // m.erase(first, last);
-        first = m.erase(first);
-        std::cout << "ll" << first->first << std::endl;
-        m.erase(first);
         CHECK(m.size() == 3);
-        CHECK(m.find(2) == m.end());
-        CHECK(m.find(3) == m.end());
-        CHECK(m.find(1) != m.end());
-        CHECK(m.find(4) != m.end());
+        CHECK(m.find(2) != m.end());
+        CHECK(m.find(3) != m.end());
+        CHECK(m.find(1) == m.end());
+        CHECK(m.find(4) == m.end());
         CHECK(m.find(5) != m.end());
     }
 
@@ -838,6 +851,7 @@ TEST_SUITE("Unordered_Map Modifiers - Erase")
 
     TEST_CASE("clear() on empty map")
     {
+        std::cout << "clear() on empty map" << std::endl;
         demo::unordered_map<int, int> m{};
 
         CHECK_NOTHROW(m.clear());
@@ -870,7 +884,7 @@ TEST_SUITE("Unordered_Map Modifiers - Erase")
 }
 
 // ============================================
-// 娴嬭瘯濂椾欢: 淇敼鍣?- 鍏朵粬鎿嶄綔
+// 测试套件: 修改器 - 其他操作
 // ============================================
 
 TEST_SUITE("Unordered_Map Modifiers - Other")
@@ -915,7 +929,7 @@ TEST_SUITE("Unordered_Map Modifiers - Other")
 }
 
 // ============================================
-// 娴嬭瘯濂椾欢: 鏌ユ壘鎿嶄綔
+// 测试套件: 查找操作
 // ============================================
 
 TEST_SUITE("Unordered_Map Lookup")
@@ -991,7 +1005,7 @@ TEST_SUITE("Unordered_Map Lookup")
 
         auto range = m.equal_range(2);
         CHECK(range.first->first == 2);
-        CHECK(range.second->first == 2);
+        CHECK(range.second == m.end());
     }
 
     TEST_CASE("equal_range() for non-existing key")
@@ -1008,7 +1022,7 @@ TEST_SUITE("Unordered_Map Lookup")
 }
 
 // ============================================
-// 娴嬭瘯濂椾欢: 妗舵帴鍙?
+// 测试套件: 桶接口
 // ============================================
 
 TEST_SUITE("Unordered_Map Bucket Interface")
@@ -1047,7 +1061,7 @@ TEST_SUITE("Unordered_Map Bucket Interface")
 }
 
 // ============================================
-// 娴嬭瘯濂椾欢: 鍝堝笇绛栫暐
+// 测试套件: 哈希策略
 // ============================================
 
 TEST_SUITE("Unordered_Map Hash Policy")
@@ -1091,6 +1105,10 @@ TEST_SUITE("Unordered_Map Hash Policy")
         };
 
         m.rehash(1);
+        // for (auto it = m.begin(); it != m.end(); ++it)
+        // {
+        //     std::cout << it->first << std::endl;
+        // }
         CHECK(m.size() == 3);
         CHECK(m[1] == 10);
         CHECK(m[2] == 20);
@@ -1119,10 +1137,43 @@ TEST_SUITE("Unordered_Map Hash Policy")
         CHECK(m[1] == 10);
         CHECK(m[2] == 20);
     }
+
+    TEST_CASE("rehash occurs when exceeding default load factor")
+    {
+        demo::unordered_map<int, int> m(4);
+
+        m.insert({3, 30});
+        m.insert({4, 40});
+        m.insert({5, 50});
+        m.insert({6, 60});
+        m.insert({7, 70});
+        m.insert({8, 80});
+        m.insert({9, 90});
+
+        CHECK(m.size() == 7);
+        CHECK(m.bucket_count() > 4);
+    }
+
+    TEST_CASE("no rehash when load factor is sufficiently large")
+    {
+        demo::unordered_map<int, int> m(4);
+        m.max_load_factor(7.0f);
+
+        m.insert({3, 30});
+        m.insert({4, 40});
+        m.insert({5, 50});
+        m.insert({6, 60});
+        m.insert({7, 70});
+        m.insert({8, 80});
+        m.insert({9, 90});
+
+        CHECK(m.size() == 7);
+        CHECK(m.bucket_count() == 4);
+    }
 }
 
 // ============================================
-// 娴嬭瘯濂椾欢: 瑙傚療鍣?
+// 测试套件: 观察器
 // ============================================
 
 TEST_SUITE("Unordered_Map Observers")
@@ -1154,7 +1205,7 @@ TEST_SUITE("Unordered_Map Observers")
 }
 
 // ============================================
-// 娴嬭瘯濂椾欢: 鎿嶄綔鍑芥暟
+// 测试套件: 操作函数
 // ============================================
 
 TEST_SUITE("Unordered_Map Operations")
@@ -1228,7 +1279,7 @@ TEST_SUITE("Unordered_Map Operations")
 }
 
 // ============================================
-// 娴嬭瘯濂椾欢: 鍏ㄥ眬姣旇緝杩愮畻绗?
+// 测试套件: 全局比较运算符
 // ============================================
 
 TEST_SUITE("Unordered_Map Comparison Operators")
@@ -1287,7 +1338,7 @@ TEST_SUITE("Unordered_Map Comparison Operators")
 }
 
 // ============================================
-// 娴嬭瘯濂椾欢: 杈圭晫鎯呭喌鍜屽紓甯稿満鏅?
+// 测试套件: 边界情况和异常场景
 // ============================================
 
 TEST_SUITE("Unordered_Map Boundary Cases")
@@ -1371,7 +1422,7 @@ TEST_SUITE("Unordered_Map Boundary Cases")
 }
 
 // ============================================
-// 娴嬭瘯濂椾欢: 瀛楃涓茬被鍨嬫祴璇?
+// 测试套件: 字符串类型测试
 // ============================================
 
 TEST_SUITE("Unordered_Map String Type")
@@ -1409,7 +1460,7 @@ TEST_SUITE("Unordered_Map String Type")
 }
 
 // ============================================
-// 娴嬭瘯濂椾欢: 鍘嬪姏娴嬭瘯
+// 测试套件: 压力测试
 // ============================================
 
 TEST_SUITE("Unordered_Map Stress Tests")
@@ -1739,9 +1790,55 @@ TEST_SUITE("Unordered_Map Custom Hash")
             }
         };
 
+        // 虽然key是相同的，但是hash_code不同，所以插入成功，size为2
+
         demo::unordered_map<int, int, std::hash<int>, CustomEqual> m;
-        m.insert({1, 10});
-        m.insert({11, 110});
+
+        auto result = m.insert({1, 10});
+        CHECK(result.second);
+        CHECK(result.first->first == 1);
+        CHECK(result.first->second == 10);
+        result = m.insert({11, 110});
+        CHECK(result.second);
+        CHECK(result.first->first == 11);
+        CHECK(result.first->second == 110);
+
+        CHECK(m.size() == 2);
+        CHECK(m[1] == 10);
+        CHECK(m[11] == 110);
+    }
+
+    TEST_CASE("custom key equality")
+    {
+        struct CustomEqual
+        {
+            bool operator()(int a, int b) const
+            {
+                return (a % 10) == (b % 10);
+            }
+        };
+
+        // 自定义哈希：必须按个位数 hash！
+        struct CustomHash
+        {
+            size_t operator()(int a) const
+            {
+                return std::hash<int>()(a % 10);
+            }
+        };
+
+        // key 和 hash_code 都相同，，size为1
+
+        demo::unordered_map<int, int, CustomHash, CustomEqual> m;
+
+        auto result = m.insert({1, 10});
+        CHECK(result.second);
+        CHECK(result.first->first == 1);
+        CHECK(result.first->second == 10);
+        result = m.insert({11, 110});
+        CHECK_FALSE(result.second);
+        CHECK(result.first->first == 1);
+        CHECK(result.first->second == 10);
 
         CHECK(m.size() == 1);
         CHECK(m[1] == 10);
@@ -1859,7 +1956,7 @@ TEST_SUITE("Unordered_Map Additional Edge Cases")
         CHECK(m3[1] == 10);
 
         m1.swap(m3);
-        CHECK(m1[3] == 30);
+        CHECK(m1[1] == 10);
         CHECK(m3[2] == 20);
     }
 
@@ -2038,7 +2135,7 @@ TEST_SUITE("Unordered_Map Additional Edge Cases")
         auto range = m.equal_range(1);
         CHECK(range.first != m.end());
         CHECK(range.first->first == 1);
-        CHECK(range.second->first == 1);
+        CHECK(range.second == m.end());
     }
 
     TEST_CASE("equal_range on non-existing key")
