@@ -35,6 +35,7 @@
 | `demo::deque`        | 双端队列 | ✅ 已实现 | 双端操作、分段存储、随机访问迭代器      |
 | `demo::map`          | 关联容器 | ✅ 已实现 | 有序键值对、红黑树实现、O(log n) 查找   |
 | `demo::set`          | 关联容器 | ✅ 已实现 | 有序唯一键、红黑树实现、O(log n) 查找    |
+| `demo::unordered_map`| 关联容器 | ✅ 已实现 | 无序键值对、哈希表实现、O(1) 平均查找   |
 
 ### 核心功能
 
@@ -75,6 +76,14 @@
   - 支持双向迭代器，按中序遍历顺序访问元素
   - 提供 `find()`、`lower_bound()`、`upper_bound()` 等查找接口
   - 支持 `insert()`、`erase()` 等高效插入操作
+
+- **关联容器 (`demo::unordered_map`)**
+  - 基于哈希表实现，保证平均 O(1) 的插入、删除和查找操作
+  - 存储键值对（key-value pairs），键唯一但不保证顺序
+  - 支持前向迭代器，按桶顺序访问元素
+  - 提供 `find()`、`count()`、`equal_range()` 等查找接口
+  - 支持 `insert_or_assign()`、`try_emplace()` 等高效插入操作
+  - 支持负载因子调整、重哈希、预留空间等哈希策略管理
   
 ## 快速开始
 
@@ -168,14 +177,22 @@ demo-STL/
 │       ├── doctest.h            # 测试框架
 │       ├── test_deque.cpp       # deque测试用例
 │       └── main.cpp             # 测试入口
-└── map/                         # 关联容器模块
+├── map/                         # 关联容器模块（有序）
 │     ├── map.h                  # map实现
-│     └── map.md                 # map详细文档
+│     ├── map.md                 # map详细文档
 │     └── utest/                 # 测试用例目录
 │       ├── CMakeLists.txt       # 测试构建配置
 │       ├── doctest.h            # 测试框架
 │       ├── test_map.cpp         # map测试用例
 │       └── main.cpp             # 测试入口
+└── unordered_map/               # 关联容器模块（无序）
+      ├── unordered_map.h        # unordered_map实现
+      ├── unordered_map.md       # unordered_map详细文档
+      └── utest/                 # 测试用例目录
+        ├── CMakeLists.txt       # 测试构建配置
+        ├── doctest.h            # 测试框架
+        ├── test_unordered_map.cpp # unordered_map测试用例
+        └── main.cpp             # 测试入口
 ```
 
 ## API 参考
@@ -255,8 +272,8 @@ demo-STL/
 
 ---
 
-**文档版本**：v1.7
-**最后更新**：2026-05-20
+**文档版本**：v1.8
+**最后更新**：2026-05-26
 **项目地址**：[demo-STL](https://github.com/wgc918/demo-STL)
 
 > **提示**：如需了解各容器的详细实现，请查阅 [自定义STL容器综合文档](./自定义STL容器综合文档.md)
