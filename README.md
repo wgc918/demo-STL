@@ -27,15 +27,16 @@
 
 ### 已实现容器
 
-| 容器名称             | 类型     | 状态      | 核心特性                                |
-| :------------------- | :------- | :-------- | :-------------------------------------- |
-| `demo::vector`       | 动态数组 | ✅ 已实现 | 随机访问、动态扩容、异常安全            |
-| `demo::forward_list` | 单向链表 | ✅ 已实现 | 前向迭代、O(1) 前端操作、低内存开销     |
-| `demo::list`         | 双向链表 | ✅ 已实现 | 双向迭代、O(1) 任意位置操作、迭代器稳定 |
-| `demo::deque`        | 双端队列 | ✅ 已实现 | 双端操作、分段存储、随机访问迭代器      |
-| `demo::map`          | 关联容器 | ✅ 已实现 | 有序键值对、红黑树实现、O(log n) 查找   |
-| `demo::set`          | 关联容器 | ✅ 已实现 | 有序唯一键、红黑树实现、O(log n) 查找    |
-| `demo::unordered_map`| 关联容器 | ✅ 已实现 | 无序键值对、哈希表实现、O(1) 平均查找   |
+| 容器名称              | 类型     | 状态      | 核心特性                                |
+| :-------------------- | :------- | :-------- | :-------------------------------------- |
+| `demo::vector`        | 动态数组 | ✅ 已实现 | 随机访问、动态扩容、异常安全            |
+| `demo::forward_list`  | 单向链表 | ✅ 已实现 | 前向迭代、O(1) 前端操作、低内存开销     |
+| `demo::list`          | 双向链表 | ✅ 已实现 | 双向迭代、O(1) 任意位置操作、迭代器稳定 |
+| `demo::deque`         | 双端队列 | ✅ 已实现 | 双端操作、分段存储、随机访问迭代器      |
+| `demo::map`           | 关联容器 | ✅ 已实现 | 有序键值对、红黑树实现、O(log n) 查找   |
+| `demo::set`           | 关联容器 | ✅ 已实现 | 有序唯一键、红黑树实现、O(log n) 查找   |
+| `demo::unordered_map` | 关联容器 | ✅ 已实现 | 无序键值对、哈希表实现、O(1) 平均查找   |
+| `demo::unordered_set` | 关联容器 | ✅ 已实现 | 无序唯一键、哈希表实现、O(1) 平均查找   |
 
 ### 核心功能
 
@@ -84,7 +85,16 @@
   - 提供 `find()`、`count()`、`equal_range()` 等查找接口
   - 支持 `insert_or_assign()`、`try_emplace()` 等高效插入操作
   - 支持负载因子调整、重哈希、预留空间等哈希策略管理
-  
+
+- **关联容器 (`demo::unordered_set`)**
+  - 基于哈希表实现，保证平均 O(1) 的插入、删除和查找操作
+  - 存储唯一键（keys），键唯一但不保证顺序
+  - 支持前向迭代器，按桶顺序访问元素
+  - 提供 `find()`、`count()`、`equal_range()` 等查找接口
+  - 支持 `emplace()`、`insert()` 等高效插入操作，自动去重
+  - 支持负载因子调整、重哈希、预留空间等哈希策略管理
+  - 支持合并异类型 unordered_set 的 `merge()` 操作
+
 ## 快速开始
 
 ### 环境要求
@@ -186,13 +196,21 @@ demo-STL/
 │       ├── test_map.cpp         # map测试用例
 │       └── main.cpp             # 测试入口
 └── unordered_map/               # 关联容器模块（无序）
-      ├── unordered_map.h        # unordered_map实现
-      ├── unordered_map.md       # unordered_map详细文档
-      └── utest/                 # 测试用例目录
-        ├── CMakeLists.txt       # 测试构建配置
-        ├── doctest.h            # 测试框架
-        ├── test_unordered_map.cpp # unordered_map测试用例
-        └── main.cpp             # 测试入口
+│      ├── unordered_map.h        # unordered_map实现
+│      ├── unordered_map.md       # unordered_map详细文档
+│      └── utest/                 # 测试用例目录
+│        ├── CMakeLists.txt       # 测试构建配置
+│        ├── doctest.h            # 测试框架
+│        ├── test_unordered_map.cpp # unordered_map测试用例
+│        └── main.cpp             # 测试入口
+└── unordered_set/                # 关联容器模块（无序集合）
+│      ├── unordered_set.h        # unordered_set实现
+│      ├── unordered_set.md       # unordered_set详细文档
+│      └── utests/                # 测试用例目录
+│        ├── CMakeLists.txt       # 测试构建配置
+│        ├── doctest.h            # 测试框架
+│        ├── test_unordered_set.cpp # unordered_set测试用例
+│        └── main.cpp             # 测试入口
 ```
 
 ## API 参考
@@ -272,8 +290,8 @@ demo-STL/
 
 ---
 
-**文档版本**：v1.8
-**最后更新**：2026-05-26
+**文档版本**：v1.9
+**最后更新**：2026-05-27
 **项目地址**：[demo-STL](https://github.com/wgc918/demo-STL)
 
 > **提示**：如需了解各容器的详细实现，请查阅 [自定义STL容器综合文档](./自定义STL容器综合文档.md)

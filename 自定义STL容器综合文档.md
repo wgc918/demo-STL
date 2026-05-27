@@ -672,6 +672,161 @@ Is empty after clear: true
 
 **详细文档跳转**：跳转至[demo::set容器开发文档](./set/set.md)
 
+### 4. demo::unordered_set（无序不重复集合容器）
+
+**核心定位**：基于哈希表实现的关联容器，仅存储唯一的键（key），键即元素值，**不保证任何特定顺序**，支持平均 O(1) 时间复杂度的插入、删除和查找操作，是实现高速去重、快速集合成员判断等场景的理想选择。
+
+**设计目标**：对齐 `std::unordered_set` 接口，实现哈希表的高效查找机制，提供平均常数时间复杂度的操作，补充异常安全机制和哈希策略管理。
+
+**核心特性**：
+
+- **哈希表实现**：底层基于链地址法（Separate Chaining）的哈希表，保证平均 O(1) 的时间复杂度；
+- **键唯一存储**：仅存储键，元素类型与键类型相同（`value_type = key_type`），自动保证键的唯一性；
+- **无序遍历**：迭代器按桶顺序访问元素，不保证特定顺序，重哈希后顺序可能改变；
+- **高效查找**：提供 `find()`、`count()`、`equal_range()` 等查找接口；
+- **前向迭代器**：支持前向迭代器（`std::forward_iterator_tag`），支持前置/后置自增操作；
+- **桶内迭代器**：支持 `local_iterator`/`const_local_iterator` 遍历单个桶的元素；
+- **高效插入**：支持 `emplace()`（原地构造）、`insert()`（拷贝/移动版本）等高效插入接口；
+- **哈希策略管理**：支持调整负载因子、重哈希、预留空间等操作；
+- **桶接口**：支持 `bucket_count()`、`bucket_size()`、`bucket()` 等桶相关接口；
+- **移动语义优化**：支持移动构造、移动赋值，避免不必要的拷贝开销；
+- **合并操作**：支持 `merge()` 合并异类型 unordered_set 的元素；
+- **异常安全**：内存分配失败抛 `std::bad_alloc` 异常。
+
+**核心数据结构设计原理**：
+
+`unordered_set` 采用**链地址法哈希表**实现，核心组件包括：
+
+- **桶数组（m_table）**：存储节点指针的数组，每个桶指向一个链表；
+- **节点（Node）**：存储键值、哈希值缓存和指向下一个节点的指针；
+- **负载因子（load_factor）**：元素数量与桶数量的比值，超过阈值时触发重哈希；
+- **哈希函数（Hash）**：将键转换为哈希值，默认使用 `std::hash<Key>`；
+- **键比较函数（KeyEqual）**：判断两个键是否相等，默认使用 `std::equal_to<Key>`；
+- **桶数量优化**：桶数量始终为 2 的幂，通过位与运算 `hash & m_mask` 快速定位桶索引。
+
+**常用操作方法及时间复杂度**：
+
+| 操作方法                   | 功能描述         | 时间复杂度 | 说明              |
+| :------------------------- | :--------------- | :--------- | :---------------- |
+| `insert(const value_type&)` | 插入键（拷贝版本） | O(1) 平均  | 键已存在则忽略    |
+| `insert(value_type&&)`      | 插入键（移动版本） | O(1) 平均  | 键已存在则忽略    |
+| `emplace(args...)`         | 原地构造键并插入 | O(1) 平均  | 避免拷贝开销      |
+| `emplace_hint(hint, args...)` | 在提示位置插入 | O(1) 平均  | hint仅用于兼容性  |
+| `erase(key)`               | 删除指定键的元素 | O(1) 平均  | 返回删除数量(0或1)|
+| `erase(iterator)`          | 删除迭代器指向元素 | O(1) 平均 | 返回下一个迭代器  |
+| `erase(first, last)`       | 删除范围元素     | O(m) 平均  | m为删除元素个数   |
+| `find(key)`                | 查找指定键       | O(1) 平均  | 返回迭代器        |
+| `count(key)`               | 统计键出现次数   | O(1) 平均  | 返回 0 或 1       |
+| `equal_range(key)`         | 等于key的元素范围 | O(1) 平均 | 返回迭代器对      |
+| `size()`                   | 返回元素个数     | O(1)       | 直接返回成员变量  |
+| `empty()`                  | 判断是否为空     | O(1)       | 比较 size 与 0    |
+| `clear()`                  | 清空容器         | O(n)       | 销毁所有节点      |
+| `swap(set&)`               | 交换两个容器     | O(1)       | 交换内部指针      |
+| `merge(source)`            | 合并另一个容器   | O(m) 平均  | m为源容器元素个数 |
+| `rehash(n)`                | 重新哈希         | O(n)       | 重新分配桶数组    |
+| `reserve(n)`               | 预留空间         | O(n)       | 可能触发 rehash   |
+| `bucket_count()`            | 返回桶数量       | O(1)       | -                 |
+| `load_factor()`             | 返回负载因子     | O(1)       | size/bucket_count |
+| `bucket(key)`              | 返回键所在桶索引 | O(1) 平均  | -                 |
+
+**使用示例代码**：
+
+```cpp
+#include <iostream>
+#include "unordered_set/unordered_set.h"
+#include <string>
+
+int main() {
+    // 创建 unordered_set 容器
+    demo::unordered_set<std::string> s{"apple", "banana", "cherry"};
+
+    // 插入元素
+    s.insert("date");
+    s.emplace("elderberry");
+    
+    // 尝试插入重复元素（会被忽略）
+    auto [it, inserted] = s.insert("apple");
+    std::cout << "apple inserted: " << std::boolalpha << inserted << std::endl; // false
+
+    // 查找元素
+    auto find_it = s.find("cherry");
+    if (find_it != s.end()) {
+        std::cout << "Found: " << *find_it << std::endl;
+    }
+
+    // 遍历（无序）
+    std::cout << "Traversal: ";
+    for (const auto& key : s) {
+        std::cout << key << " ";
+    }
+    std::cout << std::endl;
+
+    // 统计元素数量
+    std::cout << "cherry count: " << s.count("cherry") << std::endl; // 1
+    std::cout << "grape count: " << s.count("grape") << std::endl;   // 0
+
+    // 查看哈希策略信息
+    std::cout << "Bucket count: " << s.bucket_count() << std::endl;
+    std::cout << "Load factor: " << s.load_factor() << std::endl;
+
+    // 删除元素
+    s.erase("banana");
+    std::cout << "Size after erase: " << s.size() << std::endl;
+
+    return 0;
+}
+```
+
+**输出结果**：
+
+```
+apple inserted: false
+Found: cherry
+Traversal: apple banana cherry date elderberry 
+cherry count: 1
+grape count: 0
+Bucket count: 16
+Load factor: 0.3125
+Size after erase: 4
+```
+
+**与 demo::set 的区别**：
+
+| 特性              | demo::unordered_set       | demo::set               |
+| :---------------- | :------------------------ | :---------------------- |
+| **底层实现**      | 哈希表（链地址法）        | 红黑树                  |
+| **元素顺序**      | 无序                      | 按键升序排序            |
+| **查找复杂度**    | O(1) 平均，O(n) 最坏      | O(log n) 最坏           |
+| **插入复杂度**    | O(1) 平均，O(n) 最坏      | O(log n) 最坏           |
+| **删除复杂度**    | O(1) 平均，O(n) 最坏      | O(log n) 最坏           |
+| **内存布局**      | 非连续（节点式+桶数组）   | 非连续（节点式）        |
+| **迭代器类型**    | 前向迭代器                | 双向迭代器              |
+| **反向遍历**      | 不支持                    | 支持（rbegin/rend）     |
+| **范围查询**      | 不支持（无序）            | 支持（lower/upper_bound）|
+| **内存开销**      | 较高（哈希表+链表）       | 较高（红黑树结构）      |
+| **适用场景**      | 快速查找、去重、不关心顺序 | 有序遍历、范围查询      |
+
+**适用场景**：
+
+| 场景             | 推荐使用 unordered_set 的原因           |
+| :--------------- | :------------------------------------- |
+| 去重处理         | 键唯一性保证，自动去重                   |
+| 集合成员判断     | O(1) 平均查找，快速判断元素是否在集合中   |
+| 缓存/去重系统    | 高速查找、插入、删除                   |
+| 不关心顺序的场景 | 无序存储，无需排序开销                 |
+| 唯一性验证       | 快速判断数据是否重复                   |
+
+**与 demo::unordered_map 的区别**：
+
+| 特性              | demo::unordered_set        | demo::unordered_map         |
+| :---------------- | :------------------------- | :-------------------------- |
+| **存储内容**      | 仅存储键（key）            | 存储键值对（key-value）     |
+| **value_type**    | 等于 key_type              | `std::pair<const K, T>`     |
+| **元素访问**      | 仅支持迭代器访问           | 支持 `operator[]`/`at()`   |
+| **应用场景**      | 集合运算、去重、成员判断   | 字典、配置管理、快速索引    |
+
+**详细文档跳转**：跳转至[demo::unordered_set容器开发文档](./unordered_set/unordered_set.md)
+
 ### 待实现关联式容器
 
 后续将逐步实现以下关联式容器，实现后将同步更新本总览及对应详细文档：
@@ -726,6 +881,7 @@ Is empty after clear: true
 | v1.6   | 1. 更新 demo::map 为已实现状态；2. 补充 map 核心特性、核心数据结构设计原理、常用操作方法及时间复杂度、完整使用示例和输出结果；3. 添加适用场景建议表格；4. 更新 README.md 中 map 相关内容；5. 更新版本历史记录 | 2026-05-17 |
 | v1.7   | 1. 更新 demo::set 为已实现状态；2. 补充 set 核心特性、核心数据结构设计原理、常用操作方法及时间复杂度、完整使用示例和输出结果；3. 添加适用场景建议表格；4. 添加与 demo::map 的对比表格；5. 更新 README.md 中 set 相关内容；6. 更新版本历史记录 | 2026-05-20 |
 | v1.8   | 1. 更新 demo::unordered_map 为已实现状态；2. 补充 unordered_map 核心特性、核心数据结构设计原理、常用操作方法及时间复杂度、完整使用示例和输出结果；3. 添加与 demo::map 的对比表格；4. 添加适用场景建议表格；5. 更新 README.md 中 unordered_map 相关内容；6. 更新版本历史记录 | 2026-05-26 |
+| v1.9   | 1. 更新 demo::unordered_set 为已实现状态；2. 补充 unordered_set 核心特性、核心数据结构设计原理、常用操作方法及时间复杂度、完整使用示例和输出结果；3. 添加与 demo::set 的对比表格；4. 添加与 demo::unordered_map 的对比表格；5. 添加适用场景建议表格；6. 更新 README.md 中 unordered_set 相关内容；7. 更新版本历史记录 | 2026-05-27 |
 | 待更新 | 1. 扩展关联式容器（multiset、multimap）、容器适配器的框架内容                                                                                                                                                                          | -          |
 
 # 注意事项
