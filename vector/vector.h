@@ -2027,8 +2027,8 @@ inline void vector<T, Allocator>::pop_back()
 {
     if (empty())
         throw std::out_of_range("vector::pop_back: empty vector");
-    m_size--;
     alloc_traits::destroy(m_allocator, m_data + m_size - 1);
+    m_size--;
 }
 
 template <typename T, typename Allocator>
