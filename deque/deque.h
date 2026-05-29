@@ -46,6 +46,7 @@
 #include <initializer_list>
 #include <iterator>
 #include <memory>
+#include <stdexcept>
 #include <type_traits>
 
 namespace demo
