@@ -159,7 +159,7 @@ int main() {
 ```
 demo-STL/
 ├── README.md                    # 项目说明文档（本文件）
-├── 自定义STL容器综合文档.md       # 容器综合文档入口
+├── 自定义STL容器综合文档.md        # 容器综合文档入口
 ├── CMakeLists.txt               # 项目构建配置
 ├── list/                        # 链表容器模块
 │   ├── list.h                   # 双向链表实现
@@ -195,7 +195,15 @@ demo-STL/
 │       ├── doctest.h            # 测试框架
 │       ├── test_map.cpp         # map测试用例
 │       └── main.cpp             # 测试入口
-└── unordered_map/               # 关联容器模块（无序）
+├── set/                         # 关联容器模块（有序）
+│     ├── set.h                  # set实现
+│     ├── set.md                 # set详细文档
+│     └── utest/                 # 测试用例目录
+│       ├── CMakeLists.txt       # 测试构建配置
+│       ├── doctest.h            # 测试框架
+│       ├── test_set.cpp         # set测试用例
+│       └── main.cpp             # 测试入口
+├──  unordered_map/               # 关联容器模块（无序）
 │      ├── unordered_map.h        # unordered_map实现
 │      ├── unordered_map.md       # unordered_map详细文档
 │      └── utest/                 # 测试用例目录
@@ -249,35 +257,6 @@ demo-STL/
 - **测试类型**：涵盖正常流程、边界条件、异常场景
 - **运行方式**：通过 CTest 运行所有测试用例
 
-## 贡献指南
-
-欢迎提交 Issue 和 Pull Request！
-
-### 提交规范
-
-1. **代码风格**：遵循 Google C++ 编码规范
-2. **提交信息**：使用清晰的提交信息，格式如下：
-
-   ```
-   [类型] 描述
-
-   详细说明（可选）
-   ```
-
-   类型：`feat`（新功能）、`fix`（修复）、`docs`（文档）、`refactor`（重构）、`test`（测试）
-
-3. **测试要求**：新增功能必须配套单元测试
-
-### 开发流程
-
-```
-1. Fork 仓库
-2. 创建功能分支
-3. 实现功能并编写测试
-4. 提交代码并创建 Pull Request
-5. 代码审查通过后合并
-```
-
 ## 许可证
 
 本项目采用 MIT 许可证，详见 [LICENSE](LICENSE) 文件。
@@ -286,7 +265,6 @@ demo-STL/
 
 - 感谢 C++ 标准库委员会提供的优秀接口设计
 - 感谢 doctest 提供的轻量级测试框架
-- 感谢所有为项目做出贡献的开发者
 
 ---
 
