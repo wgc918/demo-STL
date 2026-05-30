@@ -1,0 +1,34 @@
+cmake_minimum_required(VERSION 3.16)
+
+project(queue_tests LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+if(MSVC)
+    add_compile_options(
+        /W4
+        /EHsc
+        /utf-8
+    )
+else()
+    add_compile_options(
+        -Wall
+        -Wextra
+        -pedantic
+    )
+endif()
+
+include_directories(
+    ${PROJECT_SOURCE_DIR}
+    ${PROJECT_SOURCE_DIR}/..
+)
+
+set(TEST_SOURCES
+    test_deque_queue.cpp
+    test_list_queue.cpp
+    main.cpp
+)
+
+add_executable(test ${TEST_SOURCES})
