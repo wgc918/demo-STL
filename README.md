@@ -38,6 +38,7 @@
 | `demo::unordered_map` | 关联容器 | ✅ 已实现 | 无序键值对、哈希表实现、O(1) 平均查找   |
 | `demo::unordered_set` | 关联容器 | ✅ 已实现 | 无序唯一键、哈希表实现、O(1) 平均查找   |
 | `demo::stack`         | 容器适配器 | ✅ 已实现 | LIFO 结构、双端队列适配、栈顶操作       |
+| `demo::queue`         | 容器适配器 | ✅ 已实现 | FIFO 结构、双端队列适配、双向访问       |
 
 ### 核心功能
 
@@ -100,6 +101,14 @@
   - 基于 deque 实现的后进先出（LIFO）栈适配器
   - 支持栈顶插入（push）、删除（pop）和访问（top）操作
   - 默认使用 deque 作为底层容器，也可使用 vector 或 list
+  - 支持拷贝构造、移动构造和赋值运算符重载
+  - 提供 `empty()`、`size()`、`swap()` 等接口
+  - 支持 emplace() 原地构造元素
+
+- **容器适配器 (`demo::queue`)**
+  - 基于 deque 实现的先进先出（FIFO）队列适配器
+  - 支持队尾插入（push）、队首删除（pop）、队首访问（front）和队尾访问（back）操作
+  - 默认使用 deque 作为底层容器，也可使用 list（不推荐使用 vector）
   - 支持拷贝构造、移动构造和赋值运算符重载
   - 提供 `empty()`、`size()`、`swap()` 等接口
   - 支持 emplace() 原地构造元素
@@ -228,6 +237,25 @@ demo-STL/
 │        ├── doctest.h            # 测试框架
 │        ├── test_unordered_set.cpp # unordered_set测试用例
 │        └── main.cpp             # 测试入口
+├── stack/                       # 容器适配器模块（栈）
+│     ├── stack.h                 # stack实现
+│     ├── stack.md                # stack详细文档
+│     └── utests/                 # 测试用例目录
+│       ├── CMakeLists.txt        # 测试构建配置
+│       ├── doctest.h             # 测试框架
+│       ├── test_deque_stack.cpp  # stack测试用例(deque为底层容器)
+│       ├── test_list_stack.cpp   # stack测试用例(list为底层容器)
+│       ├── test_vector_stack.cpp # stack测试用例(vector为底层容器)
+│       └── main.cpp              # 测试入口
+└── queue/                        # 容器适配器模块（队列）
+      ├── queue.h                 # queue实现
+      ├── queue.md                # queue详细文档
+      └── utests/                 # 测试用例目录
+        ├── CMakeLists.txt        # 测试构建配置
+        ├── doctest.h             # 测试框架
+        ├── test_deque_queue.cpp  # queue测试用例(deque为底层容器)
+        ├── test_list_queue.cpp   # queue测试用例(list为底层容器)
+        └── main.cpp              # 测试入口
 ```
 
 ## API 参考
@@ -277,8 +305,8 @@ demo-STL/
 
 ---
 
-**文档版本**：v1.9
-**最后更新**：2026-05-27
+**文档版本**：v1.11
+**最后更新**：2026-05-30
 **项目地址**：[demo-STL](https://github.com/wgc918/demo-STL)
 
 > **提示**：如需了解各容器的详细实现，请查阅 [自定义STL容器综合文档](./自定义STL容器综合文档.md)
