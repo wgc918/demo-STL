@@ -39,6 +39,7 @@
 | `demo::unordered_set` | 关联容器 | ✅ 已实现 | 无序唯一键、哈希表实现、O(1) 平均查找   |
 | `demo::stack`         | 容器适配器 | ✅ 已实现 | LIFO 结构、双端队列适配、栈顶操作       |
 | `demo::queue`         | 容器适配器 | ✅ 已实现 | FIFO 结构、双端队列适配、双向访问       |
+| `demo::priority_queue` | 容器适配器 | ✅ 已实现 | 优先级队列、堆数据结构、O(log n) 插入删除 |
 
 ### 核心功能
 
@@ -112,6 +113,15 @@
   - 支持拷贝构造、移动构造和赋值运算符重载
   - 提供 `empty()`、`size()`、`swap()` 等接口
   - 支持 emplace() 原地构造元素
+
+- **容器适配器 (`demo::priority_queue`)**
+  - 基于 vector 实现的优先队列适配器，使用堆数据结构
+  - 支持 O(log n) 时间复杂度的插入（push）和删除（pop）操作
+  - 默认使用 vector 作为底层容器，也可使用 deque
+  - 默认使用 `std::less` 实现最大堆（顶部为最大元素），支持自定义比较函数实现最小堆
+  - 支持拷贝构造、移动构造和赋值运算符重载
+  - 提供 `top()` 访问顶部元素、`empty()`、`size()`、`swap()` 等接口
+  - 支持 emplace() 原地构造元素，使用 Floyd 算法高效建堆
 
 ## 快速开始
 
@@ -247,14 +257,23 @@ demo-STL/
 │       ├── test_list_stack.cpp   # stack测试用例(list为底层容器)
 │       ├── test_vector_stack.cpp # stack测试用例(vector为底层容器)
 │       └── main.cpp              # 测试入口
-└── queue/                        # 容器适配器模块（队列）
-      ├── queue.h                 # queue实现
-      ├── queue.md                # queue详细文档
+├── queue/                        # 容器适配器模块（队列）
+│      ├── queue.h                # queue实现
+│      ├── queue.md               # queue详细文档
+│      └── utests/                # 测试用例目录
+│        ├── CMakeLists.txt       # 测试构建配置
+│        ├── doctest.h            # 测试框架
+│        ├── test_deque_queue.cpp # queue测试用例(deque为底层容器)
+│        ├── test_list_queue.cpp  # queue测试用例(list为底层容器)
+│        └── main.cpp             # 测试入口
+├── priority_queue/               # 容器适配器模块（优先队列）
+      ├── priority_queue.h        # priority_queue实现
+      ├── priority_queue.md       # priority_queue详细文档
       └── utests/                 # 测试用例目录
         ├── CMakeLists.txt        # 测试构建配置
         ├── doctest.h             # 测试框架
-        ├── test_deque_queue.cpp  # queue测试用例(deque为底层容器)
-        ├── test_list_queue.cpp   # queue测试用例(list为底层容器)
+        ├── test_vector_priority_queue.cpp  # priority_queue测试用例(vector为底层容器)
+        ├── test_deque_priority_queue.cpp  # priority_queue测试用例(deque为底层容器)
         └── main.cpp              # 测试入口
 ```
 
@@ -305,8 +324,8 @@ demo-STL/
 
 ---
 
-**文档版本**：v1.11
-**最后更新**：2026-05-30
+**文档版本**：v1.12
+**最后更新**：2026-05-31
 **项目地址**：[demo-STL](https://github.com/wgc918/demo-STL)
 
 > **提示**：如需了解各容器的详细实现，请查阅 [自定义STL容器综合文档](./自定义STL容器综合文档.md)
