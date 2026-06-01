@@ -192,10 +192,10 @@ public:
         friend class unordered_multimap;
 
     public:
-        using iterator_category = std::forward_iterator_tag;          ///< 迭代器类别（前向迭代器）
-        using value_type        = unordered_multimap::value_type;     ///< 元素类型
-        using pointer           = unordered_multimap::pointer;        ///< 元素指针类型
-        using reference         = unordered_multimap::reference;      ///< 元素引用类型
+        using iterator_category = std::forward_iterator_tag;       ///< 迭代器类别（前向迭代器）
+        using value_type        = unordered_multimap::value_type;  ///< 元素类型
+        using pointer           = unordered_multimap::pointer;     ///< 元素指针类型
+        using reference         = unordered_multimap::reference;   ///< 元素引用类型
         using difference_type   = unordered_multimap::difference_type;  ///< 差值类型
 
     public:
@@ -243,9 +243,9 @@ public:
         bool operator!=(const iterator& other) const;
 
     protected:
-        Node*             m_node;       ///< 当前节点指针
+        Node*               m_node;       ///< 当前节点指针
         unordered_multimap* m_container;  ///< 所属容器指针
-        bool              m_local;      ///< 是否仅限桶内遍历（用于 equal_range）
+        bool                m_local;      ///< 是否仅限桶内遍历（用于 equal_range）
     };
 
     /// @brief 常量前向迭代器类
@@ -312,9 +312,9 @@ public:
         bool operator!=(const const_iterator& other) const;
 
     protected:
-        Node*                   m_node;       ///< 当前节点指针
+        Node*                     m_node;       ///< 当前节点指针
         const unordered_multimap* m_container;  ///< 所属容器指针（const）
-        bool                    m_local;      ///< 是否仅限桶内遍历（用于 equal_range）
+        bool                      m_local;      ///< 是否仅限桶内遍历（用于 equal_range）
     };
 
     /// @brief 桶内前向迭代器类
@@ -456,7 +456,7 @@ public:
     /// @details
     /// 从 [first, last) 范围内的元素创建 unordered_multimap。
     /// 范围中的每个元素都会被插入到容器中。
-    template <typename InputIt>
+    template <typename InputIt, std::enable_if_t<!std::is_integral<InputIt>::value, int> = 0>
     unordered_multimap(InputIt first, InputIt last,
                        size_type bucket_count = UNORDERED_MULTIMAP_DEFAULT_BUCKET_COUNT);
 
@@ -581,7 +581,7 @@ public:
     /// @param last 范围结束迭代器
     /// @details
     /// 依次插入范围内的每个元素。所有元素都会被插入。
-    template <typename InputIt>
+    template <typename InputIt, std::enable_if_t<!std::is_integral<InputIt>::value, int> = 0>
     void insert(InputIt first, InputIt last);
 
     /// @brief 插入初始化列表中的元素
@@ -831,7 +831,7 @@ private:
     using bucket_allocator_type = typename std::allocator_traits<
         allocator_type>::template rebind_alloc<Node*>;  ///< 桶分配器类型
 
-    using alloc_traits        = std::allocator_traits<node_allocator_type>;  ///< 分配器 traits 类型
+    using alloc_traits = std::allocator_traits<node_allocator_type>;  ///< 分配器 traits 类型
     using bucket_alloc_traits =
         std::allocator_traits<bucket_allocator_type>;  ///< 桶分配器 traits 类型
 
@@ -1092,8 +1092,7 @@ inline bool unordered_multimap<Key, T, Hash, KeyEqual, Allocator>::const_iterato
 
 //------------------------local_iterator 实现------------------------
 template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
-unordered_multimap<Key, T, Hash, KeyEqual, Allocator>::local_iterator::local_iterator()
-    : iterator()
+unordered_multimap<Key, T, Hash, KeyEqual, Allocator>::local_iterator::local_iterator() : iterator()
 {
 }
 
@@ -1246,9 +1245,9 @@ unordered_multimap<Key, T, Hash, KeyEqual, Allocator>::unordered_multimap(size_t
 }
 
 template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
-template <typename InputIt>
-unordered_multimap<Key, T, Hash, KeyEqual, Allocator>::unordered_multimap(InputIt  first,
-                                                                          InputIt  last,
+template <typename InputIt, std::enable_if_t<!std::is_integral<InputIt>::value, int>>
+unordered_multimap<Key, T, Hash, KeyEqual, Allocator>::unordered_multimap(InputIt   first,
+                                                                          InputIt   last,
                                                                           size_type bucket_count)
     : m_table(nullptr),
       m_mask(0),
@@ -1327,7 +1326,7 @@ unordered_multimap<Key, T, Hash, KeyEqual, Allocator>::unordered_multimap(
       m_node_allocator(other.m_node_allocator),
       m_bucket_allocator(other.m_bucket_allocator)
 {
-    other.m_mask = UNORDERED_MULTIMAP_DEFAULT_BUCKET_COUNT - 1;
+    other.m_mask            = UNORDERED_MULTIMAP_DEFAULT_BUCKET_COUNT - 1;
     other.m_bucket_count    = UNORDERED_MULTIMAP_DEFAULT_BUCKET_COUNT;
     other.m_size            = 0;
     other.m_max_load_factor = UNORDERED_MULTIMAP_DEFAULT_LOAD_FACTOR;
@@ -1355,7 +1354,8 @@ unordered_multimap<Key, T, Hash, KeyEqual, Allocator>::operator=(const unordered
 
 template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
 inline unordered_multimap<Key, T, Hash, KeyEqual, Allocator>&
-unordered_multimap<Key, T, Hash, KeyEqual, Allocator>::operator=(unordered_multimap&& other) noexcept
+unordered_multimap<Key, T, Hash, KeyEqual, Allocator>::operator=(
+    unordered_multimap&& other) noexcept
 {
     if (this == &other)
         return *this;
@@ -1371,7 +1371,7 @@ unordered_multimap<Key, T, Hash, KeyEqual, Allocator>::operator=(unordered_multi
     m_key_eq          = other.m_key_eq;
     m_node_allocator  = other.m_node_allocator;
 
-    other.m_mask = UNORDERED_MULTIMAP_DEFAULT_BUCKET_COUNT - 1;
+    other.m_mask            = UNORDERED_MULTIMAP_DEFAULT_BUCKET_COUNT - 1;
     other.m_bucket_count    = UNORDERED_MULTIMAP_DEFAULT_BUCKET_COUNT;
     other.m_size            = 0;
     other.m_max_load_factor = UNORDERED_MULTIMAP_DEFAULT_LOAD_FACTOR;
@@ -1504,8 +1504,8 @@ unordered_multimap<Key, T, Hash, KeyEqual, Allocator>::insert(value_type&& value
     Node* head = m_table[index];
     if (head == nullptr)
     {
-        new_node->next  = nullptr;
-        m_table[index]  = new_node;
+        new_node->next = nullptr;
+        m_table[index] = new_node;
     }
     else
     {
@@ -1554,7 +1554,7 @@ unordered_multimap<Key, T, Hash, KeyEqual, Allocator>::insert(const_iterator hin
 }
 
 template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
-template <typename InputIt>
+template <typename InputIt, std::enable_if_t<!std::is_integral<InputIt>::value, int>>
 void unordered_multimap<Key, T, Hash, KeyEqual, Allocator>::insert(InputIt first, InputIt last)
 {
     for (InputIt it = first; last != it; it++)
@@ -1585,7 +1585,7 @@ template <typename Key, typename T, typename Hash, typename KeyEqual, typename A
 template <typename... Args>
 typename unordered_multimap<Key, T, Hash, KeyEqual, Allocator>::iterator
 unordered_multimap<Key, T, Hash, KeyEqual, Allocator>::emplace_hint(const_iterator hint,
-                                                                    Args&&...      args)
+                                                                    Args&&... args)
 {
     (void)hint;
     return insert(value_type(std::forward<Args>(args)...));
@@ -1682,8 +1682,8 @@ template <typename Key, typename T, typename Hash, typename KeyEqual, typename A
 inline typename unordered_multimap<Key, T, Hash, KeyEqual, Allocator>::size_type
 unordered_multimap<Key, T, Hash, KeyEqual, Allocator>::erase(const Key& key)
 {
-    size_type idx      = bucket_index(key);
-    size_type erased   = erase_key_from_bucket(idx, key);
+    size_type idx    = bucket_index(key);
+    size_type erased = erase_key_from_bucket(idx, key);
     return erased;
 }
 
@@ -1738,7 +1738,7 @@ template <typename Key, typename T, typename Hash, typename KeyEqual, typename A
 inline typename unordered_multimap<Key, T, Hash, KeyEqual, Allocator>::size_type
 unordered_multimap<Key, T, Hash, KeyEqual, Allocator>::count(const Key& key) const
 {
-    size_type n         = 0;
+    size_type n          = 0;
     size_type bucket_idx = bucket_index(key);
     Node*     head       = m_table[bucket_idx];
 
@@ -2047,8 +2047,8 @@ unordered_multimap<Key, T, Hash, KeyEqual, Allocator>::find_node(const Key& key)
 // ---------------------------------------------------------------------------
 template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
 typename unordered_multimap<Key, T, Hash, KeyEqual, Allocator>::size_type
-unordered_multimap<Key, T, Hash, KeyEqual, Allocator>::erase_key_from_bucket(
-    size_type bucket_idx, const Key& key)
+unordered_multimap<Key, T, Hash, KeyEqual, Allocator>::erase_key_from_bucket(size_type  bucket_idx,
+                                                                             const Key& key)
 {
     size_type erased = 0;
     Node*     prev   = nullptr;
