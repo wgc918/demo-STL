@@ -27,19 +27,20 @@
 
 ### 已实现容器
 
-| 容器名称              | 类型     | 状态      | 核心特性                                |
-| :-------------------- | :------- | :-------- | :-------------------------------------- |
-| `demo::vector`        | 动态数组 | ✅ 已实现 | 随机访问、动态扩容、异常安全            |
-| `demo::forward_list`  | 单向链表 | ✅ 已实现 | 前向迭代、O(1) 前端操作、低内存开销     |
-| `demo::list`          | 双向链表 | ✅ 已实现 | 双向迭代、O(1) 任意位置操作、迭代器稳定 |
-| `demo::deque`         | 双端队列 | ✅ 已实现 | 双端操作、分段存储、随机访问迭代器      |
-| `demo::map`           | 关联容器 | ✅ 已实现 | 有序键值对、红黑树实现、O(log n) 查找   |
-| `demo::set`           | 关联容器 | ✅ 已实现 | 有序唯一键、红黑树实现、O(log n) 查找   |
-| `demo::unordered_map` | 关联容器 | ✅ 已实现 | 无序键值对、哈希表实现、O(1) 平均查找   |
-| `demo::unordered_set` | 关联容器 | ✅ 已实现 | 无序唯一键、哈希表实现、O(1) 平均查找   |
-| `demo::stack`         | 容器适配器 | ✅ 已实现 | LIFO 结构、双端队列适配、栈顶操作       |
-| `demo::queue`         | 容器适配器 | ✅ 已实现 | FIFO 结构、双端队列适配、双向访问       |
-| `demo::priority_queue` | 容器适配器 | ✅ 已实现 | 优先级队列、堆数据结构、O(log n) 插入删除 |
+| 容器名称                   | 类型       | 状态      | 核心特性                                    |
+| :------------------------- | :--------- | :-------- | :------------------------------------------ |
+| `demo::vector`             | 动态数组   | ✅ 已实现 | 随机访问、动态扩容、异常安全                |
+| `demo::forward_list`       | 单向链表   | ✅ 已实现 | 前向迭代、O(1) 前端操作、低内存开销         |
+| `demo::list`               | 双向链表   | ✅ 已实现 | 双向迭代、O(1) 任意位置操作、迭代器稳定     |
+| `demo::deque`              | 双端队列   | ✅ 已实现 | 双端操作、分段存储、随机访问迭代器          |
+| `demo::map`                | 关联容器   | ✅ 已实现 | 有序键值对、红黑树实现、O(log n) 查找       |
+| `demo::set`                | 关联容器   | ✅ 已实现 | 有序唯一键、红黑树实现、O(log n) 查找       |
+| `demo::unordered_map`      | 关联容器   | ✅ 已实现 | 无序键值对、哈希表实现、O(1) 平均查找       |
+| `demo::unordered_set`      | 关联容器   | ✅ 已实现 | 无序唯一键、哈希表实现、O(1) 平均查找       |
+| `demo::unordered_multimap` | 关联容器   | ✅ 已实现 | 无序可重复键值对、哈希表实现、O(1) 平均查找 |
+| `demo::stack`              | 容器适配器 | ✅ 已实现 | LIFO 结构、双端队列适配、栈顶操作           |
+| `demo::queue`              | 容器适配器 | ✅ 已实现 | FIFO 结构、双端队列适配、双向访问           |
+| `demo::priority_queue`     | 容器适配器 | ✅ 已实现 | 优先级队列、堆数据结构、O(log n) 插入删除   |
 
 ### 核心功能
 
@@ -97,6 +98,18 @@
   - 支持 `emplace()`、`insert()` 等高效插入操作，自动去重
   - 支持负载因子调整、重哈希、预留空间等哈希策略管理
   - 支持合并异类型 unordered_set 的 `merge()` 操作
+
+- **关联容器 (`demo::unordered_multimap`)**
+  - 基于哈希表实现，保证平均 O(1) 的插入、删除和查找操作
+  - 存储键值对（key-value pairs），键可重复但不保证顺序
+  - 支持前向迭代器，按桶顺序访问元素；提供 `local_iterator`/`const_local_iterator` 桶内迭代器
+  - 提供 `find()`（返回任意一个匹配键的元素）、`count()`（可返回大于 1 的值）、`equal_range()`（可返回包含多个元素的范围）等查找接口
+  - 支持 `insert()`（拷贝/移动版本，始终插入成功，返回 `iterator`）、`emplace()`（原地构造，返回 `iterator`）、`emplace_hint()` 等高效插入操作
+  - `erase(key)` 删除所有匹配键的元素，返回删除数量（区别于 `unordered_map`）
+  - 不提供 `operator[]`、`at()`、`insert_or_assign()`、`try_emplace()`（键不唯一，访问/赋值目标不明确）
+  - 支持合并异类型 `unordered_multimap` 的 `merge()` 操作，所有元素都会被合并（不检查键冲突）
+  - 支持负载因子调整、重哈希、预留空间等哈希策略管理
+  - 支持 `bucket_count()`、`max_bucket_count()`、`bucket_size(n)`、`bucket(k)`、`begin(n)`/`end(n)` 等桶相关接口
 
 - **容器适配器 (`demo::stack`)**
   - 基于 deque 实现的后进先出（LIFO）栈适配器
@@ -239,15 +252,23 @@ demo-STL/
 │        ├── doctest.h            # 测试框架
 │        ├── test_unordered_map.cpp # unordered_map测试用例
 │        └── main.cpp             # 测试入口
-└── unordered_set/                # 关联容器模块（无序集合）
+├── unordered_set/                # 关联容器模块（无序集合）
 │      ├── unordered_set.h        # unordered_set实现
 │      ├── unordered_set.md       # unordered_set详细文档
 │      └── utests/                # 测试用例目录
 │        ├── CMakeLists.txt       # 测试构建配置
 │        ├── doctest.h            # 测试框架
 │        ├── test_unordered_set.cpp # unordered_set测试用例
-│        └── main.cpp             # 测试入口
-├── stack/                       # 容器适配器模块（栈）
+│        └── main.cpp              # 测试入口
+├── unordered_multimap/            # 关联容器模块（无序可重复键值对）
+│      ├── unordered_multimap.h    # unordered_multimap实现
+│      ├── unordered_multimap.md   # unordered_multimap详细文档
+│      └── utests/                 # 测试用例目录
+│        ├── CMakeLists.txt        # 测试构建配置
+│        ├── doctest.h             # 测试框架
+│        ├── test_unordered_multimap.cpp # unordered_multimap测试用例
+│        └── main.cpp              # 测试入口
+├── stack/                        # 容器适配器模块（栈）
 │     ├── stack.h                 # stack实现
 │     ├── stack.md                # stack详细文档
 │     └── utests/                 # 测试用例目录
