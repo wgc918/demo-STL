@@ -1917,11 +1917,11 @@ unordered_map<Key, T, Hash, KeyEqual, Allocator>::equal_range(const Key& key)
     {
         if (m_key_eq(head->value.first, key))
         {
-            return {iterator(head, this), iterator(nullptr, this)};
+            return {iterator(head, this), iterator(head->next, this)};
         }
         head = head->next;
     }
-    return {iterator(nullptr, this), iterator(nullptr, this)};
+    return {iterator(nullptr, this), iterator(head->next, this)};
 }
 
 template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
@@ -1936,11 +1936,11 @@ unordered_map<Key, T, Hash, KeyEqual, Allocator>::equal_range(const Key& key) co
     {
         if (m_key_eq(head->value.first, key))
         {
-            return {const_iterator(head, this), const_iterator(nullptr, this)};
+            return {const_iterator(head, this), const_iterator(head->next, this)};
         }
         head = head->next;
     }
-    return {const_iterator(nullptr, this), const_iterator(nullptr, this)};
+    return {const_iterator(nullptr, this), const_iterator(head->next, this)};
 }
 
 template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
