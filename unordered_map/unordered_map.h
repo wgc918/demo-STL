@@ -1921,7 +1921,7 @@ unordered_map<Key, T, Hash, KeyEqual, Allocator>::equal_range(const Key& key)
         }
         head = head->next;
     }
-    return {iterator(nullptr, this), iterator(head->next, this)};
+    return {iterator(nullptr, this), iterator(nullptr, this)};
 }
 
 template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
@@ -1940,7 +1940,7 @@ unordered_map<Key, T, Hash, KeyEqual, Allocator>::equal_range(const Key& key) co
         }
         head = head->next;
     }
-    return {const_iterator(nullptr, this), const_iterator(head->next, this)};
+    return {const_iterator(nullptr, this), const_iterator(nullptr, this)};
 }
 
 template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
