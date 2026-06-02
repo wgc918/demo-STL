@@ -82,8 +82,7 @@ namespace demo
 /// @tparam KeyEqual 键比较函数对象类型，用于判断键是否相等，默认为
 /// std::equal_to<Key>
 /// @tparam Allocator 分配器类型，用于内存管理，默认为 std::allocator<Key>
-template <typename Key, typename Hash = std::hash<Key>,
-          typename KeyEqual  = std::equal_to<Key>,
+template <typename Key, typename Hash = std::hash<Key>, typename KeyEqual = std::equal_to<Key>,
           typename Allocator = std::allocator<Key>>
 class unordered_multiset;
 
@@ -125,17 +124,17 @@ class unordered_multiset
     friend bool operator!= <>(const unordered_multiset& lhs, const unordered_multiset& rhs);
 
 public:
-    using key_type        = Key;                      ///< 键类型
-    using value_type      = Key;                      ///< 元素类型（键）
-    using hash_type       = Hash;                     ///< 哈希函数类型
-    using key_equal       = KeyEqual;                 ///< 键比较函数类型
-    using allocator_type  = Allocator;                ///< 分配器类型
-    using size_type       = std::size_t;              ///< 大小类型
-    using difference_type = std::ptrdiff_t;           ///< 差值类型
-    using pointer         = value_type*;              ///< 元素指针类型
-    using const_pointer   = const value_type*;        ///< 常量元素指针类型
-    using reference       = value_type&;              ///< 元素引用类型
-    using const_reference = const value_type&;        ///< 常量元素引用类型
+    using key_type        = Key;                ///< 键类型
+    using value_type      = Key;                ///< 元素类型（键）
+    using hash_type       = Hash;               ///< 哈希函数类型
+    using key_equal       = KeyEqual;           ///< 键比较函数类型
+    using allocator_type  = Allocator;          ///< 分配器类型
+    using size_type       = std::size_t;        ///< 大小类型
+    using difference_type = std::ptrdiff_t;     ///< 差值类型
+    using pointer         = value_type*;        ///< 元素指针类型
+    using const_pointer   = const value_type*;  ///< 常量元素指针类型
+    using reference       = value_type&;        ///< 元素引用类型
+    using const_reference = const value_type&;  ///< 常量元素引用类型
 
 public:
     /// @brief 哈希桶节点结构体
@@ -183,9 +182,9 @@ public:
 
     public:
         using iterator_category = std::forward_iterator_tag;       ///< 迭代器类别（前向迭代器）
-        using value_type        = unordered_multiset::value_type;       ///< 元素类型
-        using pointer           = unordered_multiset::pointer;          ///< 元素指针类型
-        using reference         = unordered_multiset::reference;        ///< 元素引用类型
+        using value_type        = unordered_multiset::value_type;  ///< 元素类型
+        using pointer           = unordered_multiset::pointer;     ///< 元素指针类型
+        using reference         = unordered_multiset::reference;   ///< 元素引用类型
         using difference_type   = unordered_multiset::difference_type;  ///< 差值类型
 
     public:
@@ -235,7 +234,7 @@ public:
     protected:
         Node*               m_node;       ///< 当前节点指针
         unordered_multiset* m_container;  ///< 所属容器指针
-        bool m_local;///< 是否只在桶内遍历（用于equal_range）
+        bool                m_local;      ///< 是否只在桶内遍历（用于equal_range）
     };
 
     /// @brief 常量前向迭代器类
@@ -247,9 +246,9 @@ public:
         friend class unordered_multiset;
 
     public:
-        using iterator_category = std::forward_iterator_tag;       ///< 迭代器类别（前向迭代器）
-        using value_type        = unordered_multiset::value_type;       ///< 元素类型
-        using pointer           = unordered_multiset::const_pointer;    ///< 常量元素指针类型
+        using iterator_category = std::forward_iterator_tag;          ///< 迭代器类别（前向迭代器）
+        using value_type        = unordered_multiset::value_type;     ///< 元素类型
+        using pointer           = unordered_multiset::const_pointer;  ///< 常量元素指针类型
         using reference         = unordered_multiset::const_reference;  ///< 常量元素引用类型
         using difference_type   = unordered_multiset::difference_type;  ///< 差值类型
 
@@ -304,7 +303,7 @@ public:
     protected:
         Node*                     m_node;       ///< 当前节点指针
         const unordered_multiset* m_container;  ///< 所属容器指针（const）
-        bool m_local;///< 是否只在桶内遍历（用于equal_range）
+        bool                      m_local;      ///< 是否只在桶内遍历（用于equal_range）
     };
 
     /// @brief 桶内前向迭代器类
@@ -855,20 +854,20 @@ private:
 //------------------------iterator 实现------------------------
 template <typename Key, typename Hash, typename KeyEqual, typename Allocator>
 unordered_multiset<Key, Hash, KeyEqual, Allocator>::iterator::iterator()
-    : m_node(nullptr), m_container(nullptr),m_local(false)
+    : m_node(nullptr), m_container(nullptr), m_local(false)
 {
 }
 
 template <typename Key, typename Hash, typename KeyEqual, typename Allocator>
 unordered_multiset<Key, Hash, KeyEqual, Allocator>::iterator::iterator(
     Node* node, unordered_multiset* container)
-    : m_node(node), m_container(container),m_local(false)
+    : m_node(node), m_container(container), m_local(false)
 {
 }
 
 template <typename Key, typename Hash, typename KeyEqual, typename Allocator>
 unordered_multiset<Key, Hash, KeyEqual, Allocator>::iterator::iterator(const iterator& other)
-    : m_node(other.m_node), m_container(other.m_container),m_local(false)
+    : m_node(other.m_node), m_container(other.m_container), m_local(other.m_local)
 {
 }
 
@@ -878,7 +877,7 @@ unordered_multiset<Key, Hash, KeyEqual, Allocator>::iterator::operator=(const it
 {
     m_node      = other.m_node;
     m_container = other.m_container;
-    m_local=other.m_local;
+    m_local     = other.m_local;
     return *this;
 }
 
@@ -902,10 +901,13 @@ unordered_multiset<Key, Hash, KeyEqual, Allocator>::iterator::operator++()
 {
     if (m_node == nullptr)
         return *this;
-    if(m_local)
+
+    if (m_local)
     {
-        m_node=m_node->next;
+        m_node = m_node->next;
+        return *this;
     }
+
     size_type bucket_idx = m_container->bucket_index(m_node->hash_code) + 1;
     m_node               = m_node->next;
     if (m_node == nullptr)
@@ -948,21 +950,21 @@ inline bool unordered_multiset<Key, Hash, KeyEqual, Allocator>::iterator::operat
 //------------------------const_iterator 实现------------------------
 template <typename Key, typename Hash, typename KeyEqual, typename Allocator>
 unordered_multiset<Key, Hash, KeyEqual, Allocator>::const_iterator::const_iterator()
-    : m_node(nullptr), m_container(nullptr),m_local(false)
+    : m_node(nullptr), m_container(nullptr), m_local(false)
 {
 }
 
 template <typename Key, typename Hash, typename KeyEqual, typename Allocator>
 unordered_multiset<Key, Hash, KeyEqual, Allocator>::const_iterator::const_iterator(
     Node* node, const unordered_multiset* container)
-    : m_node(node), m_container(container),m_local(false)
+    : m_node(node), m_container(container), m_local(false)
 {
 }
 
 template <typename Key, typename Hash, typename KeyEqual, typename Allocator>
 unordered_multiset<Key, Hash, KeyEqual, Allocator>::const_iterator::const_iterator(
     const const_iterator& other)
-    : m_node(other.m_node), m_container(other.m_container),m_local(false)
+    : m_node(other.m_node), m_container(other.m_container), m_local(other.m_local)
 {
 }
 
@@ -973,14 +975,14 @@ unordered_multiset<Key, Hash, KeyEqual, Allocator>::const_iterator::operator=(
 {
     m_node      = other.m_node;
     m_container = other.m_container;
-    m_local=other.m_local;
+    m_local     = other.m_local;
     return *this;
 }
 
 template <typename Key, typename Hash, typename KeyEqual, typename Allocator>
 unordered_multiset<Key, Hash, KeyEqual, Allocator>::const_iterator::const_iterator(
     const iterator& other)
-    : m_node(other.m_node), m_container(other.m_container),m_local(false)
+    : m_node(other.m_node), m_container(other.m_container), m_local(other.m_local)
 {
 }
 
@@ -1005,11 +1007,12 @@ unordered_multiset<Key, Hash, KeyEqual, Allocator>::const_iterator::operator++()
     if (m_node == nullptr)
         return *this;
 
-    if(m_local)
+    if (m_local)
     {
-        m_node=m_node->next;
+        m_node = m_node->next;
+        return *this;
     }
-    
+
     size_type bucket_idx = m_container->bucket_index(m_node->hash_code) + 1;
     m_node               = m_node->next;
     if (m_node == nullptr)
@@ -1205,8 +1208,7 @@ unordered_multiset<Key, Hash, KeyEqual, Allocator>::unordered_multiset(size_type
 
 template <typename Key, typename Hash, typename KeyEqual, typename Allocator>
 template <typename InputIt>
-unordered_multiset<Key, Hash, KeyEqual, Allocator>::unordered_multiset(InputIt  first,
-                                                                       InputIt  last,
+unordered_multiset<Key, Hash, KeyEqual, Allocator>::unordered_multiset(InputIt first, InputIt last,
                                                                        size_type bucket_count)
     : m_table(nullptr),
       m_mask(0),
@@ -1285,7 +1287,7 @@ unordered_multiset<Key, Hash, KeyEqual, Allocator>::unordered_multiset(
       m_node_allocator(other.m_node_allocator),
       m_bucket_allocator(other.m_bucket_allocator)
 {
-    other.m_mask = UNORDERED_MULTISET_DEFAULT_BUCKET_COUNT - 1;
+    other.m_mask            = UNORDERED_MULTISET_DEFAULT_BUCKET_COUNT - 1;
     other.m_bucket_count    = UNORDERED_MULTISET_DEFAULT_BUCKET_COUNT;
     other.m_size            = 0;
     other.m_max_load_factor = UNORDERED_MULTISET_DEFAULT_LOAD_FACTOR;
@@ -1313,8 +1315,7 @@ unordered_multiset<Key, Hash, KeyEqual, Allocator>::operator=(const unordered_mu
 
 template <typename Key, typename Hash, typename KeyEqual, typename Allocator>
 inline unordered_multiset<Key, Hash, KeyEqual, Allocator>&
-unordered_multiset<Key, Hash, KeyEqual, Allocator>::operator=(
-    unordered_multiset&& other) noexcept
+unordered_multiset<Key, Hash, KeyEqual, Allocator>::operator=(unordered_multiset&& other) noexcept
 {
     if (this == &other)
         return *this;
@@ -1451,12 +1452,12 @@ template <typename Key, typename Hash, typename KeyEqual, typename Allocator>
 inline typename unordered_multiset<Key, Hash, KeyEqual, Allocator>::iterator
 unordered_multiset<Key, Hash, KeyEqual, Allocator>::insert(value_type&& value)
 {
-    uint64_t  hcode = m_hash_function(value);
-    Node*     new_node = alloc_traits::allocate(m_node_allocator, 1);
+    uint64_t hcode    = m_hash_function(value);
+    Node*    new_node = alloc_traits::allocate(m_node_allocator, 1);
     alloc_traits::construct(m_node_allocator, new_node, std::move(value), hcode);
     size_type index = bucket_index(hcode);
 
-    Node* head      = m_table[index];
+    Node* head       = m_table[index];
     Node* last_equal = nullptr;
 
     while (head != nullptr)
@@ -1468,13 +1469,13 @@ unordered_multiset<Key, Hash, KeyEqual, Allocator>::insert(value_type&& value)
 
     if (last_equal != nullptr)
     {
-        new_node->next    = last_equal->next;
-        last_equal->next  = new_node;
+        new_node->next   = last_equal->next;
+        last_equal->next = new_node;
     }
     else
     {
-        new_node->next  = m_table[index];
-        m_table[index]  = new_node;
+        new_node->next = m_table[index];
+        m_table[index] = new_node;
     }
 
     m_size++;
@@ -1488,7 +1489,7 @@ unordered_multiset<Key, Hash, KeyEqual, Allocator>::insert(value_type&& value)
 template <typename Key, typename Hash, typename KeyEqual, typename Allocator>
 typename unordered_multiset<Key, Hash, KeyEqual, Allocator>::iterator
 unordered_multiset<Key, Hash, KeyEqual, Allocator>::insert(const_iterator    hint,
-                                                            const value_type& value)
+                                                           const value_type& value)
 {
     (void)hint;
     return insert(value);
@@ -1496,8 +1497,7 @@ unordered_multiset<Key, Hash, KeyEqual, Allocator>::insert(const_iterator    hin
 
 template <typename Key, typename Hash, typename KeyEqual, typename Allocator>
 typename unordered_multiset<Key, Hash, KeyEqual, Allocator>::iterator
-unordered_multiset<Key, Hash, KeyEqual, Allocator>::insert(const_iterator hint,
-                                                            value_type&& value)
+unordered_multiset<Key, Hash, KeyEqual, Allocator>::insert(const_iterator hint, value_type&& value)
 {
     (void)hint;
     return insert(std::move(value));
@@ -1531,7 +1531,7 @@ template <typename Key, typename Hash, typename KeyEqual, typename Allocator>
 template <typename... Args>
 typename unordered_multiset<Key, Hash, KeyEqual, Allocator>::iterator
 unordered_multiset<Key, Hash, KeyEqual, Allocator>::emplace_hint(const_iterator hint,
-                                                                  Args&&... args)
+                                                                 Args&&... args)
 {
     return insert(hint, value_type(std::forward<Args>(args)...));
 }
@@ -1606,8 +1606,7 @@ unordered_multiset<Key, Hash, KeyEqual, Allocator>::erase(const_iterator pos)
 
 template <typename Key, typename Hash, typename KeyEqual, typename Allocator>
 inline typename unordered_multiset<Key, Hash, KeyEqual, Allocator>::iterator
-unordered_multiset<Key, Hash, KeyEqual, Allocator>::erase(const_iterator first,
-                                                           const_iterator last)
+unordered_multiset<Key, Hash, KeyEqual, Allocator>::erase(const_iterator first, const_iterator last)
 {
     while (first != last)
     {
@@ -1628,7 +1627,7 @@ unordered_multiset<Key, Hash, KeyEqual, Allocator>::erase(const Key& key)
     {
         if (m_key_eq(node->value, key))
         {
-            Node* next = node->next;
+            Node*    next = node->next;
             iterator it(node, this);
             erase(it);
             node = next;
@@ -1720,10 +1719,10 @@ inline std::pair<typename unordered_multiset<Key, Hash, KeyEqual, Allocator>::it
                  typename unordered_multiset<Key, Hash, KeyEqual, Allocator>::iterator>
 unordered_multiset<Key, Hash, KeyEqual, Allocator>::equal_range(const Key& key)
 {
-    size_type bucket_idx = bucket_index(key);
-    Node*     head       = m_table[bucket_idx];
-    Node*     first_match      = nullptr;
-    Node*     last_match       = nullptr;
+    size_type bucket_idx  = bucket_index(key);
+    Node*     head        = m_table[bucket_idx];
+    Node*     first_match = nullptr;
+    Node*     last_match  = nullptr;
 
     while (head != nullptr)
     {
@@ -1732,9 +1731,9 @@ unordered_multiset<Key, Hash, KeyEqual, Allocator>::equal_range(const Key& key)
             if (first_match == nullptr)
                 first_match = head;
         }
-        else if(first_match!=nullptr)
+        else if (first_match != nullptr)
         {
-            last_match=first_match;
+            last_match = head;
             break;
         }
         head = head->next;
@@ -1755,10 +1754,10 @@ inline std::pair<typename unordered_multiset<Key, Hash, KeyEqual, Allocator>::co
                  typename unordered_multiset<Key, Hash, KeyEqual, Allocator>::const_iterator>
 unordered_multiset<Key, Hash, KeyEqual, Allocator>::equal_range(const Key& key) const
 {
-    size_type bucket_idx = bucket_index(key);
-    Node*     head       = m_table[bucket_idx];
-    Node*     first_match      = nullptr;
-    Node*     last_match       = nullptr;
+    size_type bucket_idx  = bucket_index(key);
+    Node*     head        = m_table[bucket_idx];
+    Node*     first_match = nullptr;
+    Node*     last_match  = nullptr;
 
     while (head != nullptr)
     {
@@ -1767,9 +1766,9 @@ unordered_multiset<Key, Hash, KeyEqual, Allocator>::equal_range(const Key& key) 
             if (first_match == nullptr)
                 first_match = head;
         }
-        else if(first_match!=nullptr)
+        else if (first_match != nullptr)
         {
-            last_match=first_match;
+            last_match = head;
             break;
         }
         head = head->next;
