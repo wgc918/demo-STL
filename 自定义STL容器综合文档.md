@@ -287,6 +287,55 @@
 
 **详细文档跳转**：跳转至[demo::unordered_multimap容器开发文档](./unordered_multimap/unordered_multimap.md)
 
+### 6. demo::unordered_multiset（无序可重复集合容器）
+
+**核心定位**：基于哈希表实现的关联容器，仅存储键（key），**允许键重复**，不保证任何特定顺序，支持平均 O(1) 时间复杂度的插入、删除和查找操作，是实现多重集合、频率统计、数据聚合等场景的理想选择。作为 `demo::unordered_set` 的扩展变体，`unordered_multiset` 的核心区别在于不检查键唯一性，`insert()` 和 `emplace()` 始终成功插入并返回 `iterator`，`erase(key)` 则删除所有匹配键的元素。
+
+**设计目标**：对齐 `std::unordered_multiset` 接口，实现哈希表的高效查找机制，提供平均常数时间复杂度的操作，补充异常安全机制和哈希策略管理。在 `unordered_set` 基础上扩展键可重复特性，适配多重集合和频率统计场景。
+
+**核心特性**：
+
+- **哈希表实现**：底层基于链地址法（Separate Chaining）的哈希表，保证平均 O(1) 的时间复杂度；使用 2 的幂次方桶数量设计，通过位与操作（`hash & mask`）快速定位桶索引；节点内部缓存哈希值（`hash_code`），避免重哈希时的重复计算；
+- **键存储**：仅存储键，元素类型与键类型相同（`value_type = key_type`）；
+- **键可重复**：允许相同键出现多次，这是与 `unordered_set` 最核心的区别。`insert()` 和 `emplace()` 始终执行插入并返回 `iterator`（而非 `pair<iterator, bool>`），`count()` 可返回大于 1 的值；
+- **无序遍历**：迭代器按桶顺序访问元素，不保证特定顺序，重哈希后顺序可能改变；
+- **高效查找**：提供 `find()`（返回任意一个匹配键的元素）、`count()`（返回匹配键的元素数量，可大于 1）、`equal_range()`（返回所有匹配键的元素范围，可包含多个元素）等查找接口；
+- **前向迭代器**：支持前向迭代器（`std::forward_iterator_tag`），支持前置/后置自增操作；提供 `local_iterator`/`const_local_iterator` 桶内迭代器，用于遍历单个桶内的所有元素（不跨桶移动）；
+- **高效插入**：支持 `insert()`（拷贝/移动版本，始终插入成功，返回 `iterator`）、带提示位置的 `insert()`、`emplace()`（原地构造，返回 `iterator`）、`emplace_hint()`（带提示位置原地构造）等高效插入接口；
+- **键批量删除**：`erase(key)` 删除所有匹配键的元素，返回实际删除的元素数量（可为 0 或多个）；区别于 `unordered_set` 的 `erase(key)` 仅删除一个元素并返回 1 或 0；
+- **合并操作**：支持 `merge()` 合并异类型 `unordered_multiset` 的元素（左值和右值版本）；由于允许多个相同键存在，所有元素都会被合并，不会因键冲突而跳过；
+- **哈希策略管理**：支持调整负载因子（默认 1.0）、重哈希（桶数量翻倍扩容）、`reserve()` 预留空间等操作；
+- **桶接口**：支持 `bucket_count()`、`max_bucket_count()`、`bucket_size(n)`、`bucket(k)`、`begin(n)`/`end(n)` 等桶相关接口；
+- **移动语义优化**：支持移动构造、移动赋值，避免不必要的拷贝开销；
+- **比较运算**：支持 `==` 和 `!=` 运算符；相等比较时需匹配每个键的计数，而非仅比较键的存在性；
+- **异常安全**：内存分配失败抛 `std::bad_alloc` 异常。
+
+**与 demo::unordered_set 的核心区别**：
+
+| 特性                  | `demo::unordered_multiset`                      | `demo::unordered_set`                            |
+| :-------------------- | :---------------------------------------------- | :----------------------------------------------- |
+| 键唯一性              | 允许重复键                                      | 键必须唯一                                       |
+| `insert()` 返回值     | `iterator`（始终成功插入）                      | `pair<iterator, bool>`（第二值指示是否实际插入）  |
+| `emplace()` 返回值    | `iterator`（始终成功插入）                      | `pair<iterator, bool>`                           |
+| `count()`             | 可返回大于 1 的值                               | 最多返回 1                                       |
+| `equal_range()`       | 可返回包含多个元素的范围                        | 最多包含一个元素                                 |
+| `erase(key)`          | 删除所有匹配键的元素，返回 `size_type` 删除数量 | 仅删除一个元素，返回 1 或 0                      |
+| `find()`              | 返回任意一个匹配键的元素                        | 同                                               |
+| `merge()`             | 全部元素合并（不检查键冲突）                    | 仅合并不冲突的元素（跳过重复键）                 |
+| `operator==` 语义     | 多重集相等（每个键的计数相同）                  | 集合相等（元素存在性相同）                       |
+
+**适用场景**：
+
+| 场景                 | 推荐使用 unordered_multiset 的原因                  |
+| :------------------- | :-------------------------------------------------- |
+| 多重集合/频率统计    | 允许键重复，支持同键多值计数                        |
+| 数据聚合/事件记录    | 同一类型事件可重复存储，支持按类型快速查找          |
+| 去重计数             | 通过 `count()` 快速统计元素出现次数                 |
+| 不关心顺序的场景     | 无序存储，无需排序开销                              |
+| 缓存系统（允许重复） | 键可重复，O(1) 平均查找复杂度                       |
+
+**详细文档跳转**：跳转至[demo::unordered_multiset容器开发文档](./unordered_multiset/unordered_multiset.md)
+
 ### 待实现关联式容器
 
 后续将逐步实现以下关联式容器，实现后将同步更新本总览及对应详细文档：
@@ -411,4 +460,5 @@
 | v1.11  | 1. 更新 demo::queue 为已实现状态；2. 补充 queue 核心特性、适用场景建议表格和详细文档跳转；3. 更新 README.md 中 queue 相关内容；4. 更新版本历史记录 | 2026-05-30 |
 | v1.12  | 1. 更新 demo::priority_queue 为已实现状态；2. 补充 priority_queue 核心特性、适用场景建议表格和详细文档跳转；3. 更新 README.md 中 priority_queue 相关内容；4. 更新版本历史记录 | 2026-05-30 |
 | v1.13  | 1. 更新 demo::unordered_multimap为已实现状态；2. 补充 unordered_multimap 核心特性、适用场景建议表格和详细文档跳转；3. 更新 README.md 中 unordered_multimap 相关内容；4. 更新版本历史记录 | 2026-06-02 |
-| 待更新 | 1. 扩展实现unordered_multiset,multimap和multiset             | -          |
+| v1.14  | 1. 更新 demo::unordered_multiset 为已实现状态；2. 补充 unordered_multiset 核心特性、与 unordered_set 的区别对比、适用场景建议表格和详细文档跳转；3. 从待实现列表中移除 unordered_multiset；4. 更新 README.md 中 unordered_multiset 相关内容；5. 更新版本历史记录 | 2026-06-02 |
+| 待更新 | 1. 扩展实现multimap和multiset             | -          |

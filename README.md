@@ -38,6 +38,7 @@
 | `demo::unordered_map`      | 关联容器   | ✅ 已实现 | 无序键值对、哈希表实现、O(1) 平均查找       |
 | `demo::unordered_set`      | 关联容器   | ✅ 已实现 | 无序唯一键、哈希表实现、O(1) 平均查找       |
 | `demo::unordered_multimap` | 关联容器   | ✅ 已实现 | 无序可重复键值对、哈希表实现、O(1) 平均查找 |
+| `demo::unordered_multiset` | 关联容器   | ✅ 已实现 | 无序可重复键、哈希表实现、O(1) 平均查找     |
 | `demo::stack`              | 容器适配器 | ✅ 已实现 | LIFO 结构、双端队列适配、栈顶操作           |
 | `demo::queue`              | 容器适配器 | ✅ 已实现 | FIFO 结构、双端队列适配、双向访问           |
 | `demo::priority_queue`     | 容器适配器 | ✅ 已实现 | 优先级队列、堆数据结构、O(log n) 插入删除   |
@@ -108,6 +109,17 @@
   - `erase(key)` 删除所有匹配键的元素，返回删除数量（区别于 `unordered_map`）
   - 不提供 `operator[]`、`at()`、`insert_or_assign()`、`try_emplace()`（键不唯一，访问/赋值目标不明确）
   - 支持合并异类型 `unordered_multimap` 的 `merge()` 操作，所有元素都会被合并（不检查键冲突）
+  - 支持负载因子调整、重哈希、预留空间等哈希策略管理
+  - 支持 `bucket_count()`、`max_bucket_count()`、`bucket_size(n)`、`bucket(k)`、`begin(n)`/`end(n)` 等桶相关接口
+
+- **关联容器 (`demo::unordered_multiset`)**
+  - 基于哈希表实现，保证平均 O(1) 的插入、删除和查找操作
+  - 存储键（keys），键可重复但不保证顺序
+  - 支持前向迭代器，按桶顺序访问元素；提供 `local_iterator`/`const_local_iterator` 桶内迭代器
+  - 提供 `find()`（返回任意一个匹配键的元素）、`count()`（可返回大于 1 的值）、`equal_range()`（可返回包含多个元素的范围）等查找接口
+  - 支持 `insert()`（拷贝/移动版本，始终插入成功，返回 `iterator`）、`emplace()`（原地构造，返回 `iterator`）、`emplace_hint()` 等高效插入操作
+  - `erase(key)` 删除所有匹配键的元素，返回删除数量（区别于 `unordered_set`）
+  - 支持合并异类型 `unordered_multiset` 的 `merge()` 操作，所有元素都会被合并（不检查键冲突）
   - 支持负载因子调整、重哈希、预留空间等哈希策略管理
   - 支持 `bucket_count()`、`max_bucket_count()`、`bucket_size(n)`、`bucket(k)`、`begin(n)`/`end(n)` 等桶相关接口
 
@@ -268,6 +280,14 @@ demo-STL/
 │        ├── doctest.h             # 测试框架
 │        ├── test_unordered_multimap.cpp # unordered_multimap测试用例
 │        └── main.cpp              # 测试入口
+├── unordered_multiset/            # 关联容器模块（无序可重复集合）
+│      ├── unordered_multiset.h    # unordered_multiset实现
+│      ├── unordered_multiset.md   # unordered_multiset详细文档
+│      └── utests/                 # 测试用例目录
+│        ├── CMakeLists.txt        # 测试构建配置
+│        ├── doctest.h             # 测试框架
+│        ├── test_unordered_multiset.cpp # unordered_multiset测试用例
+│        └── main.cpp              # 测试入口
 ├── stack/                        # 容器适配器模块（栈）
 │     ├── stack.h                 # stack实现
 │     ├── stack.md                # stack详细文档
@@ -345,8 +365,8 @@ demo-STL/
 
 ---
 
-**文档版本**：v1.12
-**最后更新**：2026-05-31
+**文档版本**：v1.13
+**最后更新**：2026-06-02
 **项目地址**：[demo-STL](https://github.com/wgc918/demo-STL)
 
 > **提示**：如需了解各容器的详细实现，请查阅 [自定义STL容器综合文档](./自定义STL容器综合文档.md)
