@@ -34,6 +34,7 @@
 | `demo::list`               | 双向链表   | ✅ 已实现 | 双向迭代、O(1) 任意位置操作、迭代器稳定     |
 | `demo::deque`              | 双端队列   | ✅ 已实现 | 双端操作、分段存储、随机访问迭代器          |
 | `demo::map`                | 关联容器   | ✅ 已实现 | 有序键值对、红黑树实现、O(log n) 查找       |
+| `demo::multimap`           | 关联容器   | ✅ 已实现 | 有序可重复键值对、红黑树实现、O(log n) 查找 |
 | `demo::set`                | 关联容器   | ✅ 已实现 | 有序唯一键、红黑树实现、O(log n) 查找       |
 | `demo::unordered_map`      | 关联容器   | ✅ 已实现 | 无序键值对、哈希表实现、O(1) 平均查找       |
 | `demo::unordered_set`      | 关联容器   | ✅ 已实现 | 无序唯一键、哈希表实现、O(1) 平均查找       |
@@ -75,6 +76,14 @@
   - 支持双向迭代器，按中序遍历顺序访问元素
   - 提供 `find()`、`lower_bound()`、`upper_bound()`、`equal_range()` 等查找接口
   - 支持 `insert_or_assign()`、`try_emplace()` 等高效插入操作
+
+- **关联容器 (`demo::multimap`)**
+  - 基于红黑树实现，保证 O(log n) 的插入、删除和查找操作
+  - 存储键值对（key-value pairs），允许键重复且自动排序
+  - 支持双向迭代器，按中序遍历顺序访问元素
+  - 提供 `find()`、`count()`、`equal_range()`、`lower_bound()`、`upper_bound()` 等查找接口
+  - `insert()` 始终插入成功并返回 `iterator`，`erase(key)` 删除所有匹配键的元素
+  - 不提供 `operator[]`、`at()`、`insert_or_assign()`、`try_emplace()`（键不唯一，访问/赋值目标不明确）
 
 - **关联容器 (`demo::set`)**
   - 基于红黑树实现，保证 O(log n) 的插入、删除和查找操作
@@ -248,6 +257,14 @@ demo-STL/
 │       ├── doctest.h            # 测试框架
 │       ├── test_map.cpp         # map测试用例
 │       └── main.cpp             # 测试入口
+├── multimap/                    # 关联容器模块（有序可重复键值对）
+│     ├── multimap.h             # multimap实现
+│     ├── multimap.md            # multimap详细文档
+│     └── utests/                # 测试用例目录
+│       ├── CMakeLists.txt       # 测试构建配置
+│       ├── doctest.h            # 测试框架
+│       ├── test_multimap.cpp    # multimap测试用例
+│       └── main.cpp             # 测试入口
 ├── set/                         # 关联容器模块（有序）
 │     ├── set.h                  # set实现
 │     ├── set.md                 # set详细文档
@@ -365,8 +382,8 @@ demo-STL/
 
 ---
 
-**文档版本**：v1.13
-**最后更新**：2026-06-02
+**文档版本**：v1.14
+**最后更新**：2026-06-03
 **项目地址**：[demo-STL](https://github.com/wgc918/demo-STL)
 
 > **提示**：如需了解各容器的详细实现，请查阅 [自定义STL容器综合文档](./自定义STL容器综合文档.md)
