@@ -93,6 +93,15 @@
   - 提供 `find()`、`lower_bound()`、`upper_bound()` 等查找接口
   - 支持 `insert()`、`erase()` 等高效插入操作
 
+- **关联容器 (`demo::multiset`)**
+  - 基于红黑树实现，保证 O(log n) 的插入、删除和查找操作
+  - 存储键（keys），允许键重复且自动排序
+  - 支持双向迭代器，按中序遍历顺序访问元素
+  - 提供 `find()`、`count()`、`equal_range()`、`lower_bound()`、`upper_bound()` 等查找接口
+  - `insert()` 始终插入成功并返回 `iterator`，`erase(key)` 删除所有匹配键的元素，返回删除数量
+  - 不提供 `operator[]` 和 `at()`（键不唯一，访问目标不明确）
+  - 支持合并异类型 multiset 的 `merge()` 操作
+
 - **关联容器 (`demo::unordered_map`)**
   - 基于哈希表实现，保证平均 O(1) 的插入、删除和查找操作
   - 存储键值对（key-value pairs），键唯一但不保证顺序
@@ -273,6 +282,14 @@ demo-STL/
 │       ├── CMakeLists.txt       # 测试构建配置
 │       ├── doctest.h            # 测试框架
 │       ├── test_set.cpp         # set测试用例
+│       └── main.cpp             # 测试入口
+├── multiset/                    # 关联容器模块（有序可重复键）
+│     ├── multiset.h             # multiset实现
+│     ├── multiset.md            # multiset详细文档
+│     └── utests/                # 测试用例目录
+│       ├── CMakeLists.txt       # 测试构建配置
+│       ├── doctest.h            # 测试框架
+│       ├── test_multiset.cpp    # multiset测试用例
 │       └── main.cpp             # 测试入口
 ├──  unordered_map/               # 关联容器模块（无序）
 │      ├── unordered_map.h        # unordered_map实现
