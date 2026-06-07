@@ -1569,12 +1569,6 @@ inline void list<T, Allocator>::pop_back()
 }
 
 template <typename T, typename Allocator>
-inline void list<T, Allocator>::push_front(const_reference value)
-{
-    push_front(value_type(value));
-}
-
-template <typename T, typename Allocator>
 inline void list<T, Allocator>::push_front(value_type&& value)
 {
     Node* pre  = m_head;
@@ -1590,6 +1584,12 @@ inline void list<T, Allocator>::push_front(value_type&& value)
     next->prev     = new_node;
 
     m_size++;
+}
+
+template <typename T, typename Allocator>
+inline void list<T, Allocator>::push_front(const_reference value)
+{
+    emplace_back(value);
 }
 
 template <typename T, typename Allocator>
