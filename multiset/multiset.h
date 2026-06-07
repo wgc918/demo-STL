@@ -970,6 +970,9 @@ multiset<Key, Compare, Allocator>::multiset(std::vector<value_type>& values,
 {
     m_nil = alloc_traits::allocate(m_node_alloc, 1);
     alloc_traits::construct(m_node_alloc, m_nil);
+    m_nil->parent = m_nil;
+    m_nil->left   = m_nil;
+    m_nil->right  = m_nil;
 
     m_root = build_tree(values, 0, static_cast<int>(values.size()) - 1, 0);
     m_root->parent = m_nil;
@@ -991,6 +994,9 @@ multiset<Key, Compare, Allocator>::multiset(const multiset& other)
 {
     m_nil = alloc_traits::allocate(m_node_alloc, 1);
     alloc_traits::construct(m_node_alloc, m_nil);
+    m_nil->parent = m_nil;
+    m_nil->left   = m_nil;
+    m_nil->right  = m_nil;
 
     m_root         = copy_node(other.m_root, other);
     m_root->parent = m_nil;

@@ -1061,6 +1061,10 @@ multimap<K, T, Compare, Allocator>::multimap(
     m_nil = alloc_traits::allocate(m_node_alloc, 1);
     alloc_traits::construct(m_node_alloc, m_nil);
 
+    m_nil->parent = m_nil;
+    m_nil->left   = m_nil;
+    m_nil->right  = m_nil;
+
     std::vector<value_type> vec_copy(vec);
     m_root = build_tree(vec_copy, 0, static_cast<int>(vec_copy.size()) - 1, 0);
     m_root->parent = m_nil;
@@ -1082,6 +1086,10 @@ multimap<K, T, Compare, Allocator>::multimap(const multimap& other)
 {
     m_nil = alloc_traits::allocate(m_node_alloc, 1);
     alloc_traits::construct(m_node_alloc, m_nil);
+
+    m_nil->parent = m_nil;
+    m_nil->left   = m_nil;
+    m_nil->right  = m_nil;
 
     m_root         = copy_node(other.m_root, other);
     m_root->parent = m_nil;
