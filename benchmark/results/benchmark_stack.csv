@@ -1,0 +1,13 @@
+Container,Operation,DataSize,Implementation,TimeUs
+stack,push,1000,demo,3
+stack,push,1000,std,18.9
+stack,pop,1000,demo,2.2
+stack,pop,1000,std,11.8
+stack,top,1000,demo,0
+stack,top,1000,std,0
+stack,push,10000,demo,18.6
+stack,push,10000,std,109.9
+stack,pop,10000,demo,18.4
+stack,pop,10000,std,94.3
+stack,top,10000,demo,0
+stack,top,10000,std,0
