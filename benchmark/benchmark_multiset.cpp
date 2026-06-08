@@ -1,6 +1,5 @@
 #include <set>
 #include <vector>
-#include <algorithm>
 #include <random>
 
 #include "multiset/multiset.h"

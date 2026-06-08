@@ -1,6 +1,5 @@
 #include <deque>
 #include <vector>
-#include <algorithm>
 #include <random>
 
 #include "deque/deque.h"

@@ -1,7 +1,6 @@
 ﻿#include <map>
 #include <vector>
 #include <string>
-#include <algorithm>
 #include <random>
 
 #include "map/map.h"

@@ -1,6 +1,5 @@
 #include <unordered_set>
 #include <vector>
-#include <algorithm>
 #include <random>
 
 #include "unordered_multiset/unordered_multiset.h"

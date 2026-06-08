@@ -1,6 +1,5 @@
 #include <list>
 #include <vector>
-#include <algorithm>
 #include <random>
 
 #include "list/list.h"

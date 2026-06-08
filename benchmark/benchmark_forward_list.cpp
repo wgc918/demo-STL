@@ -1,6 +1,5 @@
 #include <forward_list>
 #include <vector>
-#include <algorithm>
 #include <random>
 
 #include "list/forward_list.h"

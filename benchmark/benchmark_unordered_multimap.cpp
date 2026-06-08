@@ -1,7 +1,6 @@
 #include <unordered_map>
 #include <vector>
 #include <string>
-#include <algorithm>
 #include <random>
 
 #include "unordered_multimap/unordered_multimap.h"
