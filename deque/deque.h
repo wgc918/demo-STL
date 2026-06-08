@@ -3,7 +3,7 @@
 //
 // 文件: deque.h
 // 作者: wgc
-// 创建日期: 2026年1月
+// 创建日期: 2026年4月
 // 最后修改: 2026年4月
 //
 // 描述:
@@ -88,10 +88,8 @@ bool operator!=(const deque<T, Allocator>& lhs, const deque<T, Allocator>& rhs);
 template <typename T, typename Allocator>
 class deque
 {
-    friend bool operator==
-        <>(const deque<T, Allocator>& lhs, const deque<T, Allocator>& rhs);
-    friend bool operator!=
-        <>(const deque<T, Allocator>& lhs, const deque<T, Allocator>& rhs);
+    friend bool operator== <>(const deque<T, Allocator>& lhs, const deque<T, Allocator>& rhs);
+    friend bool operator!= <>(const deque<T, Allocator>& lhs, const deque<T, Allocator>& rhs);
 
 public:
     using value_type      = T;               ///< 元素类型
@@ -115,10 +113,10 @@ public:
 
     public:
         using iterator_category =
-            std::random_access_iterator_tag;  ///< 迭代器类别（随机访问迭代器）
-        using value_type      = T;            ///< 元素类型
-        using pointer         = T*;           ///< 元素指针类型
-        using reference       = T&;           ///< 元素引用类型
+            std::random_access_iterator_tag;     ///< 迭代器类别（随机访问迭代器）
+        using value_type      = T;               ///< 元素类型
+        using pointer         = T*;              ///< 元素指针类型
+        using reference       = T&;              ///< 元素引用类型
         using difference_type = std::ptrdiff_t;  ///< 差值类型
         using size_type       = std::size_t;     ///< 大小类型
 
@@ -130,8 +128,7 @@ public:
         /// @param first 当前槽的第一个元素指针
         /// @param last 当前槽的最后一个元素指针（不包含）
         /// @param map_node 当前槽在 map 中的指针
-        iterator(pointer cur, pointer first, pointer last,
-                 value_type** map_node);
+        iterator(pointer cur, pointer first, pointer last, value_type** map_node);
 
         /// @brief 解引用操作符，返回当前元素的引用
         /// @return 当前元素的引用
@@ -238,10 +235,10 @@ public:
 
     public:
         using iterator_category =
-            std::random_access_iterator_tag;  ///< 迭代器类别（随机访问迭代器）
-        using value_type      = T;            ///< 元素类型
-        using pointer         = const T*;     ///< 常量元素指针类型
-        using reference       = const T&;     ///< 常量元素引用类型
+            std::random_access_iterator_tag;     ///< 迭代器类别（随机访问迭代器）
+        using value_type      = T;               ///< 元素类型
+        using pointer         = const T*;        ///< 常量元素指针类型
+        using reference       = const T&;        ///< 常量元素引用类型
         using difference_type = std::ptrdiff_t;  ///< 差值类型
         using size_type       = std::size_t;     ///< 大小类型
 
@@ -253,8 +250,7 @@ public:
         /// @param first 当前槽的第一个元素指针
         /// @param last 当前槽的最后一个元素指针（不包含）
         /// @param map_node 当前槽在 map 中的指针
-        const_iterator(pointer ptr, pointer first, pointer last,
-                       value_type** map_node);
+        const_iterator(pointer ptr, pointer first, pointer last, value_type** map_node);
 
         /// @brief 从非const迭代器构造
         /// @param other 非const迭代器
@@ -380,8 +376,7 @@ public:
     /// @tparam InputIt 输入迭代器类型
     /// @param first 范围起始迭代器
     /// @param last 范围结束迭代器
-    template <typename InputIt,
-              std::enable_if_t<!std::is_integral<InputIt>::value, int> = 0>
+    template <typename InputIt, std::enable_if_t<!std::is_integral<InputIt>::value, int> = 0>
     deque(InputIt first, InputIt last);
 
     /// @brief 初始化列表构造函数
@@ -425,8 +420,7 @@ public:
     /// @tparam InputIt 输入迭代器类型
     /// @param first 范围起始迭代器
     /// @param last 范围结束迭代器
-    template <typename InputIt,
-              std::enable_if_t<!std::is_integral<InputIt>::value, int> = 0>
+    template <typename InputIt, std::enable_if_t<!std::is_integral<InputIt>::value, int> = 0>
     void assign(InputIt first, InputIt last);
 
     /// @brief 将双端队列内容替换为初始化列表中的元素
@@ -579,8 +573,7 @@ public:
     /// @param count 插入数量
     /// @param value 要插入的值
     /// @return 指向第一个新插入元素的迭代器
-    iterator insert(const_iterator pos, size_type count,
-                    const value_type& value);
+    iterator insert(const_iterator pos, size_type count, const value_type& value);
 
     /// @brief 在指定位置插入 [first, last) 范围内的元素
     /// @tparam InputIt 输入迭代器类型
@@ -588,8 +581,7 @@ public:
     /// @param first 范围起始迭代器
     /// @param last 范围结束迭代器
     /// @return 指向第一个新插入元素的迭代器
-    template <typename InputIt,
-              std::enable_if_t<!std::is_integral<InputIt>::value, int> = 0>
+    template <typename InputIt, std::enable_if_t<!std::is_integral<InputIt>::value, int> = 0>
     iterator insert(const_iterator pos, InputIt first, InputIt last);
 
     /// @brief 在指定位置插入初始化列表中的元素
@@ -661,8 +653,8 @@ public:
 
 private:
     /// @brief map 分配器类型，用于分配存储 buffer 指针的数组
-    using map_allocator_type = typename std::allocator_traits<
-        allocator_type>::template rebind_alloc<pointer>;
+    using map_allocator_type =
+        typename std::allocator_traits<allocator_type>::template rebind_alloc<pointer>;
 
     /// @brief 元素分配器的 traits 类型
     using alloc_traits = std::allocator_traits<allocator_type>;
@@ -684,9 +676,8 @@ private:
 };
 
 template <typename T, typename Allocator>
-const typename deque<T, Allocator>::size_type
-    deque<T, Allocator>::m_buffer_size =
-        DEQUE_DEFAULT_BUFFER_SIZE / sizeof(value_type);
+const typename deque<T, Allocator>::size_type deque<T, Allocator>::m_buffer_size =
+    DEQUE_DEFAULT_BUFFER_SIZE / sizeof(value_type);
 
 // ----------------------- iterator 实现 ---------------------------
 template <typename T, typename Allocator>
@@ -696,30 +687,27 @@ inline deque<T, Allocator>::iterator::iterator()
 }
 
 template <typename T, typename Allocator>
-inline deque<T, Allocator>::iterator::iterator(pointer cur, pointer first,
-                                               pointer      last,
+inline deque<T, Allocator>::iterator::iterator(pointer cur, pointer first, pointer last,
                                                value_type** map_node)
     : m_cur(cur), m_first(first), m_last(last), m_map_node(map_node)
 {
 }
 
 template <typename T, typename Allocator>
-inline typename deque<T, Allocator>::reference
-deque<T, Allocator>::iterator::operator*() const
+inline typename deque<T, Allocator>::reference deque<T, Allocator>::iterator::operator*() const
 {
     return *m_cur;
 }
 
 template <typename T, typename Allocator>
-inline typename deque<T, Allocator>::pointer
-deque<T, Allocator>::iterator::operator->() const
+inline typename deque<T, Allocator>::pointer deque<T, Allocator>::iterator::operator->() const
 {
     return m_cur;
 }
 
 template <typename T, typename Allocator>
-inline typename deque<T, Allocator>::difference_type
-deque<T, Allocator>::iterator::operator-(const iterator& other) const
+inline typename deque<T, Allocator>::difference_type deque<T, Allocator>::iterator::operator-(
+    const iterator& other) const
 {
     if (m_map_node == other.m_map_node)
     {
@@ -737,8 +725,8 @@ deque<T, Allocator>::iterator::operator-(const iterator& other) const
 }
 
 template <typename T, typename Allocator>
-inline typename deque<T, Allocator>::iterator
-deque<T, Allocator>::iterator::operator+(difference_type n) const
+inline typename deque<T, Allocator>::iterator deque<T, Allocator>::iterator::operator+(
+    difference_type n) const
 {
     if (m_cur + n < m_last)
     {
@@ -749,14 +737,13 @@ deque<T, Allocator>::iterator::operator+(difference_type n) const
         n -= m_last - m_cur;
         value_type** new_map_node = m_map_node + (n / m_buffer_size + 1);
         pointer      new_cur      = *new_map_node + (n % m_buffer_size);
-        return iterator(new_cur, *new_map_node, *new_map_node + m_buffer_size,
-                        new_map_node);
+        return iterator(new_cur, *new_map_node, *new_map_node + m_buffer_size, new_map_node);
     }
 }
 
 template <typename T, typename Allocator>
-inline typename deque<T, Allocator>::iterator
-deque<T, Allocator>::iterator::operator-(difference_type n) const
+inline typename deque<T, Allocator>::iterator deque<T, Allocator>::iterator::operator-(
+    difference_type n) const
 {
     if (m_cur - n >= m_first)
     {
@@ -766,32 +753,29 @@ deque<T, Allocator>::iterator::operator-(difference_type n) const
     {
         n -= m_cur - m_first + 1;
         value_type** new_map_node = m_map_node - (n / m_buffer_size + 1);
-        pointer      new_cur =
-            *new_map_node + m_buffer_size - 1 - (n % m_buffer_size);
-        return iterator(new_cur, *new_map_node, *new_map_node + m_buffer_size,
-                        new_map_node);
+        pointer      new_cur      = *new_map_node + m_buffer_size - 1 - (n % m_buffer_size);
+        return iterator(new_cur, *new_map_node, *new_map_node + m_buffer_size, new_map_node);
     }
 }
 
 template <typename T, typename Allocator>
-inline typename deque<T, Allocator>::iterator&
-deque<T, Allocator>::iterator::operator+=(difference_type n)
+inline typename deque<T, Allocator>::iterator& deque<T, Allocator>::iterator::operator+=(
+    difference_type n)
 {
     *this = *this + n;
     return *this;
 }
 
 template <typename T, typename Allocator>
-inline typename deque<T, Allocator>::iterator&
-deque<T, Allocator>::iterator::operator-=(difference_type n)
+inline typename deque<T, Allocator>::iterator& deque<T, Allocator>::iterator::operator-=(
+    difference_type n)
 {
     *this = *this - n;
     return *this;
 }
 
 template <typename T, typename Allocator>
-inline typename deque<T, Allocator>::iterator&
-deque<T, Allocator>::iterator::operator++()
+inline typename deque<T, Allocator>::iterator& deque<T, Allocator>::iterator::operator++()
 {
     m_cur++;
     if (m_cur == m_last)
@@ -805,8 +789,7 @@ deque<T, Allocator>::iterator::operator++()
 }
 
 template <typename T, typename Allocator>
-inline typename deque<T, Allocator>::iterator&
-deque<T, Allocator>::iterator::operator--()
+inline typename deque<T, Allocator>::iterator& deque<T, Allocator>::iterator::operator--()
 {
     if (m_cur - 1 >= m_first)
         m_cur--;
@@ -821,8 +804,7 @@ deque<T, Allocator>::iterator::operator--()
 }
 
 template <typename T, typename Allocator>
-inline typename deque<T, Allocator>::iterator
-deque<T, Allocator>::iterator::operator++(int)
+inline typename deque<T, Allocator>::iterator deque<T, Allocator>::iterator::operator++(int)
 {
     iterator temp(*this);
 
@@ -838,8 +820,7 @@ deque<T, Allocator>::iterator::operator++(int)
 }
 
 template <typename T, typename Allocator>
-inline typename deque<T, Allocator>::iterator
-deque<T, Allocator>::iterator::operator--(int)
+inline typename deque<T, Allocator>::iterator deque<T, Allocator>::iterator::operator--(int)
 {
     iterator temp(*this);
     if (m_cur - 1 >= m_first)
@@ -855,36 +836,33 @@ deque<T, Allocator>::iterator::operator--(int)
 }
 
 template <typename T, typename Allocator>
-inline typename deque<T, Allocator>::iterator
-deque<T, Allocator>::iterator::operator[](difference_type n) const
+inline typename deque<T, Allocator>::iterator deque<T, Allocator>::iterator::operator[](
+    difference_type n) const
 {
     return *this + n;
 }
 
 template <typename T, typename Allocator>
-inline typename deque<T, Allocator>::iterator
-deque<T, Allocator>::iterator::operator[](difference_type n)
+inline typename deque<T, Allocator>::iterator deque<T, Allocator>::iterator::operator[](
+    difference_type n)
 {
     return *this + n;
 }
 
 template <typename T, typename Allocator>
-inline bool deque<T, Allocator>::iterator::operator==(
-    const iterator& other) const
+inline bool deque<T, Allocator>::iterator::operator==(const iterator& other) const
 {
     return (m_cur == other.m_cur);
 }
 
 template <typename T, typename Allocator>
-inline bool deque<T, Allocator>::iterator::operator!=(
-    const iterator& other) const
+inline bool deque<T, Allocator>::iterator::operator!=(const iterator& other) const
 {
     return !(*this == other);
 }
 
 template <typename T, typename Allocator>
-inline bool deque<T, Allocator>::iterator::operator<(
-    const iterator& other) const
+inline bool deque<T, Allocator>::iterator::operator<(const iterator& other) const
 {
     if (m_map_node == other.m_map_node)
     {
@@ -897,22 +875,19 @@ inline bool deque<T, Allocator>::iterator::operator<(
 }
 
 template <typename T, typename Allocator>
-inline bool deque<T, Allocator>::iterator::operator>(
-    const iterator& other) const
+inline bool deque<T, Allocator>::iterator::operator>(const iterator& other) const
 {
     return !(*this < other) && *this != other;
 }
 
 template <typename T, typename Allocator>
-inline bool deque<T, Allocator>::iterator::operator<=(
-    const iterator& other) const
+inline bool deque<T, Allocator>::iterator::operator<=(const iterator& other) const
 {
     return !(*this > other);
 }
 
 template <typename T, typename Allocator>
-inline bool deque<T, Allocator>::iterator::operator>=(
-    const iterator& other) const
+inline bool deque<T, Allocator>::iterator::operator>=(const iterator& other) const
 {
     return !(*this < other);
 }
@@ -925,19 +900,15 @@ inline deque<T, Allocator>::const_iterator::const_iterator()
 }
 
 template <typename T, typename Allocator>
-inline deque<T, Allocator>::const_iterator::const_iterator(
-    pointer ptr, pointer first, pointer last, value_type** map_node)
+inline deque<T, Allocator>::const_iterator::const_iterator(pointer ptr, pointer first, pointer last,
+                                                           value_type** map_node)
     : m_cur(ptr), m_first(first), m_last(last), m_map_node(map_node)
 {
 }
 
 template <typename T, typename Allocator>
-inline deque<T, Allocator>::const_iterator::const_iterator(
-    const iterator& other)
-    : m_cur(other.m_cur),
-      m_first(other.m_first),
-      m_last(other.m_last),
-      m_map_node(other.m_map_node)
+inline deque<T, Allocator>::const_iterator::const_iterator(const iterator& other)
+    : m_cur(other.m_cur), m_first(other.m_first), m_last(other.m_last), m_map_node(other.m_map_node)
 {
 }
 
@@ -956,8 +927,7 @@ deque<T, Allocator>::const_iterator::operator->() const
 }
 
 template <typename T, typename Allocator>
-inline typename deque<T, Allocator>::difference_type
-deque<T, Allocator>::const_iterator::operator-(
+inline typename deque<T, Allocator>::difference_type deque<T, Allocator>::const_iterator::operator-(
     const const_iterator& other) const
 {
     if (m_map_node == other.m_map_node)
@@ -976,8 +946,8 @@ deque<T, Allocator>::const_iterator::operator-(
 }
 
 template <typename T, typename Allocator>
-inline typename deque<T, Allocator>::const_iterator
-deque<T, Allocator>::const_iterator::operator+(difference_type n) const
+inline typename deque<T, Allocator>::const_iterator deque<T, Allocator>::const_iterator::operator+(
+    difference_type n) const
 {
     if (m_cur + n < m_last)
     {
@@ -988,14 +958,13 @@ deque<T, Allocator>::const_iterator::operator+(difference_type n) const
         n -= m_last - m_cur;
         value_type** new_map_node = m_map_node + (n / m_buffer_size + 1);
         pointer      new_cur      = *new_map_node + (n % m_buffer_size);
-        return const_iterator(new_cur, *new_map_node,
-                              *new_map_node + m_buffer_size, new_map_node);
+        return const_iterator(new_cur, *new_map_node, *new_map_node + m_buffer_size, new_map_node);
     }
 }
 
 template <typename T, typename Allocator>
-inline typename deque<T, Allocator>::const_iterator
-deque<T, Allocator>::const_iterator::operator-(difference_type n) const
+inline typename deque<T, Allocator>::const_iterator deque<T, Allocator>::const_iterator::operator-(
+    difference_type n) const
 {
     if (m_cur - n >= m_first)
     {
@@ -1005,10 +974,8 @@ deque<T, Allocator>::const_iterator::operator-(difference_type n) const
     {
         n -= m_cur - m_first + 1;
         value_type** new_map_node = m_map_node - (n / m_buffer_size + 1);
-        pointer      new_cur =
-            *new_map_node + m_buffer_size - 1 - (n % m_buffer_size);
-        return const_iterator(new_cur, *new_map_node,
-                              *new_map_node + m_buffer_size, new_map_node);
+        pointer      new_cur      = *new_map_node + m_buffer_size - 1 - (n % m_buffer_size);
+        return const_iterator(new_cur, *new_map_node, *new_map_node + m_buffer_size, new_map_node);
     }
 }
 
@@ -1060,8 +1027,8 @@ deque<T, Allocator>::const_iterator::operator--()
 }
 
 template <typename T, typename Allocator>
-inline typename deque<T, Allocator>::const_iterator
-deque<T, Allocator>::const_iterator::operator++(int)
+inline typename deque<T, Allocator>::const_iterator deque<T, Allocator>::const_iterator::operator++(
+    int)
 {
     const_iterator temp(*this);
     m_cur++;
@@ -1076,8 +1043,8 @@ deque<T, Allocator>::const_iterator::operator++(int)
 }
 
 template <typename T, typename Allocator>
-inline typename deque<T, Allocator>::const_iterator
-deque<T, Allocator>::const_iterator::operator--(int)
+inline typename deque<T, Allocator>::const_iterator deque<T, Allocator>::const_iterator::operator--(
+    int)
 {
     const_iterator temp(*this);
     if (m_cur - 1 >= m_first)
@@ -1093,36 +1060,33 @@ deque<T, Allocator>::const_iterator::operator--(int)
 }
 
 template <typename T, typename Allocator>
-inline typename deque<T, Allocator>::const_iterator
-deque<T, Allocator>::const_iterator::operator[](difference_type n) const
+inline typename deque<T, Allocator>::const_iterator deque<T, Allocator>::const_iterator::operator[](
+    difference_type n) const
 {
     return *this + n;
 }
 
 template <typename T, typename Allocator>
-inline typename deque<T, Allocator>::const_iterator
-deque<T, Allocator>::const_iterator::operator[](difference_type n)
+inline typename deque<T, Allocator>::const_iterator deque<T, Allocator>::const_iterator::operator[](
+    difference_type n)
 {
     return *this + n;
 }
 
 template <typename T, typename Allocator>
-inline bool deque<T, Allocator>::const_iterator::operator==(
-    const const_iterator& other) const
+inline bool deque<T, Allocator>::const_iterator::operator==(const const_iterator& other) const
 {
     return (m_cur == other.m_cur);
 }
 
 template <typename T, typename Allocator>
-inline bool deque<T, Allocator>::const_iterator::operator!=(
-    const const_iterator& other) const
+inline bool deque<T, Allocator>::const_iterator::operator!=(const const_iterator& other) const
 {
     return !(*this == other);
 }
 
 template <typename T, typename Allocator>
-inline bool deque<T, Allocator>::const_iterator::operator<(
-    const const_iterator& other) const
+inline bool deque<T, Allocator>::const_iterator::operator<(const const_iterator& other) const
 {
     if (m_map_node == other.m_map_node)
     {
@@ -1135,22 +1099,19 @@ inline bool deque<T, Allocator>::const_iterator::operator<(
 }
 
 template <typename T, typename Allocator>
-inline bool deque<T, Allocator>::const_iterator::operator>(
-    const const_iterator& other) const
+inline bool deque<T, Allocator>::const_iterator::operator>(const const_iterator& other) const
 {
     return !(*this < other) && *this != other;
 }
 
 template <typename T, typename Allocator>
-inline bool deque<T, Allocator>::const_iterator::operator<=(
-    const const_iterator& other) const
+inline bool deque<T, Allocator>::const_iterator::operator<=(const const_iterator& other) const
 {
     return !(*this > other);
 }
 
 template <typename T, typename Allocator>
-inline bool deque<T, Allocator>::const_iterator::operator>=(
-    const const_iterator& other) const
+inline bool deque<T, Allocator>::const_iterator::operator>=(const const_iterator& other) const
 {
     return !(*this < other);
 }
@@ -1213,8 +1174,7 @@ deque<T, Allocator>::deque(size_type count)
     // m_end 指向最后一个元素的下一个位置
     const size_type last_slot = first_slot + slots - 1;
     m_end.m_cur =
-        m_map[last_slot] +
-        (count % m_buffer_size == 0 ? m_buffer_size : count % m_buffer_size);
+        m_map[last_slot] + (count % m_buffer_size == 0 ? m_buffer_size : count % m_buffer_size);
     m_end.m_first    = m_map[last_slot];
     m_end.m_last     = m_map[last_slot] + m_buffer_size;
     m_end.m_map_node = m_map + last_slot;
@@ -1233,8 +1193,7 @@ deque<T, Allocator>::deque(size_type count, const value_type& value)
 }
 
 template <typename T, typename Allocator>
-template <typename InputIt,
-          std::enable_if_t<!std::is_integral<InputIt>::value, int>>
+template <typename InputIt, std::enable_if_t<!std::is_integral<InputIt>::value, int>>
 deque<T, Allocator>::deque(InputIt first, InputIt last)
     : m_map(nullptr),
       m_map_size(DEQUE_DEFAULT_INIT_SIZE),
@@ -1271,26 +1230,22 @@ deque<T, Allocator>::deque(const deque& other)
     for (size_type i = 0; i < m_map_size; i++)
         m_map[i] = nullptr;
     size_type first_slot = other.m_begin.m_map_node - other.m_map;
-    size_type slots = other.m_end.m_map_node - other.m_begin.m_map_node + 1;
+    size_type slots      = other.m_end.m_map_node - other.m_begin.m_map_node + 1;
 
     // 单独处理第一个槽位
     m_map[first_slot] = alloc_traits::allocate(m_allocator, m_buffer_size);
-    size_type first_slot_size = std::min(
-        m_buffer_size,
-        static_cast<size_type>(other.m_begin.m_last - other.m_begin.m_cur));
-    for (size_type j = (other.m_begin.m_cur - other.m_begin.m_first);
-         j < first_slot_size; j++)
-        alloc_traits::construct(m_allocator, m_map[first_slot] + j,
-                                *(other.m_map[first_slot] + j));
+    size_type first_slot_size =
+        std::min(m_buffer_size, static_cast<size_type>(other.m_begin.m_last - other.m_begin.m_cur));
+    for (size_type j = (other.m_begin.m_cur - other.m_begin.m_first); j < first_slot_size; j++)
+        alloc_traits::construct(m_allocator, m_map[first_slot] + j, *(other.m_map[first_slot] + j));
 
     // 单独处理最后一个槽
     size_type last_slot = first_slot + slots - 1;
     if (last_slot != first_slot)
     {
-        m_map[last_slot] = alloc_traits::allocate(m_allocator, m_buffer_size);
+        m_map[last_slot]         = alloc_traits::allocate(m_allocator, m_buffer_size);
         size_type last_slot_size = std::min(
-            m_buffer_size,
-            static_cast<size_type>(other.m_end.m_cur - other.m_end.m_first));
+            m_buffer_size, static_cast<size_type>(other.m_end.m_cur - other.m_end.m_first));
         for (size_type j = 0; j < last_slot_size; j++)
             alloc_traits::construct(m_allocator, m_map[last_slot] + j,
                                     *(other.m_map[last_slot] + j));
@@ -1301,19 +1256,17 @@ deque<T, Allocator>::deque(const deque& other)
     {
         m_map[i] = alloc_traits::allocate(m_allocator, m_buffer_size);
         for (size_type j = 0; j < m_buffer_size; j++)
-            alloc_traits::construct(m_allocator, m_map[i] + j,
-                                    *(other.m_map[i] + j));
+            alloc_traits::construct(m_allocator, m_map[i] + j, *(other.m_map[i] + j));
     }
 
     // m_begin 指向第一个元素
-    m_begin.m_cur =
-        m_map[first_slot] + (other.m_begin.m_cur - other.m_begin.m_first);
+    m_begin.m_cur      = m_map[first_slot] + (other.m_begin.m_cur - other.m_begin.m_first);
     m_begin.m_first    = m_map[first_slot];
     m_begin.m_last     = m_map[first_slot] + m_buffer_size;
     m_begin.m_map_node = m_map + first_slot;
 
     // m_end 指向最后一个元素的下一个位置
-    m_end.m_cur = m_map[last_slot] + (other.m_end.m_cur - other.m_end.m_first);
+    m_end.m_cur      = m_map[last_slot] + (other.m_end.m_cur - other.m_end.m_first);
     m_end.m_first    = m_map[last_slot];
     m_end.m_last     = m_map[last_slot] + m_buffer_size;
     m_end.m_map_node = m_map + last_slot;
@@ -1325,26 +1278,15 @@ deque<T, Allocator>& deque<T, Allocator>::operator=(const deque& other)
     if (this != &other)
     {
         clear();
-        // 释放所有buffer，避免内存泄漏
-        for (size_type i = 0; i < m_map_size; i++)
-            if (m_map[i] != nullptr)
-                alloc_traits::deallocate(m_allocator, m_map[i], m_buffer_size);
-        map_alloc_traits::deallocate(m_map_allocator, m_map, m_map_size);
-
         assign(other.begin(), other.end());
     }
     return *this;
 }
 
 template <typename T, typename Allocator>
-deque<T, Allocator>& deque<T, Allocator>::operator=(
-    std::initializer_list<T> ilist)
+deque<T, Allocator>& deque<T, Allocator>::operator=(std::initializer_list<T> ilist)
 {
     clear();
-    // 释放所有buffer，避免内存泄漏
-    for (size_type i = 0; i < m_map_size; i++)
-        if (m_map[i] != nullptr)
-            alloc_traits::deallocate(m_allocator, m_map[i], m_buffer_size);
     assign(ilist);
     return *this;
 }
@@ -1360,8 +1302,7 @@ deque<T, Allocator>::deque(deque&& other) noexcept
 {
     // other 重置为有效空状态
     other.m_map_size = DEQUE_DEFAULT_INIT_SIZE;
-    other.m_map =
-        map_alloc_traits::allocate(other.m_map_allocator, other.m_map_size);
+    other.m_map      = map_alloc_traits::allocate(other.m_map_allocator, other.m_map_size);
     for (size_type i = 0; i < other.m_map_size; i++)
         other.m_map[i] = nullptr;
     other.m_begin.m_map_node = other.m_map + other.m_map_size / 2;
@@ -1392,8 +1333,7 @@ deque<T, Allocator>& deque<T, Allocator>::operator=(deque&& other) noexcept
 
         // other 重置为有效空状态
         other.m_map_size = DEQUE_DEFAULT_INIT_SIZE;
-        other.m_map =
-            map_alloc_traits::allocate(other.m_map_allocator, other.m_map_size);
+        other.m_map      = map_alloc_traits::allocate(other.m_map_allocator, other.m_map_size);
         for (size_type i = 0; i < other.m_map_size; i++)
             other.m_map[i] = nullptr;
         other.m_begin.m_map_node = other.m_map + other.m_map_size / 2;
@@ -1421,6 +1361,13 @@ template <typename T, typename Allocator>
 void deque<T, Allocator>::assign(size_type count, const value_type& value)
 {
     clear();
+    // 释放所有buffer，避免内存泄漏
+    if (m_map != nullptr)
+        for (size_type i = 0; i < m_map_size; i++)
+            if (m_map[i] != nullptr)
+                alloc_traits::deallocate(m_allocator, m_map[i], m_buffer_size);
+    if (m_map != nullptr)
+        map_alloc_traits::deallocate(m_map_allocator, m_map, m_map_size);
 
     size_type slots = (count + m_buffer_size - 1) / m_buffer_size;
     m_map_size      = std::max(slots, m_map_size);
@@ -1445,19 +1392,24 @@ void deque<T, Allocator>::assign(size_type count, const value_type& value)
 
     size_type last_slot = first_slot + slots - 1;
     m_end.m_cur =
-        m_map[last_slot] +
-        (count % m_buffer_size == 0 ? m_buffer_size : count % m_buffer_size);
+        m_map[last_slot] + (count % m_buffer_size == 0 ? m_buffer_size : count % m_buffer_size);
     m_end.m_first    = m_map[last_slot];
     m_end.m_last     = m_map[last_slot] + m_buffer_size;
     m_end.m_map_node = m_map + last_slot;
 }
 
 template <typename T, typename Allocator>
-template <typename InputIt,
-          std::enable_if_t<!std::is_integral<InputIt>::value, int>>
+template <typename InputIt, std::enable_if_t<!std::is_integral<InputIt>::value, int>>
 void deque<T, Allocator>::assign(InputIt first, InputIt last)
 {
     clear();
+    // 释放所有buffer，避免内存泄漏
+    if (m_map != nullptr)
+        for (size_type i = 0; i < m_map_size; i++)
+            if (m_map[i] != nullptr)
+                alloc_traits::deallocate(m_allocator, m_map[i], m_buffer_size);
+    if (m_map != nullptr)
+        map_alloc_traits::deallocate(m_map_allocator, m_map, m_map_size);
 
     if (first == last)
         return;
@@ -1475,8 +1427,7 @@ void deque<T, Allocator>::assign(InputIt first, InputIt last)
     for (size_type i = first_slot; i < first_slot + slots; i++)
     {
         m_map[i] = alloc_traits::allocate(m_allocator, m_buffer_size);
-        for (size_type j = 0;
-             j < std::min(m_buffer_size, remaining) && first != last; j++)
+        for (size_type j = 0; j < std::min(m_buffer_size, remaining) && first != last; j++)
             alloc_traits::construct(m_allocator, m_map[i] + j, *first++);
         remaining -= m_buffer_size;
     }
@@ -1488,8 +1439,7 @@ void deque<T, Allocator>::assign(InputIt first, InputIt last)
 
     size_type last_slot = first_slot + slots - 1;
     m_end.m_cur =
-        m_map[last_slot] +
-        (count % m_buffer_size == 0 ? m_buffer_size : count % m_buffer_size);
+        m_map[last_slot] + (count % m_buffer_size == 0 ? m_buffer_size : count % m_buffer_size);
     m_end.m_first    = m_map[last_slot];
     m_end.m_last     = m_map[last_slot] + m_buffer_size;
     m_end.m_map_node = m_map + last_slot;
@@ -1502,64 +1452,38 @@ void deque<T, Allocator>::assign(std::initializer_list<T> ilist)
 }
 
 template <typename T, typename Allocator>
-inline typename deque<T, Allocator>::allocator_type
-deque<T, Allocator>::get_allocator() const noexcept
+inline typename deque<T, Allocator>::allocator_type deque<T, Allocator>::get_allocator()
+    const noexcept
 {
     return m_allocator;
 }
 
 template <typename T, typename Allocator>
-inline typename deque<T, Allocator>::reference deque<T, Allocator>::at(
-    size_type pos)
+inline typename deque<T, Allocator>::reference deque<T, Allocator>::at(size_type pos)
 {
-    // 不能直接使用pos，因为元素不是从第一个slot开始的
-    //  size_type slot = pos / m_map_size;
-    //  if (slot >= m_map_size)
-    //      throw std::out_of_range("deque::at: pos out of range");
-
-    // size_type offset = pos % m_map_size;
-    // if (offset >= m_buffer_size)
-    //     throw std::out_of_range("deque::at: pos out of range");
-
     if (pos >= size())
         throw std::out_of_range("deque::at: pos out of range");
     return *(m_begin + pos);
 }
 
 template <typename T, typename Allocator>
-inline typename deque<T, Allocator>::const_reference deque<T, Allocator>::at(
+inline typename deque<T, Allocator>::const_reference deque<T, Allocator>::at(size_type pos) const
+{
+    if (pos >= size())
+        throw std::out_of_range("deque::at: pos out of range");
+    return *(m_begin + pos);
+}
+
+template <typename T, typename Allocator>
+inline typename deque<T, Allocator>::reference deque<T, Allocator>::operator[](size_type pos)
+{
+    return *(m_begin + pos);
+}
+
+template <typename T, typename Allocator>
+inline typename deque<T, Allocator>::const_reference deque<T, Allocator>::operator[](
     size_type pos) const
 {
-    // size_type slot = pos / m_map_size;
-    // if (slot >= m_map_size)
-    //     throw std::out_of_range("deque::at: pos out of range");
-
-    // size_type offset = pos % m_map_size;
-    // if (offset >= m_buffer_size)
-    //     throw std::out_of_range("deque::at: pos out of range");
-
-    if (pos >= size())
-        throw std::out_of_range("deque::at: pos out of range");
-    return *(m_begin + pos);
-}
-
-template <typename T, typename Allocator>
-inline typename deque<T, Allocator>::reference deque<T, Allocator>::operator[](
-    size_type pos)
-{
-    // size_type slot = pos / m_map_size;
-    // size_type offset = pos % m_map_size;
-
-    return *(m_begin + pos);
-}
-
-template <typename T, typename Allocator>
-inline typename deque<T, Allocator>::const_reference
-deque<T, Allocator>::operator[](size_type pos) const
-{
-    // size_type slot = pos / m_map_size;
-    // size_type offset = pos % m_map_size;
-
     return *(m_begin + pos);
 }
 
@@ -1572,8 +1496,7 @@ inline typename deque<T, Allocator>::reference deque<T, Allocator>::front()
 }
 
 template <typename T, typename Allocator>
-inline typename deque<T, Allocator>::const_reference
-deque<T, Allocator>::front() const
+inline typename deque<T, Allocator>::const_reference deque<T, Allocator>::front() const
 {
     if (empty())
         throw std::out_of_range("deque::front: deque is empty");
@@ -1589,8 +1512,7 @@ inline typename deque<T, Allocator>::reference deque<T, Allocator>::back()
 }
 
 template <typename T, typename Allocator>
-inline typename deque<T, Allocator>::const_reference deque<T, Allocator>::back()
-    const
+inline typename deque<T, Allocator>::const_reference deque<T, Allocator>::back() const
 {
     if (empty())
         throw std::out_of_range("deque::back: deque is empty");
@@ -1604,15 +1526,13 @@ inline typename deque<T, Allocator>::iterator deque<T, Allocator>::begin()
 }
 
 template <typename T, typename Allocator>
-inline typename deque<T, Allocator>::const_iterator deque<T, Allocator>::begin()
-    const
+inline typename deque<T, Allocator>::const_iterator deque<T, Allocator>::begin() const
 {
     return m_begin;
 }
 
 template <typename T, typename Allocator>
-inline typename deque<T, Allocator>::const_iterator
-deque<T, Allocator>::cbegin() const
+inline typename deque<T, Allocator>::const_iterator deque<T, Allocator>::cbegin() const
 {
     return m_begin;
 }
@@ -1624,57 +1544,49 @@ inline typename deque<T, Allocator>::iterator deque<T, Allocator>::end()
 }
 
 template <typename T, typename Allocator>
-inline typename deque<T, Allocator>::const_iterator deque<T, Allocator>::end()
-    const
+inline typename deque<T, Allocator>::const_iterator deque<T, Allocator>::end() const
 {
     return m_end;
 }
 
 template <typename T, typename Allocator>
-inline typename deque<T, Allocator>::const_iterator deque<T, Allocator>::cend()
-    const
+inline typename deque<T, Allocator>::const_iterator deque<T, Allocator>::cend() const
 {
     return m_end;
 }
 
 template <typename T, typename Allocator>
-inline typename deque<T, Allocator>::reverse_iterator
-deque<T, Allocator>::rbegin()
+inline typename deque<T, Allocator>::reverse_iterator deque<T, Allocator>::rbegin()
 {
     return reverse_iterator(m_end);
 }
 
 template <typename T, typename Allocator>
-inline typename deque<T, Allocator>::const_reverse_iterator
-deque<T, Allocator>::rbegin() const
+inline typename deque<T, Allocator>::const_reverse_iterator deque<T, Allocator>::rbegin() const
 {
     return const_reverse_iterator(m_end);
 }
 
 template <typename T, typename Allocator>
-inline typename deque<T, Allocator>::const_reverse_iterator
-deque<T, Allocator>::crbegin() const
+inline typename deque<T, Allocator>::const_reverse_iterator deque<T, Allocator>::crbegin() const
 {
     return const_reverse_iterator(m_end);
 }
 
 template <typename T, typename Allocator>
-inline typename deque<T, Allocator>::reverse_iterator
-deque<T, Allocator>::rend()
+inline typename deque<T, Allocator>::reverse_iterator deque<T, Allocator>::rend()
 {
     return reverse_iterator(m_begin);
 }
 
 template <typename T, typename Allocator>
-inline typename deque<T, Allocator>::const_reverse_iterator
-deque<T, Allocator>::rend() const
+inline typename deque<T, Allocator>::const_reverse_iterator deque<T, Allocator>::rend() const
 {
     return const_reverse_iterator(m_begin);
 }
 
 template <typename T, typename Allocator>
-inline typename deque<T, Allocator>::const_reverse_iterator
-deque<T, Allocator>::crend() const
+inline typename deque<T, Allocator>::const_reverse_iterator deque<T, Allocator>::crend() const
 {
     return const_reverse_iterator(m_begin);
 }
@@ -1682,8 +1594,7 @@ deque<T, Allocator>::crend() const
 template <typename T, typename Allocator>
 inline bool deque<T, Allocator>::empty() const
 {
-    // 初始化时 m_begin.m_cur 为 nullptr，clear后 m_begin == m_end
-    return m_begin.m_cur == nullptr || m_begin == m_end;
+    return m_begin == m_end;
 }
 
 template <typename T, typename Allocator>
@@ -1693,8 +1604,7 @@ inline typename deque<T, Allocator>::size_type deque<T, Allocator>::size() const
 }
 
 template <typename T, typename Allocator>
-inline typename deque<T, Allocator>::size_type deque<T, Allocator>::max_size()
-    const
+inline typename deque<T, Allocator>::size_type deque<T, Allocator>::max_size() const
 {
     return alloc_traits::max_size(m_allocator);
 }
@@ -1724,8 +1634,7 @@ inline void deque<T, Allocator>::resize(size_type count)
 }
 
 template <typename T, typename Allocator>
-inline void deque<T, Allocator>::resize(size_type         count,
-                                        const value_type& value)
+inline void deque<T, Allocator>::resize(size_type count, const value_type& value)
 {
     size_type current_size = size();
     if (count == current_size)
@@ -1757,7 +1666,7 @@ inline void deque<T, Allocator>::shrink_to_fit()
     // 计算当前使用的槽位数
     // 新槽位数组每一个槽位都保存buffer,不存在空槽位，如果再插入元素，很可能需要重新分配buffer
     size_type used_slots = m_end.m_map_node - m_begin.m_map_node + 1;
-    pointer*  new_map = map_alloc_traits::allocate(m_map_allocator, used_slots);
+    pointer*  new_map    = map_alloc_traits::allocate(m_map_allocator, used_slots);
     for (size_type i = 0; i < used_slots; i++)
         new_map[i] = nullptr;
 
@@ -1795,57 +1704,16 @@ inline void deque<T, Allocator>::clear() noexcept
 }
 
 template <typename T, typename Allocator>
-inline typename deque<T, Allocator>::iterator deque<T, Allocator>::insert(
-    const_iterator pos, const value_type& value)
+inline typename deque<T, Allocator>::iterator deque<T, Allocator>::insert(const_iterator    pos,
+                                                                          const value_type& value)
 {
-    if (pos == begin())
-    {
-        push_front(value);
-        return begin();
-    }
-
-    // 计算插入位置距离两端的距离
-    difference_type distance_from_begin = pos - cbegin();
-    difference_type distance_from_end   = size() - distance_from_begin;
-
-    // 选择移动代价较小的方向
-    if (distance_from_begin <= distance_from_end)
-    {
-        // 从头部插入更优：将头部元素向后移动
-        push_front(value);
-
-        iterator first = begin();
-        iterator last  = begin() + distance_from_begin;
-
-        while (first != last)
-        {
-            std::swap(*first, *(first + 1));
-            first++;
-        }
-    }
-    else
-    {
-        // 从尾部插入更优：将尾部元素向前移动
-        push_back(value);
-
-        // 将插入位置之后的元素向前移动
-        iterator last  = end();
-        iterator first = end() - distance_from_end;
-
-        while (last != first)
-        {
-            last--;
-            std::swap(*last, *(last - 1));
-        }
-    }
-
-    // 返回指向插入元素的迭代器
-    return begin() + distance_from_begin;
+    value_type val = value;
+    return insert(pos, std::move(val));
 }
 
 template <typename T, typename Allocator>
-inline typename deque<T, Allocator>::iterator deque<T, Allocator>::insert(
-    const_iterator pos, const value_type&& value)
+inline typename deque<T, Allocator>::iterator deque<T, Allocator>::insert(const_iterator     pos,
+                                                                          const value_type&& value)
 {
     if (pos == begin())
     {
@@ -1894,39 +1762,36 @@ inline typename deque<T, Allocator>::iterator deque<T, Allocator>::insert(
 }
 
 template <typename T, typename Allocator>
-inline typename deque<T, Allocator>::iterator deque<T, Allocator>::insert(
-    const_iterator pos, size_type count, const value_type& value)
+inline typename deque<T, Allocator>::iterator deque<T, Allocator>::insert(const_iterator    pos,
+                                                                          size_type         count,
+                                                                          const value_type& value)
 {
     if (count == 0)
     {
-        return iterator(const_cast<pointer>(pos.m_cur),
-                        const_cast<pointer>(pos.m_first),
-                        const_cast<pointer>(pos.m_last),
-                        const_cast<value_type**>(pos.m_map_node));
+        return iterator(const_cast<pointer>(pos.m_cur), const_cast<pointer>(pos.m_first),
+                        const_cast<pointer>(pos.m_last), const_cast<value_type**>(pos.m_map_node));
     }
 
     difference_type insert_pos = pos - cbegin();
 
     for (size_type i = 0; i < count; ++i)
     {
-        insert(begin() + insert_pos, value);
+        insert(cbegin() + insert_pos, value);
     }
 
     return begin() + insert_pos;
 }
 
 template <typename T, typename Allocator>
-template <typename InputIt,
-          std::enable_if_t<!std::is_integral<InputIt>::value, int>>
-inline typename deque<T, Allocator>::iterator deque<T, Allocator>::insert(
-    const_iterator pos, InputIt first, InputIt last)
+template <typename InputIt, std::enable_if_t<!std::is_integral<InputIt>::value, int>>
+inline typename deque<T, Allocator>::iterator deque<T, Allocator>::insert(const_iterator pos,
+                                                                          InputIt        first,
+                                                                          InputIt        last)
 {
     if (first == last)
     {
-        return iterator(const_cast<pointer>(pos.m_cur),
-                        const_cast<pointer>(pos.m_first),
-                        const_cast<pointer>(pos.m_last),
-                        const_cast<value_type**>(pos.m_map_node));
+        return iterator(const_cast<pointer>(pos.m_cur), const_cast<pointer>(pos.m_first),
+                        const_cast<pointer>(pos.m_last), const_cast<value_type**>(pos.m_map_node));
     }
 
     difference_type insert_pos  = pos - cbegin();
@@ -1934,7 +1799,7 @@ inline typename deque<T, Allocator>::iterator deque<T, Allocator>::insert(
 
     for (InputIt it = first; it != last; ++it)
     {
-        insert(begin() + current_pos, *it);
+        insert(cbegin() + current_pos, *it);
         current_pos++;
     }
 
@@ -1950,8 +1815,8 @@ inline typename deque<T, Allocator>::iterator deque<T, Allocator>::insert(
 
 template <typename T, typename Allocator>
 template <typename... Args>
-inline typename deque<T, Allocator>::iterator deque<T, Allocator>::emplace(
-    const_iterator pos, Args&&... args)
+inline typename deque<T, Allocator>::iterator deque<T, Allocator>::emplace(const_iterator pos,
+                                                                           Args&&... args)
 {
     if (pos == begin())
     {
@@ -1993,8 +1858,7 @@ inline typename deque<T, Allocator>::iterator deque<T, Allocator>::emplace(
 }
 
 template <typename T, typename Allocator>
-inline typename deque<T, Allocator>::iterator deque<T, Allocator>::erase(
-    const_iterator pos)
+inline typename deque<T, Allocator>::iterator deque<T, Allocator>::erase(const_iterator pos)
 {
     if (empty() || pos == end())
         return end();
@@ -2031,8 +1895,7 @@ inline typename deque<T, Allocator>::iterator deque<T, Allocator>::erase(
     }
     else
     {
-        for (difference_type i = erase_pos;
-             i < static_cast<difference_type>(size()) - 1; ++i)
+        for (difference_type i = erase_pos; i < static_cast<difference_type>(size()) - 1; ++i)
         {
             *(begin() + i) = std::move(*(begin() + i + 1));
         }
@@ -2042,13 +1905,12 @@ inline typename deque<T, Allocator>::iterator deque<T, Allocator>::erase(
 }
 
 template <typename T, typename Allocator>
-inline typename deque<T, Allocator>::iterator deque<T, Allocator>::erase(
-    const_iterator first, const_iterator last)
+inline typename deque<T, Allocator>::iterator deque<T, Allocator>::erase(const_iterator first,
+                                                                         const_iterator last)
 {
     if (first == last)
     {
-        return iterator(const_cast<pointer>(first.m_cur),
-                        const_cast<pointer>(first.m_first),
+        return iterator(const_cast<pointer>(first.m_cur), const_cast<pointer>(first.m_first),
                         const_cast<pointer>(first.m_last),
                         const_cast<value_type**>(first.m_map_node));
     }
@@ -2116,8 +1978,7 @@ inline void deque<T, Allocator>::push_front(const value_type& value)
     {
         size_type mid = m_map_size / 2;
         m_map[mid]    = alloc_traits::allocate(m_allocator, m_buffer_size);
-        alloc_traits::construct(m_allocator, m_map[mid] + m_buffer_size / 2,
-                                value);
+        alloc_traits::construct(m_allocator, m_map[mid] + m_buffer_size / 2, value);
         m_begin.m_cur      = m_map[mid] + m_buffer_size / 2;
         m_begin.m_first    = m_map[mid];
         m_begin.m_last     = m_map[mid] + m_buffer_size;
@@ -2139,8 +2000,7 @@ inline void deque<T, Allocator>::push_front(const value_type& value)
         if (new_slot < m_map)  // 无法向前扩展，需要开辟新的槽位数组
         {
             size_type    new_map_size = m_map_size * 2;
-            value_type** new_map =
-                map_alloc_traits::allocate(m_map_allocator, new_map_size);
+            value_type** new_map      = map_alloc_traits::allocate(m_map_allocator, new_map_size);
             for (size_type i = 0; i < new_map_size; i++)
                 new_map[i] = nullptr;
             size_type first_slot = (new_map_size - m_map_size) / 2;
@@ -2165,8 +2025,7 @@ inline void deque<T, Allocator>::push_front(const value_type& value)
         if (*new_slot == nullptr)
             *new_slot = alloc_traits::allocate(m_allocator, m_buffer_size);
 
-        alloc_traits::construct(m_allocator, *new_slot + m_buffer_size - 1,
-                                value);
+        alloc_traits::construct(m_allocator, *new_slot + m_buffer_size - 1, value);
         m_begin.m_cur      = *new_slot + m_buffer_size - 1;
         m_begin.m_first    = *new_slot;
         m_begin.m_last     = *new_slot + m_buffer_size;
@@ -2181,8 +2040,7 @@ inline void deque<T, Allocator>::push_front(value_type&& value)
     {
         size_type mid = m_map_size / 2;
         m_map[mid]    = alloc_traits::allocate(m_allocator, m_buffer_size);
-        alloc_traits::construct(m_allocator, m_map[mid] + m_buffer_size / 2,
-                                std::move(value));
+        alloc_traits::construct(m_allocator, m_map[mid] + m_buffer_size / 2, std::move(value));
         m_begin.m_cur      = m_map[mid] + m_buffer_size / 2;
         m_begin.m_first    = m_map[mid];
         m_begin.m_last     = m_map[mid] + m_buffer_size;
@@ -2204,8 +2062,7 @@ inline void deque<T, Allocator>::push_front(value_type&& value)
         if (new_slot < m_map)  // 无法向前扩展，需要开辟新的槽位数组
         {
             size_type    new_map_size = m_map_size * 2;
-            value_type** new_map =
-                map_alloc_traits::allocate(m_map_allocator, new_map_size);
+            value_type** new_map      = map_alloc_traits::allocate(m_map_allocator, new_map_size);
             for (size_type i = 0; i < new_map_size; i++)
                 new_map[i] = nullptr;
             size_type first_slot = (new_map_size - m_map_size) / 2;
@@ -2230,8 +2087,7 @@ inline void deque<T, Allocator>::push_front(value_type&& value)
         if (*new_slot == nullptr)
             *new_slot = alloc_traits::allocate(m_allocator, m_buffer_size);
 
-        alloc_traits::construct(m_allocator, *new_slot + m_buffer_size - 1,
-                                std::move(value));
+        alloc_traits::construct(m_allocator, *new_slot + m_buffer_size - 1, std::move(value));
         m_begin.m_cur      = *new_slot + m_buffer_size - 1;
         m_begin.m_first    = *new_slot;
         m_begin.m_last     = *new_slot + m_buffer_size;
@@ -2266,8 +2122,7 @@ inline void deque<T, Allocator>::push_back(const value_type& value)
         if (new_slot >= m_map + m_map_size)
         {
             size_type    new_map_size = m_map_size * 2;
-            value_type** new_map =
-                map_alloc_traits::allocate(m_map_allocator, new_map_size);
+            value_type** new_map      = map_alloc_traits::allocate(m_map_allocator, new_map_size);
             for (size_type i = 0; i < new_map_size; i++)
                 new_map[i] = nullptr;
             size_type first_slot = (new_map_size - m_map_size) / 2;
@@ -2327,8 +2182,7 @@ inline void deque<T, Allocator>::push_back(value_type&& value)
         if (new_slot >= m_map + m_map_size)
         {
             size_type    new_map_size = m_map_size * 2;
-            value_type** new_map =
-                map_alloc_traits::allocate(m_map_allocator, new_map_size);
+            value_type** new_map      = map_alloc_traits::allocate(m_map_allocator, new_map_size);
             for (size_type i = 0; i < new_map_size; i++)
                 new_map[i] = nullptr;
             size_type first_slot = (new_map_size - m_map_size) / 2;
@@ -2363,15 +2217,13 @@ inline void deque<T, Allocator>::push_back(value_type&& value)
 
 template <typename T, typename Allocator>
 template <typename... Args>
-inline typename deque<T, Allocator>::reference
-deque<T, Allocator>::emplace_back(Args&&... args)
+inline typename deque<T, Allocator>::reference deque<T, Allocator>::emplace_back(Args&&... args)
 {
     if (m_end.m_cur == nullptr)
     {
         size_type mid = m_map_size / 2;
         m_map[mid]    = alloc_traits::allocate(m_allocator, m_buffer_size);
-        alloc_traits::construct(m_allocator, m_map[mid],
-                                std::forward<Args>(args)...);
+        alloc_traits::construct(m_allocator, m_map[mid], std::forward<Args>(args)...);
         m_end.m_cur   = m_map[mid] + 1;
         m_end.m_first = m_map[mid];
         m_end.m_last  = m_map[mid] + m_buffer_size;
@@ -2381,8 +2233,7 @@ deque<T, Allocator>::emplace_back(Args&&... args)
     }
     else if (m_end.m_cur < m_end.m_last)
     {
-        alloc_traits::construct(m_allocator, m_end.m_cur,
-                                std::forward<Args>(args)...);
+        alloc_traits::construct(m_allocator, m_end.m_cur, std::forward<Args>(args)...);
         reference result = *m_end.m_cur;
         m_end.m_cur++;
         return result;
@@ -2394,8 +2245,7 @@ deque<T, Allocator>::emplace_back(Args&&... args)
         if (new_slot >= m_map + m_map_size)
         {
             size_type    new_map_size = m_map_size * 2;
-            value_type** new_map =
-                map_alloc_traits::allocate(m_map_allocator, new_map_size);
+            value_type** new_map      = map_alloc_traits::allocate(m_map_allocator, new_map_size);
             for (size_type i = 0; i < new_map_size; i++)
                 new_map[i] = nullptr;
             size_type first_slot = (new_map_size - m_map_size) / 2;
@@ -2415,8 +2265,7 @@ deque<T, Allocator>::emplace_back(Args&&... args)
         if (*new_slot == nullptr)
             *new_slot = alloc_traits::allocate(m_allocator, m_buffer_size);
 
-        alloc_traits::construct(m_allocator, *new_slot,
-                                std::forward<Args>(args)...);
+        alloc_traits::construct(m_allocator, *new_slot, std::forward<Args>(args)...);
         reference result = **new_slot;
         m_end.m_cur      = *new_slot + 1;
         m_end.m_first    = *new_slot;
@@ -2428,8 +2277,7 @@ deque<T, Allocator>::emplace_back(Args&&... args)
 
 template <typename T, typename Allocator>
 template <typename... Args>
-inline typename deque<T, Allocator>::reference
-deque<T, Allocator>::emplace_front(Args&&... args)
+inline typename deque<T, Allocator>::reference deque<T, Allocator>::emplace_front(Args&&... args)
 {
     if (m_begin.m_cur == nullptr)
     {
@@ -2449,8 +2297,7 @@ deque<T, Allocator>::emplace_front(Args&&... args)
     else if (m_begin.m_cur > m_begin.m_first)
     {
         m_begin.m_cur--;
-        alloc_traits::construct(m_allocator, m_begin.m_cur,
-                                std::forward<Args>(args)...);
+        alloc_traits::construct(m_allocator, m_begin.m_cur, std::forward<Args>(args)...);
         return *m_begin;
     }
     else
@@ -2460,8 +2307,7 @@ deque<T, Allocator>::emplace_front(Args&&... args)
         if (new_slot < m_map)
         {
             size_type    new_map_size = m_map_size * 2;
-            value_type** new_map =
-                map_alloc_traits::allocate(m_map_allocator, new_map_size);
+            value_type** new_map      = map_alloc_traits::allocate(m_map_allocator, new_map_size);
             for (size_type i = 0; i < new_map_size; i++)
                 new_map[i] = nullptr;
             size_type first_slot = (new_map_size - m_map_size) / 2;
