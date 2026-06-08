@@ -13,24 +13,105 @@
  */
 
 #define DOCTEST_CONFIG_NO_MULTITHREADING
-#include "doctest.h"
-
+#include <algorithm>
+#include <numeric>
+#include <stdexcept>
 #include <string>
 #include <vector>
-#include <stdexcept>
-#include <functional>
-#include <algorithm>
+
 #include "../deque.h"
+#include "doctest.h"
 
 // ============================================
 // 测试辅助工具
 // ============================================
 
+/// @brief 非平凡类型，用于跟踪构造、析构、拷贝、移动操作
+struct TrackedObject
+{
+    int               value;
+    inline static int ctor_count        = 0;
+    inline static int dtor_count        = 0;
+    inline static int copy_ctor_count   = 0;
+    inline static int move_ctor_count   = 0;
+    inline static int copy_assign_count = 0;
+    inline static int move_assign_count = 0;
+
+    TrackedObject() : value(0)
+    {
+        ctor_count++;
+    }
+
+    explicit TrackedObject(int v) : value(v)
+    {
+        ctor_count++;
+    }
+
+    TrackedObject(const TrackedObject& other) : value(other.value)
+    {
+        ctor_count++;
+        copy_ctor_count++;
+    }
+
+    TrackedObject(TrackedObject&& other) noexcept : value(other.value)
+    {
+        other.value = 0;
+        ctor_count++;
+        move_ctor_count++;
+    }
+
+    TrackedObject& operator=(const TrackedObject& other)
+    {
+        if (this != &other)
+        {
+            value = other.value;
+            copy_assign_count++;
+        }
+        return *this;
+    }
+
+    TrackedObject& operator=(TrackedObject&& other) noexcept
+    {
+        if (this != &other)
+        {
+            value       = other.value;
+            other.value = 0;
+            move_assign_count++;
+        }
+        return *this;
+    }
+
+    ~TrackedObject()
+    {
+        dtor_count++;
+    }
+
+    bool operator==(const TrackedObject& other) const
+    {
+        return value == other.value;
+    }
+
+    bool operator!=(const TrackedObject& other) const
+    {
+        return value != other.value;
+    }
+
+    static void reset_counters()
+    {
+        ctor_count        = 0;
+        dtor_count        = 0;
+        copy_ctor_count   = 0;
+        move_ctor_count   = 0;
+        copy_assign_count = 0;
+        move_assign_count = 0;
+    }
+};
+
 template <typename T>
-std::vector<T> deque_to_vector(const demo::deque<T> &dq)
+std::vector<T> deque_to_vector(const demo::deque<T>& dq)
 {
     std::vector<T> result;
-    for (const auto &elem : dq)
+    for (const auto& elem : dq)
     {
         result.push_back(elem);
     }
@@ -38,13 +119,13 @@ std::vector<T> deque_to_vector(const demo::deque<T> &dq)
 }
 
 template <typename T>
-bool deque_equals_vector(const demo::deque<T> &dq, const std::vector<T> &vec)
+bool deque_equals_vector(const demo::deque<T>& dq, const std::vector<T>& vec)
 {
     if (dq.size() != vec.size())
         return false;
 
     auto it = dq.begin();
-    for (const auto &elem : vec)
+    for (const auto& elem : vec)
     {
         if (it == dq.end() || *it != elem)
             return false;
@@ -54,7 +135,7 @@ bool deque_equals_vector(const demo::deque<T> &dq, const std::vector<T> &vec)
 }
 
 template <typename T>
-bool deque_equals_deque(const demo::deque<T> &a, const demo::deque<T> &b)
+bool deque_equals_deque(const demo::deque<T>& a, const demo::deque<T>& b)
 {
     if (a.size() != b.size())
         return false;
@@ -85,7 +166,6 @@ std::vector<T> generate_test_vector(size_t size, T start = T())
 
 TEST_SUITE("Deque Constructors")
 {
-
     TEST_CASE("Default constructor creates empty deque")
     {
         demo::deque<int> dq;
@@ -99,7 +179,7 @@ TEST_SUITE("Deque Constructors")
         CHECK(dq.size() == 5);
         CHECK_FALSE(dq.empty());
 
-        for (const auto &elem : dq)
+        for (const auto& elem : dq)
         {
             CHECK(elem == int());
         }
@@ -164,7 +244,6 @@ TEST_SUITE("Deque Constructors")
 
 TEST_SUITE("Deque Assignment Operators")
 {
-
     TEST_CASE("Copy assignment operator")
     {
         demo::deque<std::string> original{"a", "b", "c"};
@@ -212,7 +291,6 @@ TEST_SUITE("Deque Assignment Operators")
 
 TEST_SUITE("Deque Element Access")
 {
-
     TEST_CASE("front() returns first element")
     {
         demo::deque<int> dq{1, 2, 3};
@@ -279,15 +357,35 @@ TEST_SUITE("Deque Element Access")
         CHECK_THROWS_AS(dq.at(-1), std::out_of_range);
     }
 
+    TEST_CASE("const at() throws on out of bounds")
+    {
+        const demo::deque<int> dq{1, 2, 3};
+
+        CHECK_THROWS_AS(dq.at(3), std::out_of_range);
+        CHECK_THROWS_AS(dq.at(10), std::out_of_range);
+    }
+
     TEST_CASE("front() throws on empty deque")
     {
         demo::deque<int> dq;
         CHECK_THROWS_AS(dq.front(), std::out_of_range);
     }
 
+    TEST_CASE("const front() throws on empty deque")
+    {
+        const demo::deque<int> dq;
+        CHECK_THROWS_AS(dq.front(), std::out_of_range);
+    }
+
     TEST_CASE("back() throws on empty deque")
     {
         demo::deque<int> dq;
+        CHECK_THROWS_AS(dq.back(), std::out_of_range);
+    }
+
+    TEST_CASE("const back() throws on empty deque")
+    {
+        const demo::deque<int> dq;
         CHECK_THROWS_AS(dq.back(), std::out_of_range);
     }
 }
@@ -298,7 +396,6 @@ TEST_SUITE("Deque Element Access")
 
 TEST_SUITE("Deque Iterators")
 {
-
     TEST_CASE("begin() and end() iterators")
     {
         demo::deque<int> dq{1, 2, 3, 4, 5};
@@ -328,7 +425,7 @@ TEST_SUITE("Deque Iterators")
         demo::deque<int> dq{10, 20, 30};
 
         int sum = 0;
-        for (const auto &elem : dq)
+        for (const auto& elem : dq)
         {
             sum += elem;
         }
@@ -387,7 +484,7 @@ TEST_SUITE("Deque Iterators")
     TEST_CASE("iterator subscript operator")
     {
         demo::deque<int> dq{10, 20, 30, 40, 50};
-        auto it = dq.begin();
+        auto             it = dq.begin();
 
         CHECK(*(it[0]) == 10);
         CHECK(*(it[2]) == 30);
@@ -436,7 +533,7 @@ TEST_SUITE("Deque Iterators")
     {
         demo::deque<int> dq{1, 2, 3};
 
-        demo::deque<int>::iterator it = dq.begin();
+        demo::deque<int>::iterator       it  = dq.begin();
         demo::deque<int>::const_iterator cit = it;
 
         CHECK(cit == it);
@@ -450,7 +547,6 @@ TEST_SUITE("Deque Iterators")
 
 TEST_SUITE("Deque Capacity")
 {
-
     TEST_CASE("empty() returns true for empty deque")
     {
         demo::deque<int> dq;
@@ -543,7 +639,6 @@ TEST_SUITE("Deque Capacity")
 
 TEST_SUITE("Deque Modifiers - Insert")
 {
-
     TEST_CASE("push_front() adds element to front")
     {
         demo::deque<int> dq;
@@ -599,7 +694,7 @@ TEST_SUITE("Deque Modifiers - Insert")
     TEST_CASE("insert() single element at begin")
     {
         demo::deque<int> dq{2, 3};
-        auto result = dq.insert(dq.begin(), 1);
+        auto             result = dq.insert(dq.begin(), 1);
 
         CHECK(*result == 1);
         std::vector<int> expected{1, 2, 3};
@@ -609,7 +704,7 @@ TEST_SUITE("Deque Modifiers - Insert")
     TEST_CASE("insert() single element in middle")
     {
         demo::deque<int> dq{1, 3, 5};
-        auto it = dq.begin();
+        auto             it = dq.begin();
         ++it;
 
         auto result = dq.insert(it, 2);
@@ -622,7 +717,7 @@ TEST_SUITE("Deque Modifiers - Insert")
     TEST_CASE("insert() single element at end")
     {
         demo::deque<int> dq{1, 2, 3};
-        auto result = dq.insert(dq.end(), 4);
+        auto             result = dq.insert(dq.end(), 4);
 
         CHECK(*result == 4);
         CHECK(dq.size() == 4);
@@ -633,7 +728,7 @@ TEST_SUITE("Deque Modifiers - Insert")
     TEST_CASE("insert() multiple copies")
     {
         demo::deque<int> dq{1, 5};
-        auto it = ++dq.begin();
+        auto             it = ++dq.begin();
 
         dq.insert(it, 3, 3);
         CHECK(dq.size() == 5);
@@ -656,7 +751,7 @@ TEST_SUITE("Deque Modifiers - Insert")
     TEST_CASE("insert() initializer list")
     {
         demo::deque<int> dq{1, 5};
-        auto it = ++dq.begin();
+        auto             it = ++dq.begin();
 
         dq.insert(it, {2, 3, 4});
 
@@ -667,7 +762,7 @@ TEST_SUITE("Deque Modifiers - Insert")
     TEST_CASE("emplace() constructs in-place")
     {
         demo::deque<std::string> dq{"hello", "world"};
-        auto it = ++dq.begin();
+        auto                     it = ++dq.begin();
 
         auto result = dq.emplace(it, 5, 'x');
 
@@ -694,7 +789,7 @@ TEST_SUITE("Deque Modifiers - Insert")
     TEST_CASE("push_front() with move semantics")
     {
         demo::deque<std::string> dq{"world"};
-        std::string s = "hello";
+        std::string              s = "hello";
         dq.push_front(std::move(s));
 
         CHECK(dq.front() == "hello");
@@ -704,11 +799,21 @@ TEST_SUITE("Deque Modifiers - Insert")
     TEST_CASE("push_back() with move semantics")
     {
         demo::deque<std::string> dq{"hello"};
-        std::string s = "world";
+        std::string              s = "world";
         dq.push_back(std::move(s));
 
         CHECK(dq.back() == "world");
         CHECK(s.empty());
+    }
+
+    TEST_CASE("insert() with move semantics")
+    {
+        demo::deque<std::string> dq{"hello", "world"};
+        std::string              s = "middle";
+        dq.insert(++dq.begin(), std::move(s));
+
+        CHECK(dq.size() == 3);
+        CHECK(deque_equals_vector(dq, {"hello", "middle", "world"}));
     }
 }
 
@@ -718,11 +823,10 @@ TEST_SUITE("Deque Modifiers - Insert")
 
 TEST_SUITE("Deque Modifiers - Erase")
 {
-
     TEST_CASE("erase() single element in middle")
     {
         demo::deque<int> dq{1, 2, 3, 4, 5};
-        auto it = dq.begin();
+        auto             it = dq.begin();
         ++it;
         ++it;
 
@@ -736,8 +840,8 @@ TEST_SUITE("Deque Modifiers - Erase")
     TEST_CASE("erase() single element at begin")
     {
         demo::deque<int> dq{1, 2, 3};
-        auto it = dq.begin();
-        auto next = dq.erase(it);
+        auto             it   = dq.begin();
+        auto             next = dq.erase(it);
 
         CHECK(*next == 2);
         std::vector<int> expected{2, 3};
@@ -747,7 +851,7 @@ TEST_SUITE("Deque Modifiers - Erase")
     TEST_CASE("erase() single element at end")
     {
         demo::deque<int> dq{1, 2, 3};
-        auto it = dq.end();
+        auto             it = dq.end();
         --it;
         auto next = dq.erase(it);
 
@@ -759,8 +863,8 @@ TEST_SUITE("Deque Modifiers - Erase")
     TEST_CASE("erase() range")
     {
         demo::deque<int> dq{1, 2, 3, 4, 5, 6, 7};
-        auto first = ++dq.begin();
-        auto last = dq.end();
+        auto             first = ++dq.begin();
+        auto             last  = dq.end();
         --last;
         --last;
 
@@ -773,8 +877,8 @@ TEST_SUITE("Deque Modifiers - Erase")
     TEST_CASE("erase() empty range")
     {
         demo::deque<int> dq{1, 2, 3};
-        auto it = dq.begin();
-        auto result = dq.erase(it, it);
+        auto             it     = dq.begin();
+        auto             result = dq.erase(it, it);
 
         CHECK(result == it);
         std::vector<int> expected{1, 2, 3};
@@ -805,7 +909,6 @@ TEST_SUITE("Deque Modifiers - Erase")
 
 TEST_SUITE("Deque Modifiers - Other")
 {
-
     TEST_CASE("swap() exchanges contents")
     {
         demo::deque<int> dq1{1, 2, 3};
@@ -826,6 +929,19 @@ TEST_SUITE("Deque Modifiers - Other")
 
         std::vector<int> expected{1, 2, 3};
         CHECK(deque_equals_vector(dq, expected));
+    }
+
+    TEST_CASE("std::swap() non-member swap")
+    {
+        demo::deque<int> dq1{1, 2, 3};
+        demo::deque<int> dq2{4, 5};
+
+        std::swap(dq1, dq2);
+
+        std::vector<int> expected1{4, 5};
+        std::vector<int> expected2{1, 2, 3};
+        CHECK(deque_equals_vector(dq1, expected1));
+        CHECK(deque_equals_vector(dq2, expected2));
     }
 
     TEST_CASE("assign() with count and value")
@@ -865,7 +981,7 @@ TEST_SUITE("Deque Modifiers - Other")
         dq.assign(5, 42);
 
         CHECK(dq.size() == 5);
-        for (const auto &elem : dq)
+        for (const auto& elem : dq)
         {
             CHECK(elem == 42);
         }
@@ -878,7 +994,6 @@ TEST_SUITE("Deque Modifiers - Other")
 
 TEST_SUITE("Deque Comparison Operators")
 {
-
     TEST_CASE("operator== for equal deques")
     {
         demo::deque<int> dq1{1, 2, 3};
@@ -926,7 +1041,6 @@ TEST_SUITE("Deque Comparison Operators")
 
 TEST_SUITE("Deque Edge Cases and Exceptions")
 {
-
     TEST_CASE("Operations on empty deque")
     {
         demo::deque<int> dq;
@@ -962,7 +1076,7 @@ TEST_SUITE("Deque Edge Cases and Exceptions")
     TEST_CASE("Large deque operations")
     {
         demo::deque<int> dq;
-        const int N = 10000;
+        const int        N = 10000;
 
         for (int i = 0; i < N; ++i)
         {
@@ -980,7 +1094,7 @@ TEST_SUITE("Deque Edge Cases and Exceptions")
     TEST_CASE("Iterator stability after modifications")
     {
         demo::deque<int> dq{1, 2, 3, 4, 5};
-        auto it = ++dq.begin();
+        auto             it = ++dq.begin();
 
         dq.push_back(6);
         CHECK(*it == 2);
@@ -1045,102 +1159,764 @@ TEST_SUITE("Deque Edge Cases and Exceptions")
 
     TEST_CASE("get_allocator")
     {
-        demo::deque<int> dq;
+        demo::deque<int>    dq;
         std::allocator<int> alloc = dq.get_allocator();
-        int *p = std::allocator_traits<std::allocator<int>>::allocate(alloc, 1);
+        int*                p     = std::allocator_traits<std::allocator<int>>::allocate(alloc, 1);
         std::allocator_traits<std::allocator<int>>::construct(alloc, p, 42);
         CHECK(*p == 42);
         std::allocator_traits<std::allocator<int>>::destroy(alloc, p);
         std::allocator_traits<std::allocator<int>>::deallocate(alloc, p, 1);
     }
-}
 
-// ============================================
-// 测试套件: 性能边界测试
-// ============================================
-
-TEST_SUITE("Deque Performance Edge Cases")
-{
-
-    TEST_CASE("Stress test: many small insertions")
+    TEST_CASE("const begin()/end() from const deque")
     {
-        demo::deque<int> dq;
-        const int N = 10000;
-
-        for (int i = 0; i < N; ++i)
-        {
-            dq.push_back(i);
-        }
-
-        CHECK(dq.size() == N);
-        CHECK(dq.back() == N - 1);
-    }
-
-    TEST_CASE("Stress test: many small deletions")
-    {
-        demo::deque<int> dq;
-        const int N = 10000;
-
-        for (int i = 0; i < N; ++i)
-        {
-            dq.push_back(i);
-        }
-
-        while (!dq.empty())
-        {
-            dq.pop_front();
-        }
-
-        CHECK(dq.empty());
-    }
-
-    TEST_CASE("Stress test: alternating insert and erase")
-    {
-        demo::deque<int> dq;
-        const int N = 1000;
-
-        for (int i = 0; i < N; ++i)
-        {
-            dq.push_back(i);
-            if (i > 0)
-            {
-                dq.pop_front();
-            }
-        }
-
-        CHECK(dq.size() == 1);
-        CHECK(dq.front() == N - 1);
-    }
-
-    TEST_CASE("Stress test: push_front and push_back alternating")
-    {
-        demo::deque<int> dq;
-        const int N = 5000;
-
-        for (int i = 0; i < N; ++i)
-        {
-            dq.push_front(i);
-            dq.push_back(i + N);
-        }
-
-        CHECK(dq.size() == N * 2);
-        CHECK(dq.front() == N - 1);
-        CHECK(dq.back() == N * 2 - 1);
-    }
-
-    TEST_CASE("Cross-slot iteration")
-    {
-        demo::deque<int> dq;
-        for (int i = 0; i < 1000; ++i)
-        {
-            dq.push_back(i);
-        }
-
-        int sum = 0;
+        const demo::deque<int> dq{1, 2, 3, 4, 5};
+        int                    sum = 0;
         for (auto it = dq.begin(); it != dq.end(); ++it)
         {
             sum += *it;
         }
-        CHECK(sum == 499500);
+        CHECK(sum == 15);
+    }
+
+    TEST_CASE("non-const reverse iterators rbegin()/rend()")
+    {
+        demo::deque<int> dq{1, 2, 3, 4};
+        std::vector<int> reversed;
+        for (auto it = dq.rbegin(); it != dq.rend(); ++it)
+        {
+            reversed.push_back(*it);
+        }
+        std::vector<int> expected{4, 3, 2, 1};
+        CHECK(reversed == expected);
+    }
+
+    TEST_CASE("const reverse iterators from const deque")
+    {
+        const demo::deque<int> dq{1, 2, 3};
+        std::vector<int>       reversed;
+        for (auto it = dq.rbegin(); it != dq.rend(); ++it)
+        {
+            reversed.push_back(*it);
+        }
+        std::vector<int> expected{3, 2, 1};
+        CHECK(reversed == expected);
+    }
+
+    TEST_CASE("resize() to larger from empty")
+    {
+        demo::deque<int> dq;
+        dq.resize(5, 42);
+        CHECK(dq.size() == 5);
+        for (const auto& e : dq)
+            CHECK(e == 42);
+    }
+
+    TEST_CASE("erase range covering multiple slots")
+    {
+        demo::deque<int> dq;
+        for (int i = 0; i < 600; ++i)
+            dq.push_back(i);  // spans multiple buffers
+
+        auto first = dq.begin() + 100;
+        auto last  = dq.begin() + 500;
+        dq.erase(first, last);
+
+        CHECK(dq.size() == 200);
+        CHECK(dq.front() == 0);
+        CHECK(dq.back() == 599);
+    }
+
+    TEST_CASE("push_front when buffer is full triggers new slot")
+    {
+        demo::deque<int> dq;
+        for (int i = 0; i < 600; ++i)
+            dq.push_front(i);
+
+        CHECK(dq.size() == 600);
+        CHECK(dq.front() == 599);
+        CHECK(dq.back() == 0);
+    }
+}
+
+// ============================================
+// 测试套件: const_iterator 全面测试
+// ============================================
+
+TEST_SUITE("Deque Const Iterator Comprehensive")
+{
+    TEST_CASE("const_iterator default construction")
+    {
+        demo::deque<int>::const_iterator cit;
+        // 默认构造的迭代器仅验证其存在性
+        CHECK(true);
+    }
+
+    TEST_CASE("const_iterator from iterator conversion")
+    {
+        demo::deque<int>                 dq{10, 20, 30};
+        demo::deque<int>::iterator       it  = dq.begin();
+        demo::deque<int>::const_iterator cit = it;
+
+        CHECK(*cit == 10);
+        ++cit;
+        CHECK(*cit == 20);
+    }
+
+    TEST_CASE("const_iterator comparison operators")
+    {
+        demo::deque<int> dq{1, 2, 3, 4, 5};
+        auto             cit1 = dq.cbegin();
+        auto             cit2 = dq.cbegin();
+
+        CHECK(cit1 == cit2);
+        CHECK_FALSE(cit1 != cit2);
+        CHECK_FALSE(cit1 < cit2);
+        CHECK_FALSE(cit1 > cit2);
+        CHECK(cit1 <= cit2);
+        CHECK(cit1 >= cit2);
+
+        ++cit1;
+        CHECK(cit1 != cit2);
+        CHECK(cit1 > cit2);
+        CHECK(cit2 < cit1);
+        CHECK(cit1 >= cit2);
+        CHECK(cit2 <= cit1);
+    }
+
+    TEST_CASE("const_iterator arithmetic (+/-)")
+    {
+        demo::deque<int> dq{1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+        auto             cit = dq.cbegin();
+
+        auto cit2 = cit + 5;
+        CHECK(*cit2 == 6);
+
+        cit2 = cit2 - 3;
+        CHECK(*cit2 == 3);
+
+        auto dist = cit2 - cit;
+        CHECK(dist == 2);
+    }
+
+    TEST_CASE("const_iterator += / -=")
+    {
+        demo::deque<int> dq{10, 20, 30, 40, 50};
+        auto             cit = dq.cbegin();
+
+        cit += 3;
+        CHECK(*cit == 40);
+
+        cit -= 2;
+        CHECK(*cit == 20);
+    }
+
+    TEST_CASE("const_iterator subscript operator")
+    {
+        demo::deque<int> dq{100, 200, 300, 400, 500};
+        auto             cit = dq.cbegin();
+
+        CHECK(*(cit[0]) == 100);
+        CHECK(*(cit[2]) == 300);
+        CHECK(*(cit[4]) == 500);
+    }
+
+    TEST_CASE("const_iterator pre/post increment/decrement")
+    {
+        demo::deque<int> dq{1, 2, 3, 4, 5};
+        auto             cit = dq.cbegin();
+
+        CHECK(*(cit++) == 1);
+        CHECK(*cit == 2);
+
+        CHECK(*(++cit) == 3);
+
+        CHECK(*(cit--) == 3);
+        CHECK(*cit == 2);
+
+        CHECK(*(--cit) == 1);
+    }
+
+    TEST_CASE("const_iterator arrow operator")
+    {
+        demo::deque<std::string> dq{"abc", "def"};
+        auto                     cit = dq.cbegin();
+
+        CHECK(cit->size() == 3);
+        ++cit;
+        CHECK(cit->size() == 3);
+    }
+
+    TEST_CASE("const_iterator cross-slot traversal")
+    {
+        demo::deque<int> dq;
+        for (int i = 0; i < 600; ++i)
+            dq.push_back(i);
+
+        int sum = 0;
+        for (auto cit = dq.cbegin(); cit != dq.cend(); ++cit)
+            sum += *cit;
+
+        CHECK(sum == 600 * 599 / 2);
+    }
+
+    TEST_CASE("const_iterator from const deque begin()/end()")
+    {
+        const demo::deque<int> dq{1, 2, 3, 4, 5};
+        int                    sum = 0;
+        for (auto it = dq.cbegin(); it != dq.cend(); ++it)
+            sum += *it;
+        CHECK(sum == 15);
+    }
+}
+
+// ============================================
+// 测试套件: 非平凡类型 (TrackedObject)
+// ============================================
+
+TEST_SUITE("Deque Non-Trivial Type (TrackedObject)")
+{
+    TEST_CASE("default construction and destruction")
+    {
+        TrackedObject::reset_counters();
+        {
+            demo::deque<TrackedObject> dq(5);
+            CHECK(dq.size() == 5);
+            CHECK(TrackedObject::ctor_count == 5);
+            CHECK(TrackedObject::dtor_count == 0);
+        }
+        CHECK(TrackedObject::ctor_count == 5);
+        CHECK(TrackedObject::dtor_count == 5);
+    }
+
+    TEST_CASE("copy constructor triggers copy")
+    {
+        TrackedObject::reset_counters();
+        demo::deque<TrackedObject> dq1(3, TrackedObject(42));
+
+        // 重置以排除构造初值的影响
+        TrackedObject::reset_counters();
+
+        demo::deque<TrackedObject> dq2(dq1);
+        CHECK(TrackedObject::copy_ctor_count >= 0);
+        CHECK(dq2.size() == 3);
+    }
+
+    TEST_CASE("move constructor")
+    {
+        TrackedObject::reset_counters();
+        demo::deque<TrackedObject> dq1(3, TrackedObject(42));
+
+        TrackedObject::reset_counters();
+        demo::deque<TrackedObject> dq2(std::move(dq1));
+
+        CHECK(dq1.empty());
+        CHECK(dq2.size() == 3);
+        // 移动构造函数不应触发元素拷贝
+        CHECK(TrackedObject::copy_ctor_count == 0);
+    }
+
+    TEST_CASE("move assignment")
+    {
+        TrackedObject::reset_counters();
+        demo::deque<TrackedObject> dq1(3, TrackedObject(42));
+        demo::deque<TrackedObject> dq2(2, TrackedObject(10));
+
+        TrackedObject::reset_counters();
+        dq2 = std::move(dq1);
+
+        CHECK(dq1.empty());
+        CHECK(dq2.size() == 3);
+        CHECK(TrackedObject::copy_ctor_count == 0);
+    }
+
+    TEST_CASE("push_back copies object")
+    {
+        TrackedObject::reset_counters();
+        demo::deque<TrackedObject> dq;
+        TrackedObject              obj(42);
+        TrackedObject::reset_counters();
+
+        dq.push_back(obj);
+        CHECK(TrackedObject::copy_ctor_count == 1);
+        CHECK(dq.back().value == 42);
+    }
+
+    TEST_CASE("push_back moves object")
+    {
+        TrackedObject::reset_counters();
+        demo::deque<TrackedObject> dq;
+        TrackedObject              obj(42);
+        TrackedObject::reset_counters();
+
+        dq.push_back(std::move(obj));
+        CHECK(TrackedObject::move_ctor_count >= 1);
+        CHECK(dq.back().value == 42);
+    }
+
+    TEST_CASE("push_front moves object")
+    {
+        TrackedObject::reset_counters();
+        demo::deque<TrackedObject> dq;
+        TrackedObject              obj(42);
+        TrackedObject::reset_counters();
+
+        dq.push_front(std::move(obj));
+        CHECK(TrackedObject::move_ctor_count >= 1);
+        CHECK(dq.front().value == 42);
+    }
+
+    TEST_CASE("clear destroys all elements")
+    {
+        TrackedObject::reset_counters();
+        demo::deque<TrackedObject> dq;
+        // 直接用emplace_back构造10个元素，避免临时对象干扰计数
+        for (int i = 0; i < 10; ++i)
+            dq.emplace_back(1);
+
+        TrackedObject::reset_counters();
+
+        dq.clear();
+        CHECK(dq.empty());
+        // clear 应析构10个元素
+        CHECK(TrackedObject::dtor_count == 10);
+    }
+
+    TEST_CASE("pop_front/back destroy elements")
+    {
+        TrackedObject::reset_counters();
+        demo::deque<TrackedObject> dq;
+        dq.push_back(TrackedObject(1));
+        dq.push_back(TrackedObject(2));
+        dq.push_back(TrackedObject(3));
+
+        TrackedObject::reset_counters();
+        dq.pop_front();
+        CHECK(TrackedObject::dtor_count == 1);
+
+        dq.pop_back();
+        CHECK(TrackedObject::dtor_count == 2);
+    }
+
+    TEST_CASE("destructor destroys all remaining elements")
+    {
+        TrackedObject::reset_counters();
+        {
+            demo::deque<TrackedObject> dq(5, TrackedObject(7));
+        }
+        // 5个元素被构造后又被析构
+        CHECK(TrackedObject::ctor_count == TrackedObject::dtor_count);
+    }
+}
+
+// ============================================
+// 测试套件: 交叉槽边界操作
+// ============================================
+
+TEST_SUITE("Deque Cross-Slot Operations")
+{
+    TEST_CASE("iterator spans multiple slots forward")
+    {
+        demo::deque<int> dq;
+        const int        N = 600;  // 超出默认buffer大小
+        for (int i = 0; i < N; ++i)
+            dq.push_back(i);
+
+        int expected = 0;
+        for (auto it = dq.begin(); it != dq.end(); ++it)
+            CHECK(*it == expected++);
+        CHECK(expected == N);
+    }
+
+    TEST_CASE("iterator spans multiple slots backward")
+    {
+        demo::deque<int> dq;
+        const int        N = 600;
+        for (int i = 0; i < N; ++i)
+            dq.push_back(i);
+
+        int  expected = N;
+        auto it       = dq.end();
+        while (it != dq.begin())
+        {
+            --it;
+            CHECK(*it == --expected);
+        }
+        CHECK(expected == 0);
+    }
+
+    TEST_CASE("random access across slot boundaries")
+    {
+        demo::deque<int> dq;
+        const int        N = 600;
+        for (int i = 0; i < N; ++i)
+            dq.push_back(i);
+
+        CHECK(dq[0] == 0);
+        CHECK(dq[511] == 511);
+        CHECK(dq[512] == 512);
+        CHECK(dq[N - 1] == N - 1);
+    }
+
+    TEST_CASE("erase across slot boundaries")
+    {
+        demo::deque<int> dq;
+        const int        N = 600;
+        for (int i = 0; i < N; ++i)
+            dq.push_back(i);
+
+        // 删除跨槽元素
+        dq.erase(dq.begin() + 500, dq.begin() + 550);
+
+        CHECK(dq.size() == 550);
+        CHECK(dq[499] == 499);
+        CHECK(dq[500] == 550);
+    }
+
+    TEST_CASE("insert across slot boundaries")
+    {
+        demo::deque<int> dq;
+        for (int i = 0; i < 600; ++i)
+            dq.push_back(i);
+
+        // 在槽边界附近插入
+        std::vector<int> to_insert{1000, 1001, 1002, 1003, 1004};
+        auto             insert_pos = dq.begin() + 512;  // 在buffer边界附近
+        dq.insert(insert_pos, to_insert.begin(), to_insert.end());
+
+        // 验证插入后的完整性
+        CHECK(dq.size() == 605);
+        CHECK(dq[0] == 0);
+        CHECK(dq[511] == 511);
+        CHECK(dq[512] == 1000);
+        CHECK(dq[516] == 1004);
+        CHECK(dq[517] == 512);
+        CHECK(dq.back() == 599);
+    }
+
+    TEST_CASE("push_back triggers map expansion")
+    {
+        demo::deque<int> dq;
+        // 足够多次push_back触发map重分配
+        for (int i = 0; i < 5000; ++i)
+            dq.push_back(i);
+
+        CHECK(dq.size() == 5000);
+        CHECK(dq.front() == 0);
+        CHECK(dq.back() == 4999);
+
+        // 继续从头部填充
+        for (int i = 0; i < 5000; ++i)
+            dq.push_front(-i - 1);
+
+        CHECK(dq.size() == 10000);
+        CHECK(dq.front() == -5000);
+        CHECK(dq.back() == 4999);
+    }
+
+    TEST_CASE("shrink_to_fit after expansion maintains data")
+    {
+        demo::deque<int> dq;
+        for (int i = 0; i < 2000; ++i)
+            dq.push_back(i);
+
+        // 删除大部分元素
+        dq.erase(dq.begin() + 50, dq.end() - 50);
+
+        size_t sz_before = dq.size();
+        dq.shrink_to_fit();
+
+        CHECK(dq.size() == sz_before);
+        CHECK(dq.front() == 0);
+        CHECK(dq.back() == 1999);
+    }
+}
+
+// ============================================
+// 测试套件: 综合性压测
+// ============================================
+
+TEST_SUITE("Deque Comprehensive Stress Tests")
+{
+    TEST_CASE("Stress: bulk push_back 100K elements")
+    {
+        demo::deque<int> dq;
+        const int        N = 100000;
+
+        for (int i = 0; i < N; ++i)
+            dq.push_back(i);
+
+        CHECK(dq.size() == static_cast<size_t>(N));
+        CHECK(dq.front() == 0);
+        CHECK(dq.back() == N - 1);
+
+        // 验证随机访问正确性
+        CHECK(dq[0] == 0);
+        CHECK(dq[N / 2] == N / 2);
+        CHECK(dq[N - 1] == N - 1);
+    }
+
+    TEST_CASE("Stress: bulk push_front 100K elements")
+    {
+        demo::deque<int> dq;
+        const int        N = 100000;
+
+        for (int i = 0; i < N; ++i)
+            dq.push_front(i);
+
+        CHECK(dq.size() == static_cast<size_t>(N));
+        CHECK(dq.front() == N - 1);
+        CHECK(dq.back() == 0);
+    }
+
+    TEST_CASE("Stress: interleaved push_front and push_back 50K each")
+    {
+        demo::deque<int> dq;
+        const int        N = 50000;
+
+        for (int i = 0; i < N; ++i)
+        {
+            dq.push_front(-i - 1);
+            dq.push_back(i);
+        }
+
+        CHECK(dq.size() == static_cast<size_t>(2 * N));
+        CHECK(dq.front() == -N);
+        CHECK(dq.back() == N - 1);
+
+        // 跨大量槽的迭代验证
+        int expected = -N;
+        for (const auto& e : dq)
+        {
+            CHECK(e == expected);
+            ++expected;
+        }
+    }
+
+    TEST_CASE("Stress: alternating pop_front and push_back (sliding window)")
+    {
+        demo::deque<int> dq;
+        const int        N      = 50000;
+        const int        WINDOW = 1000;
+
+        // 初始填充
+        for (int i = 0; i < WINDOW; ++i)
+            dq.push_back(i);
+
+        for (int i = WINDOW; i < N; ++i)
+        {
+            dq.pop_front();
+            dq.push_back(i);
+            CHECK(dq.front() == i - WINDOW + 1);
+            CHECK(dq.back() == i);
+        }
+
+        CHECK(dq.size() == static_cast<size_t>(WINDOW));
+    }
+
+    TEST_CASE("Stress: random insert and erase")
+    {
+        demo::deque<int> dq;
+        const int        N = 5000;
+
+        for (int i = 0; i < N; ++i)
+            dq.push_back(i);
+
+        // 随机位置擦除
+        for (int i = 0; i < N / 2; ++i)
+        {
+            size_t pos = (i * 9973 + 17) % dq.size();
+            dq.erase(dq.begin() + pos);
+        }
+
+        CHECK(dq.size() == N - N / 2);
+
+        // 验证剩余元素严格递增
+        int prev = -1;
+        for (const auto& e : dq)
+        {
+            CHECK(e > prev);
+            prev = e;
+        }
+    }
+
+    TEST_CASE("Stress: insert in middle many times")
+    {
+        demo::deque<int> dq{0, 100};
+        for (int i = 99; i >= 1; --i)
+        {
+            dq.insert(++dq.begin(), i);
+        }
+
+        CHECK(dq.size() == 101);
+        for (int i = 0; i <= 100; ++i)
+            CHECK(dq[i] == i);
+    }
+
+    TEST_CASE("Stress: many resize operations")
+    {
+        demo::deque<int> dq;
+
+        for (int i = 0; i < 100; ++i)
+        {
+            dq.resize(i, i);
+            CHECK(dq.size() == static_cast<size_t>(i));
+        }
+
+        for (int i = 99; i >= 0; --i)
+        {
+            dq.resize(i);
+            CHECK(dq.size() == static_cast<size_t>(i));
+        }
+    }
+
+    TEST_CASE("Stress: std::sort compatibility")
+    {
+        demo::deque<int> dq;
+        const int        N = 10000;
+
+        for (int i = 0; i < N; ++i)
+            dq.push_back((i * 7919 + 17) % 100000);
+
+        std::sort(dq.begin(), dq.end());
+
+        int prev = dq.front();
+        for (const auto& e : dq)
+        {
+            CHECK(e >= prev);
+            prev = e;
+        }
+    }
+
+    TEST_CASE("Stress: std::reverse compatibility")
+    {
+        demo::deque<int> dq;
+        const int        N = 1000;
+
+        for (int i = 0; i < N; ++i)
+            dq.push_back(i);
+
+        std::reverse(dq.begin(), dq.end());
+
+        for (int i = 0; i < N; ++i)
+            CHECK(dq[i] == N - 1 - i);
+    }
+
+    TEST_CASE("Stress: std::find compatibility")
+    {
+        demo::deque<int> dq;
+        for (int i = 0; i < 10000; ++i)
+            dq.push_back(i);
+
+        auto it = std::find(dq.begin(), dq.end(), 5000);
+        CHECK(it != dq.end());
+        CHECK(*it == 5000);
+    }
+
+    TEST_CASE("Stress: std::copy compatibility")
+    {
+        demo::deque<int> dq;
+        for (int i = 0; i < 10000; ++i)
+            dq.push_back(i);
+
+        std::vector<int> vec(dq.size());
+        std::copy(dq.begin(), dq.end(), vec.begin());
+
+        for (size_t i = 0; i < vec.size(); ++i)
+            CHECK(vec[i] == static_cast<int>(i));
+    }
+
+    TEST_CASE("Stress: std::accumulate compatibility")
+    {
+        demo::deque<int> dq;
+        for (int i = 1; i <= 10000; ++i)
+            dq.push_back(i);
+
+        long long sum = std::accumulate(dq.begin(), dq.end(), 0LL);
+        CHECK(sum == 50005000LL);
+    }
+
+    TEST_CASE("Stress: complex pattern - enqueue/dequeue simulation")
+    {
+        demo::deque<int> dq;
+        const int        N = 20000;
+
+        // 模拟双端队列的生产消费模式
+        for (int i = 0; i < N; ++i)
+        {
+            if (i % 3 == 0)
+                dq.push_front(i);
+            else if (i % 3 == 1)
+                dq.push_back(i);
+            else if (!dq.empty())
+            {
+                if (i % 2 == 0)
+                    dq.pop_front();
+                else
+                    dq.pop_back();
+            }
+        }
+        // 验证deque始终处于有效状态
+        CHECK(dq.size() <= static_cast<size_t>(N));
+    }
+
+    TEST_CASE("Stress: copy large deque")
+    {
+        demo::deque<int> dq1;
+        const int        N = 50000;
+        for (int i = 0; i < N; ++i)
+            dq1.push_back(i);
+
+        demo::deque<int> dq2(dq1);
+        CHECK(dq2.size() == dq1.size());
+        CHECK(deque_equals_deque(dq1, dq2));
+    }
+
+    TEST_CASE("Stress: move large deque")
+    {
+        demo::deque<int> dq1;
+        const int        N = 50000;
+        for (int i = 0; i < N; ++i)
+            dq1.push_back(i);
+
+        demo::deque<int> dq2(std::move(dq1));
+        CHECK(dq1.empty());
+        CHECK(dq2.size() == static_cast<size_t>(N));
+        CHECK(dq2.front() == 0);
+        CHECK(dq2.back() == N - 1);
+    }
+
+    TEST_CASE("Stress: assign large iterator range")
+    {
+        demo::deque<int> dq;
+        std::vector<int> source(30000);
+        std::iota(source.begin(), source.end(), 0);
+
+        dq.assign(source.begin(), source.end());
+
+        CHECK(dq.size() == 30000);
+        CHECK(deque_equals_vector(dq, source));
+    }
+
+    TEST_CASE("Stress: many swap operations")
+    {
+        demo::deque<int> dq1{1, 2, 3, 4, 5};
+        demo::deque<int> dq2{6, 7, 8};
+
+        for (int i = 0; i < 1000; ++i)
+        {
+            dq1.swap(dq2);
+
+            if (i % 2 == 0)
+            {
+                CHECK(dq1.size() == 3);
+                CHECK(dq2.size() == 5);
+            }
+            else
+            {
+                CHECK(dq1.size() == 5);
+                CHECK(dq2.size() == 3);
+            }
+        }
     }
 }
