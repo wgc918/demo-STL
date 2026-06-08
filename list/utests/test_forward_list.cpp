@@ -15,14 +15,13 @@
  */
 
 #define DOCTEST_CONFIG_NO_MULTITHREADING
-#include "doctest.h"
-
+#include <functional>
+#include <stdexcept>
 #include <string>
 #include <vector>
-#include <stdexcept>
-#include <functional>
-#include <algorithm>
+
 #include "../forward_list.h"
+#include "doctest.h"
 
 // ============================================
 // 测试辅助工具
@@ -32,10 +31,10 @@
  * @brief 将demo::forward_list转换为std::vector便于比较
  */
 template <typename T>
-std::vector<T> list_to_vector(const demo::forward_list<T> &lst)
+std::vector<T> list_to_vector(const demo::forward_list<T>& lst)
 {
     std::vector<T> result;
-    for (const auto &elem : lst)
+    for (const auto& elem : lst)
     {
         result.push_back(elem);
     }
@@ -46,10 +45,10 @@ std::vector<T> list_to_vector(const demo::forward_list<T> &lst)
  * @brief 比较demo::forward_list与std::vector内容是否一致
  */
 template <typename T>
-bool list_equals_vector(const demo::forward_list<T> &lst, const std::vector<T> &vec)
+bool list_equals_vector(const demo::forward_list<T>& lst, const std::vector<T>& vec)
 {
     auto vec_it = vec.begin();
-    for (const auto &elem : lst)
+    for (const auto& elem : lst)
     {
         if (vec_it == vec.end() || elem != *vec_it)
             return false;
@@ -62,7 +61,7 @@ bool list_equals_vector(const demo::forward_list<T> &lst, const std::vector<T> &
  * @brief 比较两个forward_list内容是否一致
  */
 template <typename T>
-bool list_equals_list(const demo::forward_list<T> &a, const demo::forward_list<T> &b)
+bool list_equals_list(const demo::forward_list<T>& a, const demo::forward_list<T>& b)
 {
     auto it_a = a.begin();
     auto it_b = b.begin();
@@ -78,10 +77,10 @@ bool list_equals_list(const demo::forward_list<T> &a, const demo::forward_list<T
  * @brief 获取forward_list的元素数量
  */
 template <typename T>
-size_t get_list_size(const demo::forward_list<T> &lst)
+size_t get_list_size(const demo::forward_list<T>& lst)
 {
     size_t size = 0;
-    for (const auto &elem : lst)
+    for (const auto& elem : lst)
     {
         (void)elem;
         ++size;
@@ -108,7 +107,7 @@ TEST_SUITE("ForwardList Constructors")
         CHECK_FALSE(lst.empty());
         CHECK(get_list_size(lst) == 5);
 
-        for (const auto &elem : lst)
+        for (const auto& elem : lst)
         {
             CHECK(elem == int());
         }
@@ -134,7 +133,7 @@ TEST_SUITE("ForwardList Constructors")
 
     TEST_CASE("Iterator range constructor")
     {
-        std::vector<int> source{10, 20, 30, 40};
+        std::vector<int>        source{10, 20, 30, 40};
         demo::forward_list<int> lst(source.begin(), source.end());
 
         CHECK(get_list_size(lst) == 4);
@@ -165,6 +164,27 @@ TEST_SUITE("ForwardList Constructors")
 
         std::vector<int> expected{1, 2, 3, 4, 5};
         CHECK(list_equals_vector(moved, expected));
+    }
+
+    TEST_CASE("Size constructor with zero count")
+    {
+        demo::forward_list<int> lst(0);
+        CHECK(lst.empty());
+        CHECK(get_list_size(lst) == 0);
+    }
+
+    TEST_CASE("Empty initializer list constructor")
+    {
+        demo::forward_list<int> lst{};
+        CHECK(lst.empty());
+        CHECK(get_list_size(lst) == 0);
+    }
+
+    TEST_CASE("Iterator range constructor from empty range")
+    {
+        std::vector<int>        source;
+        demo::forward_list<int> lst(source.begin(), source.end());
+        CHECK(lst.empty());
     }
 }
 
@@ -212,6 +232,31 @@ TEST_SUITE("ForwardList Assignment Operators")
         CHECK(get_list_size(lst) == 3);
         std::vector<int> expected{100, 200, 300};
         CHECK(list_equals_vector(lst, expected));
+    }
+
+    TEST_CASE("Copy assignment to non-empty list")
+    {
+        demo::forward_list<int> lst1{1, 2, 3, 4};
+        demo::forward_list<int> lst2{10, 20};
+        lst2 = lst1;
+
+        CHECK(get_list_size(lst2) == 4);
+        CHECK(list_equals_list(lst1, lst2));
+    }
+
+    TEST_CASE("Move assignment to non-empty list")
+    {
+        demo::forward_list<int> lst1{1, 2, 3};
+        demo::forward_list<int> lst2{4, 5, 6};
+        auto                    old_size = get_list_size(lst2);
+        (void)old_size;
+
+        lst2 = std::move(lst1);
+
+        CHECK(get_list_size(lst2) == 3);
+        CHECK(lst1.empty());
+        std::vector<int> expected{1, 2, 3};
+        CHECK(list_equals_vector(lst2, expected));
     }
 }
 
@@ -272,7 +317,7 @@ TEST_SUITE("ForwardList Iterators")
         demo::forward_list<int> lst{10, 20, 30};
 
         int sum = 0;
-        for (const auto &elem : lst)
+        for (const auto& elem : lst)
         {
             sum += elem;
         }
@@ -284,7 +329,7 @@ TEST_SUITE("ForwardList Iterators")
         demo::forward_list<int> lst{1, 2, 3};
 
         auto it = lst.before_begin();
-        ++it; // 移动到第一个元素
+        ++it;  // 移动到第一个元素
         CHECK(*it == 1);
     }
 
@@ -331,11 +376,42 @@ TEST_SUITE("ForwardList Iterators")
     {
         demo::forward_list<int> lst{1, 2, 3};
 
-        demo::forward_list<int>::iterator it = lst.begin();
+        demo::forward_list<int>::iterator       it  = lst.begin();
         demo::forward_list<int>::const_iterator cit = it;
 
         CHECK(cit == it);
         CHECK(*cit == *it);
+    }
+
+    TEST_CASE("iterator operator->")
+    {
+        demo::forward_list<std::string> lst{"hello", "world"};
+        auto                            it = lst.begin();
+        CHECK(it->size() == 5);
+    }
+
+    TEST_CASE("traverse from cbegin() to cend()")
+    {
+        const demo::forward_list<int> lst{1, 2, 3, 4, 5};
+        int                           sum = 0;
+        for (auto it = lst.cbegin(); it != lst.cend(); ++it)
+        {
+            sum += *it;
+        }
+        CHECK(sum == 15);
+    }
+
+    TEST_CASE("const_iterator matches iterator position")
+    {
+        demo::forward_list<int>                 lst{1, 2, 3};
+        demo::forward_list<int>::iterator       it  = lst.begin();
+        demo::forward_list<int>::const_iterator cit = lst.cbegin();
+
+        CHECK(*it == *cit);
+
+        ++it;
+        ++cit;
+        CHECK(*it == *cit);
     }
 }
 
@@ -406,6 +482,16 @@ TEST_SUITE("ForwardList Capacity")
         CHECK(lst.empty());
         CHECK(get_list_size(lst) == 0);
     }
+
+    TEST_CASE("resize() from empty list")
+    {
+        demo::forward_list<int> lst;
+        lst.resize(5, 42);
+
+        CHECK(get_list_size(lst) == 5);
+        std::vector<int> expected{42, 42, 42, 42, 42};
+        CHECK(list_equals_vector(lst, expected));
+    }
 }
 
 // ============================================
@@ -443,8 +529,8 @@ TEST_SUITE("ForwardList Modifiers - Insert")
     TEST_CASE("insert_after() single element")
     {
         demo::forward_list<int> lst{1, 3, 4};
-        auto it = lst.begin();
-        auto result = lst.insert_after(it, 2);
+        auto                    it     = lst.begin();
+        auto                    result = lst.insert_after(it, 2);
 
         CHECK(*result == 2);
         std::vector<int> expected{1, 2, 3, 4};
@@ -463,7 +549,7 @@ TEST_SUITE("ForwardList Modifiers - Insert")
     TEST_CASE("insert_after() multiple copies")
     {
         demo::forward_list<int> lst{1, 5};
-        auto it = lst.begin();
+        auto                    it = lst.begin();
 
         lst.insert_after(it, 3, 2);
         CHECK(get_list_size(lst) == 5);
@@ -474,7 +560,7 @@ TEST_SUITE("ForwardList Modifiers - Insert")
     TEST_CASE("insert_after() iterator range")
     {
         demo::forward_list<int> lst{1, 6};
-        std::vector<int> to_insert{2, 3, 4, 5};
+        std::vector<int>        to_insert{2, 3, 4, 5};
 
         auto it = lst.begin();
         lst.insert_after(it, to_insert.begin(), to_insert.end());
@@ -486,7 +572,7 @@ TEST_SUITE("ForwardList Modifiers - Insert")
     TEST_CASE("insert_after() initializer list")
     {
         demo::forward_list<int> lst{1, 6};
-        auto it = lst.begin();
+        auto                    it = lst.begin();
 
         lst.insert_after(it, {2, 3, 4, 5});
 
@@ -497,7 +583,7 @@ TEST_SUITE("ForwardList Modifiers - Insert")
     TEST_CASE("emplace_after() constructs in-place")
     {
         demo::forward_list<std::string> lst{"hello", "world"};
-        auto it = lst.begin();
+        auto                            it = lst.begin();
 
         auto result = lst.emplace_after(it, 5, 'x');
 
@@ -512,6 +598,48 @@ TEST_SUITE("ForwardList Modifiers - Insert")
 
         CHECK(lst.front() == "aaa");
     }
+
+    TEST_CASE("insert_after() with count zero")
+    {
+        demo::forward_list<int> lst{1, 2, 3};
+        auto                    it     = lst.begin();
+        auto                    result = lst.insert_after(it, 0, 99);
+
+        CHECK(*result == *it);
+        std::vector<int> expected{1, 2, 3};
+        CHECK(list_equals_vector(lst, expected));
+    }
+
+    TEST_CASE("insert_after() rvalue")
+    {
+        demo::forward_list<int> lst{1, 3};
+        auto                    it = lst.begin();
+
+        int val = 2;
+        lst.insert_after(it, std::move(val));
+
+        std::vector<int> expected{1, 2, 3};
+        CHECK(list_equals_vector(lst, expected));
+    }
+
+    TEST_CASE("push_front() rvalue")
+    {
+        demo::forward_list<std::string> lst;
+        std::string                     s = "hello";
+        lst.push_front(std::move(s));
+
+        CHECK(lst.front() == "hello");
+    }
+
+    TEST_CASE("emplace_after() at before_begin")
+    {
+        demo::forward_list<int> lst{2, 3, 4};
+        auto                    result = lst.emplace_after(lst.before_begin(), 1);
+
+        CHECK(*result == 1);
+        std::vector<int> expected{1, 2, 3, 4};
+        CHECK(list_equals_vector(lst, expected));
+    }
 }
 
 // ============================================
@@ -523,8 +651,8 @@ TEST_SUITE("ForwardList Modifiers - Erase")
     TEST_CASE("erase_after() single element")
     {
         demo::forward_list<int> lst{1, 2, 3, 4};
-        auto it = lst.begin();
-        auto result = lst.erase_after(it);
+        auto                    it     = lst.begin();
+        auto                    result = lst.erase_after(it);
 
         CHECK(*result == 3);
         std::vector<int> expected{1, 3, 4};
@@ -534,11 +662,11 @@ TEST_SUITE("ForwardList Modifiers - Erase")
     TEST_CASE("erase_after() range")
     {
         demo::forward_list<int> lst{1, 2, 3, 4, 5};
-        auto first = lst.begin();
-        auto last = lst.begin();
+        auto                    first = lst.begin();
+        auto                    last  = lst.begin();
         ++last;
         ++last;
-        ++last; // last 指向 4
+        ++last;  // last 指向 4
 
         lst.erase_after(first, last);
 
@@ -549,7 +677,7 @@ TEST_SUITE("ForwardList Modifiers - Erase")
     TEST_CASE("erase_after() on empty list")
     {
         demo::forward_list<int> lst;
-        auto result = lst.erase_after(lst.before_begin());
+        auto                    result = lst.erase_after(lst.before_begin());
         CHECK(result == lst.end());
         CHECK(lst.empty());
     }
@@ -566,8 +694,20 @@ TEST_SUITE("ForwardList Modifiers - Erase")
     TEST_CASE("clear() on empty list")
     {
         demo::forward_list<int> lst;
-        lst.clear(); // 不应抛出异常
+        lst.clear();  // 不应抛出异常
         CHECK(lst.empty());
+    }
+
+    TEST_CASE("erase_after() last element")
+    {
+        demo::forward_list<int> lst{1, 2, 3};
+        auto                    it = lst.begin();
+        ++it;  // 指向 2，要删除 3
+        auto result = lst.erase_after(it);
+
+        CHECK(result == lst.end());
+        std::vector<int> expected{1, 2};
+        CHECK(list_equals_vector(lst, expected));
     }
 }
 
@@ -589,7 +729,7 @@ TEST_SUITE("ForwardList Modifiers - Other")
     TEST_CASE("assign() with iterator range")
     {
         demo::forward_list<int> lst{1, 2, 3};
-        std::vector<int> src{4, 5, 6, 7};
+        std::vector<int>        src{4, 5, 6, 7};
         lst.assign(src.begin(), src.end());
 
         CHECK(list_equals_vector(lst, src));
@@ -615,6 +755,42 @@ TEST_SUITE("ForwardList Modifiers - Other")
         std::vector<int> expected2{1, 2, 3};
         CHECK(list_equals_vector(lst1, expected1));
         CHECK(list_equals_vector(lst2, expected2));
+    }
+
+    TEST_CASE("swap() with self")
+    {
+        demo::forward_list<int> lst{1, 2, 3};
+        lst.swap(lst);
+
+        std::vector<int> expected{1, 2, 3};
+        CHECK(list_equals_vector(lst, expected));
+    }
+
+    TEST_CASE("swap() with empty list")
+    {
+        demo::forward_list<int> lst1{1, 2, 3};
+        demo::forward_list<int> lst2;
+
+        lst1.swap(lst2);
+        CHECK(lst1.empty());
+        CHECK(get_list_size(lst2) == 3);
+        std::vector<int> expected{1, 2, 3};
+        CHECK(list_equals_vector(lst2, expected));
+    }
+
+    TEST_CASE("assign() zero count")
+    {
+        demo::forward_list<int> lst{1, 2, 3};
+        lst.assign(0, 99);
+        CHECK(lst.empty());
+    }
+
+    TEST_CASE("assign() from empty range")
+    {
+        demo::forward_list<int> lst{1, 2, 3};
+        std::vector<int>        empty;
+        lst.assign(empty.begin(), empty.end());
+        CHECK(lst.empty());
     }
 }
 
@@ -737,7 +913,7 @@ TEST_SUITE("ForwardList Operations")
     {
         demo::forward_list<int> lst1{1, 3, 4};
         demo::forward_list<int> lst2{2};
-        auto it = lst1.begin();
+        auto                    it = lst1.begin();
         lst1.splice_after(it, lst2, lst2.before_begin());
 
         std::vector<int> expected{1, 2, 3, 4};
@@ -758,7 +934,7 @@ TEST_SUITE("ForwardList Operations")
     TEST_CASE("remove() removes matching elements")
     {
         demo::forward_list<int> lst{1, 2, 3, 2, 4, 2};
-        size_t removed = lst.remove(2);
+        size_t                  removed = lst.remove(2);
 
         std::vector<int> expected{1, 3, 4};
         CHECK(list_equals_vector(lst, expected));
@@ -768,7 +944,7 @@ TEST_SUITE("ForwardList Operations")
     TEST_CASE("remove() no matching elements")
     {
         demo::forward_list<int> lst{1, 2, 3};
-        size_t removed = lst.remove(99);
+        size_t                  removed = lst.remove(99);
 
         CHECK(removed == 0);
         std::vector<int> expected{1, 2, 3};
@@ -778,8 +954,7 @@ TEST_SUITE("ForwardList Operations")
     TEST_CASE("remove_if() removes elements satisfying predicate")
     {
         demo::forward_list<int> lst{1, 2, 3, 4, 5, 6};
-        size_t removed = lst.remove_if([](int val)
-                                       { return val % 2 == 0; });
+        size_t                  removed = lst.remove_if([](int val) { return val % 2 == 0; });
 
         std::vector<int> expected{1, 3, 5};
         CHECK(list_equals_vector(lst, expected));
@@ -789,7 +964,7 @@ TEST_SUITE("ForwardList Operations")
     TEST_CASE("unique() removes consecutive duplicates")
     {
         demo::forward_list<int> lst{1, 1, 2, 2, 2, 3, 3, 4};
-        size_t removed = lst.unique();
+        size_t                  removed = lst.unique();
 
         std::vector<int> expected{1, 2, 3, 4};
         CHECK(list_equals_vector(lst, expected));
@@ -799,8 +974,7 @@ TEST_SUITE("ForwardList Operations")
     TEST_CASE("unique() with custom predicate")
     {
         demo::forward_list<int> lst{1, 3, 5, 2, 4, 6};
-        size_t removed = lst.unique([](int a, int b)
-                                    { return a % 2 == b % 2; });
+        size_t                  removed = lst.unique([](int a, int b) { return a % 2 == b % 2; });
 
         std::vector<int> expected{1, 2};
         CHECK(list_equals_vector(lst, expected));
@@ -810,9 +984,153 @@ TEST_SUITE("ForwardList Operations")
     TEST_CASE("unique() on empty list")
     {
         demo::forward_list<int> lst;
-        size_t removed = lst.unique();
+        size_t                  removed = lst.unique();
         CHECK(removed == 0);
         CHECK(lst.empty());
+    }
+
+    TEST_CASE("reverse() on two elements")
+    {
+        demo::forward_list<int> lst{1, 2};
+        lst.reverse();
+
+        std::vector<int> expected{2, 1};
+        CHECK(list_equals_vector(lst, expected));
+    }
+
+    TEST_CASE("sort() on two elements")
+    {
+        demo::forward_list<int> lst{2, 1};
+        lst.sort();
+
+        std::vector<int> expected{1, 2};
+        CHECK(list_equals_vector(lst, expected));
+    }
+
+    TEST_CASE("sort() already sorted")
+    {
+        demo::forward_list<int> lst{1, 2, 3, 4, 5, 6, 7, 8};
+        lst.sort();
+
+        std::vector<int> expected{1, 2, 3, 4, 5, 6, 7, 8};
+        CHECK(list_equals_vector(lst, expected));
+    }
+
+    TEST_CASE("sort() reverse sorted")
+    {
+        demo::forward_list<int> lst{8, 7, 6, 5, 4, 3, 2, 1};
+        lst.sort();
+
+        std::vector<int> expected{1, 2, 3, 4, 5, 6, 7, 8};
+        CHECK(list_equals_vector(lst, expected));
+    }
+
+    TEST_CASE("sort() all equal elements")
+    {
+        demo::forward_list<int> lst{5, 5, 5, 5, 5};
+        lst.sort();
+
+        std::vector<int> expected{5, 5, 5, 5, 5};
+        CHECK(list_equals_vector(lst, expected));
+    }
+
+    TEST_CASE("sort() with duplicates throughout")
+    {
+        demo::forward_list<int> lst{3, 1, 4, 1, 5, 9, 2, 6, 5, 3};
+        lst.sort();
+
+        std::vector<int> expected{1, 1, 2, 3, 3, 4, 5, 5, 6, 9};
+        CHECK(list_equals_vector(lst, expected));
+    }
+
+    TEST_CASE("merge() with duplicates")
+    {
+        demo::forward_list<int> lst1{1, 2, 2, 3};
+        demo::forward_list<int> lst2{2, 3, 4, 4};
+        lst1.merge(lst2);
+
+        std::vector<int> expected{1, 2, 2, 2, 3, 3, 4, 4};
+        CHECK(list_equals_vector(lst1, expected));
+        CHECK(lst2.empty());
+    }
+
+    TEST_CASE("merge() rvalue")
+    {
+        demo::forward_list<int> lst1{1, 3, 5};
+        lst1.merge(demo::forward_list<int>{2, 4, 6});
+
+        std::vector<int> expected{1, 2, 3, 4, 5, 6};
+        CHECK(list_equals_vector(lst1, expected));
+    }
+
+    TEST_CASE("remove() on empty list")
+    {
+        demo::forward_list<int> lst;
+        size_t                  removed = lst.remove(42);
+        CHECK(removed == 0);
+        CHECK(lst.empty());
+    }
+
+    TEST_CASE("remove_if() on empty list")
+    {
+        demo::forward_list<int> lst;
+        size_t                  removed = lst.remove_if(
+            [](int v)
+            {
+                (void)v;
+                return true;
+            });
+        CHECK(removed == 0);
+        CHECK(lst.empty());
+    }
+
+    TEST_CASE("remove_if() removes all elements")
+    {
+        demo::forward_list<int> lst{1, 2, 3, 4, 5};
+        size_t                  removed = lst.remove_if(
+            [](int v)
+            {
+                (void)v;
+                return true;
+            });
+        CHECK(removed == 5);
+        CHECK(lst.empty());
+    }
+
+    TEST_CASE("unique() on single element")
+    {
+        demo::forward_list<int> lst{42};
+        size_t                  removed = lst.unique();
+        CHECK(removed == 0);
+        CHECK(lst.front() == 42);
+        CHECK(get_list_size(lst) == 1);
+    }
+
+    TEST_CASE("unique() all same")
+    {
+        demo::forward_list<int> lst{7, 7, 7, 7};
+        size_t                  removed = lst.unique();
+        CHECK(removed == 3);
+        std::vector<int> expected{7};
+        CHECK(list_equals_vector(lst, expected));
+    }
+
+    TEST_CASE("splice_after() self single element should be no-op")
+    {
+        demo::forward_list<int> lst{1, 2, 3};
+        lst.splice_after(lst.before_begin(), lst, lst.begin());
+
+        std::vector<int> expected{1, 2, 3};
+        CHECK(list_equals_vector(lst, expected));
+    }
+
+    TEST_CASE("splice_after() rvalue")
+    {
+        demo::forward_list<int> lst1{1, 4, 5};
+        lst1.splice_after(lst1.begin(), demo::forward_list<int>{2, 3});
+
+        std::vector<int> expected{1, 2, 3, 4, 5};
+        CHECK(list_equals_vector(lst1, expected));
     }
 }
 
@@ -840,6 +1158,22 @@ TEST_SUITE("ForwardList Comparison Operators")
 
         CHECK_FALSE(lst1 != lst2);
         CHECK(lst1 != lst3);
+    }
+
+    TEST_CASE("operator== empty lists")
+    {
+        demo::forward_list<int> lst1;
+        demo::forward_list<int> lst2;
+        CHECK(lst1 == lst2);
+        CHECK_FALSE(lst1 != lst2);
+    }
+
+    TEST_CASE("operator!= empty vs non-empty")
+    {
+        demo::forward_list<int> lst1;
+        demo::forward_list<int> lst2{1};
+        CHECK(lst1 != lst2);
+        CHECK_FALSE(lst1 == lst2);
     }
 }
 
@@ -900,8 +1234,57 @@ TEST_SUITE("ForwardList Boundary Cases")
     TEST_CASE("get_allocator() returns allocator")
     {
         demo::forward_list<int> lst;
-        auto alloc = lst.get_allocator();
-        (void)alloc; // 测试编译通过
+        auto                    alloc = lst.get_allocator();
+        (void)alloc;  // 测试编译通过
+    }
+
+    TEST_CASE("multiple push_front and pop_front")
+    {
+        demo::forward_list<int> lst;
+        const int               N = 1000;
+        for (int i = 0; i < N; ++i)
+            lst.push_front(i);
+        CHECK(get_list_size(lst) == N);
+
+        for (int i = 0; i < N; ++i)
+            lst.pop_front();
+        CHECK(lst.empty());
+    }
+
+    TEST_CASE("mixed insert_after and erase_after")
+    {
+        demo::forward_list<int> lst{1, 2, 3};
+        auto                    it = lst.insert_after(lst.begin(), 10);
+        CHECK(*it == 10);
+        CHECK(get_list_size(lst) == 4);
+
+        // erase_after(begin()) 删除 begin() 后面的 10，返回指向 2 的迭代器
+        auto erased_it = lst.erase_after(lst.begin());
+        CHECK(*erased_it == 2);
+        std::vector<int> expected{1, 2, 3};
+        CHECK(list_equals_vector(lst, expected));
+    }
+
+    TEST_CASE("double reverse restores original")
+    {
+        demo::forward_list<int> lst{1, 2, 3, 4, 5};
+        lst.reverse();
+        lst.reverse();
+
+        std::vector<int> expected{1, 2, 3, 4, 5};
+        CHECK(list_equals_vector(lst, expected));
+    }
+
+    TEST_CASE("const list begin/end")
+    {
+        const demo::forward_list<int> lst{1, 2, 3};
+        auto                          it = lst.begin();
+        CHECK(*it == 1);
+
+        int sum = 0;
+        for (auto i = lst.begin(); i != lst.end(); ++i)
+            sum += *i;
+        CHECK(sum == 6);
     }
 }
 
@@ -925,5 +1308,220 @@ TEST_SUITE("ForwardList String Type")
         lst.remove("hello");
         std::vector<std::string> expected_after_remove{"first", "second", "world", "test"};
         CHECK(list_equals_vector(lst, expected_after_remove));
+    }
+}
+
+// ============================================
+// 测试套件: 压力测试
+// ============================================
+
+TEST_SUITE("ForwardList Stress Tests")
+{
+    TEST_CASE("Stress: 100000 push_front and pop_front")
+    {
+        demo::forward_list<int> lst;
+        const int               N = 100000;
+
+        for (int i = 0; i < N; ++i)
+            lst.push_front(i);
+        CHECK(get_list_size(lst) == N);
+
+        for (int i = 0; i < N; ++i)
+            lst.pop_front();
+        CHECK(lst.empty());
+    }
+
+    TEST_CASE("Stress: 50000 push_front then clear")
+    {
+        demo::forward_list<int> lst;
+        const int               N = 50000;
+
+        for (int i = 0; i < N; ++i)
+            lst.push_front(i);
+        CHECK(get_list_size(lst) == N);
+
+        lst.clear();
+        CHECK(lst.empty());
+        CHECK(get_list_size(lst) == 0);
+    }
+
+    TEST_CASE("Stress: large sort")
+    {
+        demo::forward_list<int> lst;
+        const int               N = 10000;
+
+        // 逆序插入
+        for (int i = N; i > 0; --i)
+            lst.push_front(i);
+
+        lst.sort();
+
+        int expected = 1;
+        for (const auto& elem : lst)
+        {
+            CHECK(elem == expected);
+            ++expected;
+        }
+        CHECK(expected == N + 1);
+    }
+
+    TEST_CASE("Stress: large reverse")
+    {
+        demo::forward_list<int> lst;
+        const int               N = 10000;
+
+        for (int i = 0; i < N; ++i)
+            lst.push_front(i);
+
+        lst.reverse();
+
+        int expected = 0;
+        for (const auto& elem : lst)
+        {
+            CHECK(elem == expected);
+            ++expected;
+        }
+    }
+
+    TEST_CASE("Stress: many insert_after at front")
+    {
+        demo::forward_list<int> lst{1};
+        const int               N = 10000;
+
+        for (int i = 0; i < N; ++i)
+            lst.insert_after(lst.before_begin(), i);
+
+        CHECK(get_list_size(lst) == N + 1);
+    }
+
+    TEST_CASE("Stress: remove_if all even numbers")
+    {
+        demo::forward_list<int> lst;
+        const int               N = 50000;
+
+        for (int i = 1; i <= N; ++i)
+            lst.push_front(i);
+
+        size_t removed = lst.remove_if([](int v) { return v % 2 == 0; });
+        CHECK(removed == N / 2);
+        CHECK(get_list_size(lst) == N - N / 2);
+
+        // 验证剩余的都是奇数
+        for (const auto& elem : lst)
+            CHECK(elem % 2 == 1);
+    }
+
+    TEST_CASE("Stress: large unique")
+    {
+        demo::forward_list<int> lst;
+        const int               N = 50000;
+
+        // 创建重复模式: 1,1,2,2,3,3,...
+        for (int i = 1; i <= N; ++i)
+        {
+            lst.push_front(i);
+            lst.push_front(i);
+        }
+
+        lst.sort();
+
+        size_t removed = lst.unique();
+        CHECK(removed == N);
+        CHECK(get_list_size(lst) == N);
+    }
+
+    TEST_CASE("Stress: large merge")
+    {
+        demo::forward_list<int> lst1, lst2;
+        const int               N = 50000;
+
+        for (int i = N; i > 0; --i)
+        {
+            if (i % 2 == 0)
+                lst1.push_front(i);
+            else
+                lst2.push_front(i);
+        }
+
+        lst1.merge(lst2);
+        CHECK(get_list_size(lst1) == N);
+        CHECK(lst2.empty());
+
+        int expected = 1;
+        for (const auto& elem : lst1)
+        {
+            CHECK(elem == expected);
+            ++expected;
+        }
+    }
+
+    TEST_CASE("Stress: large resize grow and shrink")
+    {
+        demo::forward_list<int> lst{1, 2, 3};
+        const int               LARGE = 10000;
+
+        lst.resize(LARGE, 42);
+        CHECK(get_list_size(lst) == LARGE);
+
+        lst.resize(2);
+        CHECK(get_list_size(lst) == 2);
+        std::vector<int> expected{1, 2};
+        CHECK(list_equals_vector(lst, expected));
+    }
+
+    TEST_CASE("Stress: chained operations")
+    {
+        demo::forward_list<int> lst;
+        const int               N = 10000;
+
+        // 交替插入和删除
+        for (int i = 0; i < N; ++i)
+        {
+            lst.push_front(i);
+            if (i % 3 == 0 && !lst.empty())
+                lst.pop_front();
+        }
+
+        CHECK_FALSE(lst.empty());
+
+        // sort and verify sorted
+        lst.sort();
+        int prev = -1;
+        for (const auto& val : lst)
+        {
+            CHECK(val >= prev);
+            prev = val;
+        }
+    }
+
+    TEST_CASE("Stress: copy large list")
+    {
+        demo::forward_list<int> original;
+        const int               N = 50000;
+
+        for (int i = 0; i < N; ++i)
+            original.push_front(i);
+
+        demo::forward_list<int> copy(original);
+        CHECK(get_list_size(copy) == N);
+        CHECK(list_equals_list(original, copy));
+
+        // 验证深拷贝
+        original.clear();
+        CHECK(get_list_size(copy) == N);
+        CHECK(original.empty());
+    }
+
+    TEST_CASE("Stress: move large list")
+    {
+        demo::forward_list<int> original;
+        const int               N = 50000;
+
+        for (int i = 0; i < N; ++i)
+            original.push_front(i);
+
+        demo::forward_list<int> moved(std::move(original));
+        CHECK(get_list_size(moved) == N);
+        CHECK(original.empty());
     }
 }

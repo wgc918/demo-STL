@@ -14,15 +14,13 @@
  */
 
 #define DOCTEST_CONFIG_NO_MULTITHREADING
-#include "doctest.h"
-
+#include <functional>
+#include <stdexcept>
 #include <string>
 #include <vector>
-#include <stdexcept>
-#include <functional>
-#include <algorithm>
-#include <list>
+
 #include "../list.h"
+#include "doctest.h"
 
 // ============================================
 // 测试辅助工具
@@ -32,10 +30,10 @@
  * @brief 将demo::list转换为std::vector便于比较
  */
 template <typename T>
-std::vector<T> list_to_vector(const demo::list<T> &lst)
+std::vector<T> list_to_vector(const demo::list<T>& lst)
 {
     std::vector<T> result;
-    for (const auto &elem : lst)
+    for (const auto& elem : lst)
     {
         result.push_back(elem);
     }
@@ -46,13 +44,13 @@ std::vector<T> list_to_vector(const demo::list<T> &lst)
  * @brief 比较demo::list与std::vector内容是否一致
  */
 template <typename T>
-bool list_equals_vector(const demo::list<T> &lst, const std::vector<T> &vec)
+bool list_equals_vector(const demo::list<T>& lst, const std::vector<T>& vec)
 {
     if (lst.size() != vec.size())
         return false;
 
     auto it = lst.begin();
-    for (const auto &elem : vec)
+    for (const auto& elem : vec)
     {
         if (it == lst.end() || *it != elem)
             return false;
@@ -65,7 +63,7 @@ bool list_equals_vector(const demo::list<T> &lst, const std::vector<T> &vec)
  * @brief 比较两个list内容是否一致
  */
 template <typename T>
-bool list_equals_list(const demo::list<T> &a, const demo::list<T> &b)
+bool list_equals_list(const demo::list<T>& a, const demo::list<T>& b)
 {
     if (a.size() != b.size())
         return false;
@@ -99,7 +97,6 @@ std::vector<T> generate_test_vector(size_t size, T start = T())
 
 TEST_SUITE("List Constructors")
 {
-
     TEST_CASE("Default constructor creates empty list")
     {
         demo::list<int> lst;
@@ -113,9 +110,9 @@ TEST_SUITE("List Constructors")
         CHECK(lst.size() == 5);
         CHECK_FALSE(lst.empty());
 
-        for (const auto &elem : lst)
+        for (const auto& elem : lst)
         {
-            CHECK(elem == int()); // 默认构造值
+            CHECK(elem == int());  // 默认构造值
         }
     }
 
@@ -140,7 +137,7 @@ TEST_SUITE("List Constructors")
     TEST_CASE("Iterator range constructor")
     {
         std::vector<int> source{10, 20, 30, 40};
-        demo::list<int> lst(source.begin(), source.end());
+        demo::list<int>  lst(source.begin(), source.end());
 
         CHECK(lst.size() == 4);
         CHECK(list_equals_vector(lst, source));
@@ -166,10 +163,32 @@ TEST_SUITE("List Constructors")
         demo::list<int> moved(std::move(original));
 
         CHECK(moved.size() == 5);
-        CHECK(original.size() == 0); // 移动后原列表应为空
+        CHECK(original.size() == 0);  // 移动后原列表应为空
 
         std::vector<int> expected{1, 2, 3, 4, 5};
         CHECK(list_equals_vector(moved, expected));
+    }
+
+    TEST_CASE("Size constructor with zero count")
+    {
+        demo::list<int> lst(0);
+        CHECK(lst.empty());
+        CHECK(lst.size() == 0);
+    }
+
+    TEST_CASE("Empty initializer list constructor")
+    {
+        demo::list<int> lst{};
+        CHECK(lst.empty());
+        CHECK(lst.size() == 0);
+    }
+
+    TEST_CASE("Iterator range constructor from empty range")
+    {
+        std::vector<int> source;
+        demo::list<int>  lst(source.begin(), source.end());
+        CHECK(lst.empty());
+        CHECK(lst.size() == 0);
     }
 }
 
@@ -179,7 +198,6 @@ TEST_SUITE("List Constructors")
 
 TEST_SUITE("List Assignment Operators")
 {
-
     TEST_CASE("Copy assignment operator")
     {
         demo::list<std::string> original{"a", "b", "c"};
@@ -220,6 +238,29 @@ TEST_SUITE("List Assignment Operators")
         std::vector<int> expected{100, 200, 300};
         CHECK(list_equals_vector(lst, expected));
     }
+
+    TEST_CASE("Copy assignment to non-empty list")
+    {
+        demo::list<int> lst1{1, 2, 3, 4};
+        demo::list<int> lst2{10, 20};
+        lst2 = lst1;
+
+        CHECK(lst2.size() == 4);
+        CHECK(list_equals_list(lst1, lst2));
+    }
+
+    TEST_CASE("Move assignment to non-empty list")
+    {
+        demo::list<int> lst1{1, 2, 3};
+        demo::list<int> lst2{4, 5, 6};
+
+        lst2 = std::move(lst1);
+
+        CHECK(lst2.size() == 3);
+        CHECK(lst1.empty());
+        std::vector<int> expected{1, 2, 3};
+        CHECK(list_equals_vector(lst2, expected));
+    }
 }
 
 // ============================================
@@ -228,13 +269,12 @@ TEST_SUITE("List Assignment Operators")
 
 TEST_SUITE("List Element Access")
 {
-
     TEST_CASE("front() returns first element")
     {
         demo::list<int> lst{1, 2, 3};
         CHECK(lst.front() == 1);
 
-        lst.front() = 100; // 测试可修改性
+        lst.front() = 100;  // 测试可修改性
         CHECK(lst.front() == 100);
     }
 
@@ -261,7 +301,6 @@ TEST_SUITE("List Element Access")
 
 TEST_SUITE("List Iterators")
 {
-
     TEST_CASE("begin() and end() iterators")
     {
         demo::list<int> lst{1, 2, 3, 4, 5};
@@ -291,7 +330,7 @@ TEST_SUITE("List Iterators")
         demo::list<int> lst{10, 20, 30};
 
         int sum = 0;
-        for (const auto &elem : lst)
+        for (const auto& elem : lst)
         {
             sum += elem;
         }
@@ -332,10 +371,10 @@ TEST_SUITE("List Iterators")
 
         auto it = lst.begin();
         ++it;
-        ++it; // 指向 3
+        ++it;  // 指向 3
         CHECK(*it == 3);
 
-        --it; // 指向 2
+        --it;  // 指向 2
         CHECK(*it == 2);
 
         auto old = it++;
@@ -366,11 +405,47 @@ TEST_SUITE("List Iterators")
     {
         demo::list<int> lst{1, 2, 3};
 
-        demo::list<int>::iterator it = lst.begin();
+        demo::list<int>::iterator       it  = lst.begin();
         demo::list<int>::const_iterator cit = it;
 
         CHECK(cit == it);
         CHECK(*cit == *it);
+    }
+
+    TEST_CASE("iterator operator->")
+    {
+        demo::list<std::string> lst{"hello", "world"};
+        auto                    it = lst.begin();
+        CHECK(it->size() == 5);
+    }
+
+    TEST_CASE("reverse iterator bidirectional operations")
+    {
+        demo::list<int> lst{1, 2, 3, 4, 5};
+
+        auto rit = lst.rbegin();
+        CHECK(*rit == 5);
+
+        ++rit;
+        CHECK(*rit == 4);
+
+        --rit;
+        CHECK(*rit == 5);
+
+        auto old = rit++;
+        CHECK(*old == 5);
+        CHECK(*rit == 4);
+    }
+
+    TEST_CASE("traverse from cbegin() to cend()")
+    {
+        const demo::list<int> lst{1, 2, 3, 4, 5};
+        int                   sum = 0;
+        for (auto it = lst.cbegin(); it != lst.cend(); ++it)
+        {
+            sum += *it;
+        }
+        CHECK(sum == 15);
     }
 }
 
@@ -380,7 +455,6 @@ TEST_SUITE("List Iterators")
 
 TEST_SUITE("List Capacity")
 {
-
     TEST_CASE("empty() returns true for empty list")
     {
         demo::list<int> lst;
@@ -414,7 +488,7 @@ TEST_SUITE("List Capacity")
         lst.resize(5);
 
         CHECK(lst.size() == 5);
-        CHECK(lst.back() == int()); // 新增元素为默认构造
+        CHECK(lst.back() == int());  // 新增元素为默认构造
         CHECK(list_equals_vector(lst, {1, 2, 3, int(), int()}));
     }
 
@@ -453,6 +527,16 @@ TEST_SUITE("List Capacity")
         CHECK(lst.empty());
         CHECK(lst.size() == 0);
     }
+
+    TEST_CASE("resize() from empty list")
+    {
+        demo::list<int> lst;
+        lst.resize(5, 42);
+
+        CHECK(lst.size() == 5);
+        std::vector<int> expected{42, 42, 42, 42, 42};
+        CHECK(list_equals_vector(lst, expected));
+    }
 }
 
 // ============================================
@@ -461,7 +545,6 @@ TEST_SUITE("List Capacity")
 
 TEST_SUITE("List Modifiers - Insert")
 {
-
     TEST_CASE("push_front() adds element to front")
     {
         demo::list<int> lst;
@@ -517,7 +600,7 @@ TEST_SUITE("List Modifiers - Insert")
     TEST_CASE("insert() single element at begin")
     {
         demo::list<int> lst{2, 3};
-        auto result = lst.insert(lst.begin(), 1);
+        auto            result = lst.insert(lst.begin(), 1);
 
         CHECK(*result == 1);
         std::vector<int> expected{1, 2, 3};
@@ -527,8 +610,8 @@ TEST_SUITE("List Modifiers - Insert")
     TEST_CASE("insert() single element in middle")
     {
         demo::list<int> lst{1, 3, 5};
-        auto it = lst.begin();
-        ++it; // 指向 3
+        auto            it = lst.begin();
+        ++it;  // 指向 3
 
         auto result = lst.insert(it, 2);
         CHECK(*result == 2);
@@ -540,7 +623,7 @@ TEST_SUITE("List Modifiers - Insert")
     TEST_CASE("insert() single element at end")
     {
         demo::list<int> lst{1, 2, 3};
-        auto result = lst.insert(lst.end(), 4);
+        auto            result = lst.insert(lst.end(), 4);
 
         CHECK(*result == 4);
         CHECK(lst.size() == 4);
@@ -551,9 +634,9 @@ TEST_SUITE("List Modifiers - Insert")
     TEST_CASE("insert() multiple copies")
     {
         demo::list<int> lst{1, 5};
-        auto it = ++lst.begin(); // 指向 5
+        auto            it = ++lst.begin();  // 指向 5
 
-        lst.insert(it, 3, 3); // 插入3个3
+        lst.insert(it, 3, 3);  // 插入3个3
         CHECK(lst.size() == 5);
         std::vector<int> expected{1, 3, 3, 3, 5};
         CHECK(list_equals_vector(lst, expected));
@@ -561,7 +644,7 @@ TEST_SUITE("List Modifiers - Insert")
 
     TEST_CASE("insert() iterator range")
     {
-        demo::list<int> lst{1, 6};
+        demo::list<int>  lst{1, 6};
         std::vector<int> to_insert{2, 3, 4, 5};
 
         auto it = ++lst.begin();
@@ -574,7 +657,7 @@ TEST_SUITE("List Modifiers - Insert")
     TEST_CASE("insert() initializer list")
     {
         demo::list<int> lst{1, 5};
-        auto it = ++lst.begin();
+        auto            it = ++lst.begin();
 
         lst.insert(it, {2, 3, 4});
 
@@ -585,9 +668,9 @@ TEST_SUITE("List Modifiers - Insert")
     TEST_CASE("emplace() constructs in-place")
     {
         demo::list<std::string> lst{"hello", "world"};
-        auto it = ++lst.begin();
+        auto                    it = ++lst.begin();
 
-        auto result = lst.emplace(it, 5, 'x'); // 构造 "xxxxx"
+        auto result = lst.emplace(it, 5, 'x');  // 构造 "xxxxx"
 
         CHECK(*result == "xxxxx");
         CHECK(lst.size() == 3);
@@ -596,7 +679,7 @@ TEST_SUITE("List Modifiers - Insert")
     TEST_CASE("emplace_front() constructs at front")
     {
         demo::list<std::string> lst;
-        lst.emplace_front(3, 'a'); // "aaa"
+        lst.emplace_front(3, 'a');  // "aaa"
 
         CHECK(lst.front() == "aaa");
     }
@@ -604,9 +687,51 @@ TEST_SUITE("List Modifiers - Insert")
     TEST_CASE("emplace_back() constructs at back")
     {
         demo::list<std::string> lst;
-        lst.emplace_back(3, 'b'); // "bbb"
+        lst.emplace_back(3, 'b');  // "bbb"
 
         CHECK(lst.back() == "bbb");
+    }
+
+    TEST_CASE("insert() with count zero")
+    {
+        demo::list<int> lst{1, 2, 3};
+        auto            it     = lst.begin();
+        auto            result = lst.insert(it, 0, 99);
+
+        CHECK(*result == *it);
+        CHECK(lst.size() == 3);
+        std::vector<int> expected{1, 2, 3};
+        CHECK(list_equals_vector(lst, expected));
+    }
+
+    TEST_CASE("insert() rvalue")
+    {
+        demo::list<int> lst{1, 3};
+        auto            it = ++lst.begin();
+
+        int val = 2;
+        lst.insert(it, std::move(val));
+
+        std::vector<int> expected{1, 2, 3};
+        CHECK(list_equals_vector(lst, expected));
+    }
+
+    TEST_CASE("push_back() rvalue")
+    {
+        demo::list<std::string> lst;
+        std::string             s = "hello";
+        lst.push_back(std::move(s));
+
+        CHECK(lst.back() == "hello");
+    }
+
+    TEST_CASE("push_front() rvalue")
+    {
+        demo::list<std::string> lst;
+        std::string             s = "hello";
+        lst.push_front(std::move(s));
+
+        CHECK(lst.front() == "hello");
     }
 }
 
@@ -616,13 +741,12 @@ TEST_SUITE("List Modifiers - Insert")
 
 TEST_SUITE("List Modifiers - Erase")
 {
-
     TEST_CASE("erase() single element in middle")
     {
         demo::list<int> lst{1, 2, 3, 4, 5};
-        auto it = lst.begin();
+        auto            it = lst.begin();
         ++it;
-        ++it; // 指向 3
+        ++it;  // 指向 3
 
         auto next = lst.erase(it);
         CHECK(*next == 4);
@@ -634,8 +758,8 @@ TEST_SUITE("List Modifiers - Erase")
     TEST_CASE("erase() single element at begin")
     {
         demo::list<int> lst{1, 2, 3};
-        auto it = lst.begin();
-        auto next = lst.erase(it);
+        auto            it   = lst.begin();
+        auto            next = lst.erase(it);
 
         CHECK(*next == 2);
         std::vector<int> expected{2, 3};
@@ -645,8 +769,8 @@ TEST_SUITE("List Modifiers - Erase")
     TEST_CASE("erase() single element at end")
     {
         demo::list<int> lst{1, 2, 3};
-        auto it = lst.end();
-        --it; // 指向 3
+        auto            it = lst.end();
+        --it;  // 指向 3
         auto next = lst.erase(it);
 
         CHECK(next == lst.end());
@@ -657,10 +781,10 @@ TEST_SUITE("List Modifiers - Erase")
     TEST_CASE("erase() range")
     {
         demo::list<int> lst{1, 2, 3, 4, 5, 6, 7};
-        auto first = ++lst.begin(); // 指向 2
-        auto last = lst.end();
+        auto            first = ++lst.begin();  // 指向 2
+        auto            last  = lst.end();
         --last;
-        --last; // 指向 6 (erase到last之前)
+        --last;  // 指向 6 (erase到last之前)
 
         lst.erase(first, last);
 
@@ -671,8 +795,8 @@ TEST_SUITE("List Modifiers - Erase")
     TEST_CASE("erase() empty range")
     {
         demo::list<int> lst{1, 2, 3};
-        auto it = lst.begin();
-        auto result = lst.erase(it, it); // 空范围
+        auto            it     = lst.begin();
+        auto            result = lst.erase(it, it);  // 空范围
 
         CHECK(result == it);
         std::vector<int> expected{1, 2, 3};
@@ -691,9 +815,28 @@ TEST_SUITE("List Modifiers - Erase")
     TEST_CASE("clear() on empty list")
     {
         demo::list<int> lst;
-        lst.clear(); // 不应抛出异常
+        lst.clear();  // 不应抛出异常
 
         CHECK(lst.empty());
+    }
+
+    TEST_CASE("erase() end iterator")
+    {
+        demo::list<int> lst{1, 2, 3};
+        auto            result = lst.erase(lst.end());
+
+        CHECK(result == lst.end());
+        CHECK(lst.size() == 3);  // 不应删除任何元素
+    }
+
+    TEST_CASE("erase() all elements one by one from front")
+    {
+        demo::list<int> lst{1, 2, 3, 4, 5};
+        while (!lst.empty())
+            lst.erase(lst.begin());
+
+        CHECK(lst.empty());
+        CHECK(lst.size() == 0);
     }
 }
 
@@ -703,7 +846,6 @@ TEST_SUITE("List Modifiers - Erase")
 
 TEST_SUITE("List Modifiers - Other")
 {
-
     TEST_CASE("swap() exchanges contents")
     {
         demo::list<int> lst1{1, 2, 3};
@@ -720,7 +862,7 @@ TEST_SUITE("List Modifiers - Other")
     TEST_CASE("swap() with self")
     {
         demo::list<int> lst{1, 2, 3};
-        lst.swap(lst); // 自交换应无效果
+        lst.swap(lst);  // 自交换应无效果
 
         std::vector<int> expected{1, 2, 3};
         CHECK(list_equals_vector(lst, expected));
@@ -738,7 +880,7 @@ TEST_SUITE("List Modifiers - Other")
 
     TEST_CASE("assign() with iterator range")
     {
-        demo::list<int> lst{1, 2, 3};
+        demo::list<int>  lst{1, 2, 3};
         std::vector<int> source{10, 20, 30, 40};
 
         lst.assign(source.begin(), source.end());
@@ -763,10 +905,38 @@ TEST_SUITE("List Modifiers - Other")
         lst.assign(5, 42);
 
         CHECK(lst.size() == 5);
-        for (const auto &elem : lst)
+        for (const auto& elem : lst)
         {
             CHECK(elem == 42);
         }
+    }
+
+    TEST_CASE("assign() zero count")
+    {
+        demo::list<int> lst{1, 2, 3};
+        lst.assign(0, 99);
+        CHECK(lst.empty());
+        CHECK(lst.size() == 0);
+    }
+
+    TEST_CASE("assign() from empty range")
+    {
+        demo::list<int>  lst{1, 2, 3};
+        std::vector<int> empty;
+        lst.assign(empty.begin(), empty.end());
+        CHECK(lst.empty());
+    }
+
+    TEST_CASE("swap() with empty list")
+    {
+        demo::list<int> lst1{1, 2, 3};
+        demo::list<int> lst2;
+
+        lst1.swap(lst2);
+        CHECK(lst1.empty());
+        CHECK(lst2.size() == 3);
+        std::vector<int> expected{1, 2, 3};
+        CHECK(list_equals_vector(lst2, expected));
     }
 }
 
@@ -776,7 +946,6 @@ TEST_SUITE("List Modifiers - Other")
 
 TEST_SUITE("List Operations")
 {
-
     TEST_CASE("merge() two sorted lists")
     {
         demo::list<int> lst1{1, 3, 5, 7};
@@ -784,7 +953,7 @@ TEST_SUITE("List Operations")
 
         lst1.merge(lst2);
 
-        CHECK(lst2.empty()); // 合并后lst2应为空
+        CHECK(lst2.empty());  // 合并后lst2应为空
         std::vector<int> expected{1, 2, 3, 4, 5, 6, 7, 8};
         CHECK(list_equals_vector(lst1, expected));
     }
@@ -827,7 +996,7 @@ TEST_SUITE("List Operations")
     TEST_CASE("merge() self merge")
     {
         demo::list<int> lst{1, 2, 3};
-        lst.merge(lst); // 不应崩溃
+        lst.merge(lst);  // 不应崩溃
 
         std::vector<int> expected{1, 2, 3};
         CHECK(list_equals_vector(lst, expected));
@@ -838,7 +1007,7 @@ TEST_SUITE("List Operations")
         demo::list<int> lst1{1, 4, 5};
         demo::list<int> lst2{2, 3};
 
-        auto it = ++lst1.begin(); // 指向 4
+        auto it = ++lst1.begin();  // 指向 4
         lst1.splice(it, lst2);
 
         CHECK(lst2.empty());
@@ -851,7 +1020,7 @@ TEST_SUITE("List Operations")
         demo::list<int> lst1{1, 3, 4};
         demo::list<int> lst2{2};
 
-        auto it = ++lst1.begin(); // 指向 3
+        auto it  = ++lst1.begin();  // 指向 3
         auto it2 = lst2.begin();
 
         lst1.splice(it, lst2, it2);
@@ -865,20 +1034,14 @@ TEST_SUITE("List Operations")
         demo::list<int> lst1{1, 6};
         demo::list<int> lst2{2, 3, 4, 5};
 
-        auto pos = ++lst1.begin();
+        auto pos   = ++lst1.begin();
         auto first = lst2.begin();
-        auto last = lst2.end();
-        --last; // 指向 5
+        auto last  = lst2.end();
+        --last;  // 指向 5
 
         lst1.splice(pos, lst2, first, last);
         CHECK(lst1.size() == 5);
 
-        // 手动遍历打印（最安全）
-        MESSAGE("lst1 :");
-        for (int v : lst1)
-        {
-            MESSAGE("  - ", v);
-        }
         std::vector<int> expected{1, 2, 3, 4, 6};
         CHECK(list_equals_vector(lst1, expected));
     }
@@ -886,10 +1049,28 @@ TEST_SUITE("List Operations")
     TEST_CASE("splice() self splice entire list")
     {
         demo::list<int> lst{1, 2, 3};
-        lst.splice(lst.begin(), lst); // 不应崩溃
+        lst.splice(lst.begin(), lst);  // 不应崩溃
 
         std::vector<int> expected{1, 2, 3};
         CHECK(list_equals_vector(lst, expected));
+    }
+
+    TEST_CASE("splice() self single element should be no-op")
+    {
+        demo::list<int> lst{1, 2, 3};
+        lst.splice(lst.begin(), lst, lst.begin());
+
+        std::vector<int> expected{1, 2, 3};
+        CHECK(list_equals_vector(lst, expected));
+    }
+
+    TEST_CASE("splice() rvalue")
+    {
+        demo::list<int> lst1{1, 4, 5};
+        lst1.splice(++lst1.begin(), demo::list<int>{2, 3});
+
+        std::vector<int> expected{1, 2, 3, 4, 5};
+        CHECK(list_equals_vector(lst1, expected));
     }
 
     TEST_CASE("remove() specific value")
@@ -928,8 +1109,7 @@ TEST_SUITE("List Operations")
     {
         demo::list<int> lst{1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
 
-        auto count = lst.remove_if([](int n)
-                                   { return n % 2 == 0; });
+        auto count = lst.remove_if([](int n) { return n % 2 == 0; });
 
         CHECK(count == 5);
         std::vector<int> expected{1, 3, 5, 7, 9};
@@ -940,12 +1120,29 @@ TEST_SUITE("List Operations")
     {
         demo::list<int> lst{1, 2, 3, 4, 5};
 
-        auto count = lst.remove_if([](int n)
-                                   { (void)n;return false; });
+        auto count = lst.remove_if(
+            [](int n)
+            {
+                (void)n;
+                return false;
+            });
 
         CHECK(count == 0);
         std::vector<int> expected{1, 2, 3, 4, 5};
         CHECK(list_equals_vector(lst, expected));
+    }
+
+    TEST_CASE("remove_if() removes all elements")
+    {
+        demo::list<int> lst{1, 2, 3, 4, 5};
+        auto            count = lst.remove_if(
+            [](int n)
+            {
+                (void)n;
+                return true;
+            });
+        CHECK(count == 5);
+        CHECK(lst.empty());
     }
 
     TEST_CASE("reverse() reverses list order")
@@ -960,12 +1157,21 @@ TEST_SUITE("List Operations")
     TEST_CASE("reverse() empty and single element list")
     {
         demo::list<int> empty_lst;
-        empty_lst.reverse(); // 不应崩溃
+        empty_lst.reverse();  // 不应崩溃
         CHECK(empty_lst.empty());
 
         demo::list<int> single_lst{42};
         single_lst.reverse();
         CHECK(single_lst.front() == 42);
+    }
+
+    TEST_CASE("reverse() on two elements")
+    {
+        demo::list<int> lst{1, 2};
+        lst.reverse();
+
+        std::vector<int> expected{2, 1};
+        CHECK(list_equals_vector(lst, expected));
     }
 
     TEST_CASE("unique() removes consecutive duplicates")
@@ -983,7 +1189,7 @@ TEST_SUITE("List Operations")
     {
         demo::list<std::string> lst{"A", "a", "B", "b", "C"};
 
-        auto count = lst.unique([](const auto &a, const auto &b)
+        auto count = lst.unique([](const auto& a, const auto& b)
                                 { return std::tolower(a[0]) == std::tolower(b[0]); });
 
         CHECK(count == 2);
@@ -994,7 +1200,7 @@ TEST_SUITE("List Operations")
     TEST_CASE("unique() on empty list")
     {
         demo::list<int> lst;
-        auto count = lst.unique();
+        auto            count = lst.unique();
         CHECK(count == 0);
         CHECK(lst.empty());
     }
@@ -1002,9 +1208,18 @@ TEST_SUITE("List Operations")
     TEST_CASE("unique() on single element list")
     {
         demo::list<int> lst{42};
-        auto count = lst.unique();
+        auto            count = lst.unique();
         CHECK(count == 0);
         CHECK(lst.front() == 42);
+    }
+
+    TEST_CASE("unique() all same elements")
+    {
+        demo::list<int> lst{7, 7, 7, 7};
+        auto            count = lst.unique();
+        CHECK(count == 3);
+        std::vector<int> expected{7};
+        CHECK(list_equals_vector(lst, expected));
     }
 
     TEST_CASE("sort() ascending order")
@@ -1062,6 +1277,42 @@ TEST_SUITE("List Operations")
         std::vector<int> expected{1, 1, 2, 3, 3, 4, 5, 5, 6, 9};
         CHECK(list_equals_vector(lst, expected));
     }
+
+    TEST_CASE("sort() on two elements")
+    {
+        demo::list<int> lst{2, 1};
+        lst.sort();
+        std::vector<int> expected{1, 2};
+        CHECK(list_equals_vector(lst, expected));
+    }
+
+    TEST_CASE("sort() all equal elements")
+    {
+        demo::list<int> lst{5, 5, 5, 5, 5};
+        lst.sort();
+        std::vector<int> expected{5, 5, 5, 5, 5};
+        CHECK(list_equals_vector(lst, expected));
+    }
+
+    TEST_CASE("merge() with duplicates")
+    {
+        demo::list<int> lst1{1, 2, 2, 3};
+        demo::list<int> lst2{2, 3, 4, 4};
+        lst1.merge(lst2);
+
+        CHECK(lst2.empty());
+        std::vector<int> expected{1, 2, 2, 2, 3, 3, 4, 4};
+        CHECK(list_equals_vector(lst1, expected));
+    }
+
+    TEST_CASE("merge() rvalue")
+    {
+        demo::list<int> lst1{1, 3, 5};
+        lst1.merge(demo::list<int>{2, 4, 6});
+
+        std::vector<int> expected{1, 2, 3, 4, 5, 6};
+        CHECK(list_equals_vector(lst1, expected));
+    }
 }
 
 // ============================================
@@ -1070,7 +1321,6 @@ TEST_SUITE("List Operations")
 
 TEST_SUITE("List Comparison Operators")
 {
-
     TEST_CASE("operator== for equal lists")
     {
         demo::list<int> lst1{1, 2, 3};
@@ -1110,6 +1360,22 @@ TEST_SUITE("List Comparison Operators")
 
         CHECK_FALSE(lst1 != lst2);
     }
+
+    TEST_CASE("operator== empty lists")
+    {
+        demo::list<int> lst1;
+        demo::list<int> lst2;
+        CHECK(lst1 == lst2);
+        CHECK_FALSE(lst1 != lst2);
+    }
+
+    TEST_CASE("operator!= empty vs non-empty")
+    {
+        demo::list<int> lst1;
+        demo::list<int> lst2{1};
+        CHECK(lst1 != lst2);
+        CHECK_FALSE(lst1 == lst2);
+    }
 }
 
 // ============================================
@@ -1118,7 +1384,6 @@ TEST_SUITE("List Comparison Operators")
 
 TEST_SUITE("List Edge Cases and Exceptions")
 {
-
     TEST_CASE("Operations on empty list")
     {
         demo::list<int> lst;
@@ -1152,7 +1417,7 @@ TEST_SUITE("List Edge Cases and Exceptions")
     TEST_CASE("Large list operations")
     {
         demo::list<int> lst;
-        const int N = 10000;
+        const int       N = 10000;
 
         for (int i = 0; i < N; ++i)
         {
@@ -1167,16 +1432,16 @@ TEST_SUITE("List Edge Cases and Exceptions")
     TEST_CASE("Iterator stability after modifications")
     {
         demo::list<int> lst{1, 2, 3, 4, 5};
-        auto it = ++lst.begin(); // 指向 2
+        auto            it = ++lst.begin();  // 指向 2
 
-        lst.push_back(6); // 不应使迭代器失效
+        lst.push_back(6);  // 不应使迭代器失效
         CHECK(*it == 2);
 
         lst.push_front(0);
-        CHECK(*it == 2); // 仍然指向 2
+        CHECK(*it == 2);  // 仍然指向 2
 
-        lst.insert(++lst.begin(), 10); // 在 0 和 1 之间插入
-        CHECK(*it == 2);               // 仍然指向 2
+        lst.insert(++lst.begin(), 10);  // 在 0 和 1 之间插入
+        CHECK(*it == 2);                // 仍然指向 2
     }
 
     TEST_CASE("Complex type operations")
@@ -1236,71 +1501,344 @@ TEST_SUITE("List Edge Cases and Exceptions")
 
     TEST_CASE("get_allocator")
     {
-        demo::list<int> lst;
+        demo::list<int>     lst;
         std::allocator<int> alloc = lst.get_allocator();
         // 验证分配器可用
-        int *p = std::allocator_traits<std::allocator<int>>::allocate(alloc, 1);
+        int* p = std::allocator_traits<std::allocator<int>>::allocate(alloc, 1);
         std::allocator_traits<std::allocator<int>>::construct(alloc, p, 42);
         CHECK(*p == 42);
         std::allocator_traits<std::allocator<int>>::destroy(alloc, p);
         std::allocator_traits<std::allocator<int>>::deallocate(alloc, p, 1);
     }
+
+    TEST_CASE("double reverse restores original")
+    {
+        demo::list<int> lst{1, 2, 3, 4, 5};
+        lst.reverse();
+        lst.reverse();
+
+        std::vector<int> expected{1, 2, 3, 4, 5};
+        CHECK(list_equals_vector(lst, expected));
+    }
+
+    TEST_CASE("const list iterator access")
+    {
+        const demo::list<int> lst{1, 2, 3};
+        CHECK(lst.front() == 1);
+        CHECK(lst.back() == 3);
+
+        int sum = 0;
+        for (auto i = lst.begin(); i != lst.end(); ++i)
+            sum += *i;
+        CHECK(sum == 6);
+    }
+
+    TEST_CASE("move semantics with temporary")
+    {
+        demo::list<int> lst = std::move(demo::list<int>{1, 2, 3});
+
+        std::vector<int> expected{1, 2, 3};
+        CHECK(list_equals_vector(lst, expected));
+    }
+
+    TEST_CASE("insert initializer list empty")
+    {
+        demo::list<int> lst{1, 2, 3};
+        auto            result = lst.insert(lst.begin(), std::initializer_list<int>{});
+
+        CHECK(result == lst.begin());
+        CHECK(lst.size() == 3);
+    }
 }
 
 // ============================================
-// 测试套件: 性能边界测试
+// 测试套件: 压力测试
 // ============================================
 
-TEST_SUITE("List Performance Edge Cases")
+TEST_SUITE("List Stress Tests")
 {
-
-    TEST_CASE("Stress test: many small insertions")
+    TEST_CASE("Stress: 100000 push_back and pop_back")
     {
         demo::list<int> lst;
-        const int N = 10000;
+        const int       N = 100000;
 
         for (int i = 0; i < N; ++i)
-        {
             lst.push_back(i);
-        }
-
         CHECK(lst.size() == N);
         CHECK(lst.back() == N - 1);
-    }
-
-    TEST_CASE("Stress test: many small deletions")
-    {
-        demo::list<int> lst;
-        const int N = 10000;
 
         for (int i = 0; i < N; ++i)
-        {
-            lst.push_back(i);
-        }
-
-        while (!lst.empty())
-        {
-            lst.pop_front();
-        }
-
+            lst.pop_back();
         CHECK(lst.empty());
     }
 
-    TEST_CASE("Stress test: alternating insert and erase")
+    TEST_CASE("Stress: 50000 push_front and pop_front")
     {
         demo::list<int> lst;
-        const int N = 1000;
+        const int       N = 50000;
+
+        for (int i = 0; i < N; ++i)
+            lst.push_front(i);
+        CHECK(lst.size() == N);
+
+        for (int i = 0; i < N; ++i)
+            lst.pop_front();
+        CHECK(lst.empty());
+    }
+
+    TEST_CASE("Stress: 50000 push_back then clear")
+    {
+        demo::list<int> lst;
+        const int       N = 50000;
+
+        for (int i = 0; i < N; ++i)
+            lst.push_back(i);
+        CHECK(lst.size() == N);
+
+        lst.clear();
+        CHECK(lst.empty());
+        CHECK(lst.size() == 0);
+    }
+
+    TEST_CASE("Stress: large sort")
+    {
+        demo::list<int> lst;
+        const int       N = 10000;
+
+        for (int i = N; i > 0; --i)
+            lst.push_back(i);
+
+        lst.sort();
+
+        int expected = 1;
+        for (const auto& elem : lst)
+        {
+            CHECK(elem == expected);
+            ++expected;
+        }
+        CHECK(expected == N + 1);
+    }
+
+    TEST_CASE("Stress: large sort with custom comparator")
+    {
+        demo::list<int> lst;
+        const int       N = 10000;
+
+        for (int i = 1; i <= N; ++i)
+            lst.push_back(i);
+
+        lst.sort(std::greater<int>());
+
+        int expected = N;
+        for (const auto& elem : lst)
+        {
+            CHECK(elem == expected);
+            --expected;
+        }
+        CHECK(expected == 0);
+    }
+
+    TEST_CASE("Stress: large reverse")
+    {
+        demo::list<int> lst;
+        const int       N = 10000;
+
+        for (int i = 0; i < N; ++i)
+            lst.push_back(i);
+
+        lst.reverse();
+
+        int expected = N - 1;
+        for (const auto& elem : lst)
+        {
+            CHECK(elem == expected);
+            --expected;
+        }
+    }
+
+    TEST_CASE("Stress: remove_if all even numbers")
+    {
+        demo::list<int> lst;
+        const int       N = 50000;
+
+        for (int i = 1; i <= N; ++i)
+            lst.push_back(i);
+
+        size_t removed = lst.remove_if([](int v) { return v % 2 == 0; });
+        CHECK(removed == N / 2);
+        CHECK(lst.size() == N - N / 2);
+
+        for (const auto& elem : lst)
+            CHECK(elem % 2 == 1);
+    }
+
+    TEST_CASE("Stress: large unique")
+    {
+        demo::list<int> lst;
+        const int       N = 50000;
+
+        for (int i = 1; i <= N; ++i)
+        {
+            lst.push_back(i);
+            lst.push_back(i);
+        }
+
+        size_t removed = lst.unique();
+        CHECK(removed == N);
+        CHECK(lst.size() == N);
+
+        int expected = 1;
+        for (const auto& elem : lst)
+        {
+            CHECK(elem == expected);
+            ++expected;
+        }
+    }
+
+    TEST_CASE("Stress: large merge")
+    {
+        demo::list<int> lst1, lst2;
+        const int       N = 50000;
+
+        for (int i = 1; i <= N; ++i)
+        {
+            if (i % 2 == 0)
+                lst1.push_back(i);
+            else
+                lst2.push_back(i);
+        }
+
+        lst1.merge(lst2);
+        CHECK(lst1.size() == N);
+        CHECK(lst2.empty());
+
+        int expected = 1;
+        for (const auto& elem : lst1)
+        {
+            CHECK(elem == expected);
+            ++expected;
+        }
+    }
+
+    TEST_CASE("Stress: large resize grow and shrink")
+    {
+        demo::list<int> lst{1, 2, 3};
+        const int       LARGE = 10000;
+
+        lst.resize(LARGE, 42);
+        CHECK(lst.size() == LARGE);
+
+        lst.resize(2);
+        CHECK(lst.size() == 2);
+        std::vector<int> expected{1, 2};
+        CHECK(list_equals_vector(lst, expected));
+    }
+
+    TEST_CASE("Stress: alternating insert and erase")
+    {
+        demo::list<int> lst;
+        const int       N = 10000;
 
         for (int i = 0; i < N; ++i)
         {
             lst.push_back(i);
             if (i > 0)
-            {
                 lst.pop_front();
-            }
         }
 
         CHECK(lst.size() == 1);
         CHECK(lst.front() == N - 1);
+    }
+
+    TEST_CASE("Stress: chained operations with sort")
+    {
+        demo::list<int> lst;
+        const int       N = 10000;
+
+        for (int i = 0; i < N; ++i)
+        {
+            lst.push_back(i);
+            if (i % 3 == 0 && !lst.empty())
+                lst.pop_front();
+        }
+
+        CHECK_FALSE(lst.empty());
+
+        lst.sort();
+        int prev = -1;
+        for (const auto& val : lst)
+        {
+            CHECK(val >= prev);
+            prev = val;
+        }
+    }
+
+    TEST_CASE("Stress: copy large list")
+    {
+        demo::list<int> original;
+        const int       N = 50000;
+
+        for (int i = 0; i < N; ++i)
+            original.push_back(i);
+
+        demo::list<int> copy(original);
+        CHECK(copy.size() == N);
+        CHECK(list_equals_list(original, copy));
+
+        original.clear();
+        CHECK(copy.size() == N);
+        CHECK(original.empty());
+    }
+
+    TEST_CASE("Stress: move large list")
+    {
+        demo::list<int> original;
+        const int       N = 50000;
+
+        for (int i = 0; i < N; ++i)
+            original.push_back(i);
+
+        demo::list<int> moved(std::move(original));
+        CHECK(moved.size() == N);
+        CHECK(original.empty());
+    }
+
+    TEST_CASE("Stress: many insert in middle")
+    {
+        demo::list<int> lst;
+        const int       N = 10000;
+
+        lst.push_back(0);
+
+        for (int i = 1; i < N; ++i)
+        {
+            auto it = lst.begin();
+            lst.insert(it, i);
+        }
+
+        CHECK(lst.size() == N);
+
+        lst.sort();
+        int expected = 0;
+        for (const auto& elem : lst)
+        {
+            CHECK(elem == expected);
+            ++expected;
+        }
+    }
+
+    TEST_CASE("Stress: swap large lists")
+    {
+        demo::list<int> lst1, lst2;
+        const int       N = 50000;
+
+        for (int i = 0; i < N; ++i)
+            lst1.push_back(i);
+        for (int i = 0; i < N / 2; ++i)
+            lst2.push_back(N + i);
+
+        lst1.swap(lst2);
+        CHECK(lst1.size() == N / 2);
+        CHECK(lst2.size() == N);
     }
 }
