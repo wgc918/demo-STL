@@ -42,7 +42,7 @@
 
 #pragma once
 
-#include <vcruntime_typeinfo.h>
+#include <typeinfo>
 
 #include <climits>
 #include <utility>
