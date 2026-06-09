@@ -151,11 +151,7 @@ private:
         Color      color;   ///< 节点颜色
 
         /// @brief 默认构造函数，创建空节点
-        Node()
-            : left(nullptr),
-              right(nullptr),
-              parent(nullptr),
-              color(Color::BLACK)
+        Node() : left(nullptr), right(nullptr), parent(nullptr), color(Color::BLACK)
         {
         }
 
@@ -178,8 +174,7 @@ private:
         template <typename... KeyArgs, typename... ValueArgs>
         Node(std::piecewise_construct_t, std::tuple<KeyArgs...> key_args,
              std::tuple<ValueArgs...> value_args)
-            : value(std::piecewise_construct, std::move(key_args),
-                    std::move(value_args)),
+            : value(std::piecewise_construct, std::move(key_args), std::move(value_args)),
               left(nullptr),
               right(nullptr),
               parent(nullptr),
@@ -210,12 +205,11 @@ public:
         friend class multimap;
 
     public:
-        using iterator_category =
-            std::bidirectional_iterator_tag;         ///< 迭代器类别（双向迭代器）
-        using value_type      = std::pair<const K, T>;  ///< 元素类型
-        using difference_type = std::ptrdiff_t;         ///< 差值类型
-        using pointer         = value_type*;            ///< 元素指针类型
-        using reference       = value_type&;            ///< 元素引用类型
+        using iterator_category = std::bidirectional_iterator_tag;  ///< 迭代器类别（双向迭代器）
+        using value_type        = std::pair<const K, T>;            ///< 元素类型
+        using difference_type   = std::ptrdiff_t;                   ///< 差值类型
+        using pointer           = multimap::value_type*;            ///< 元素指针类型
+        using reference         = multimap::value_type&;            ///< 元素引用类型
 
     public:
         /// @brief 默认构造函数，创建空迭代器
@@ -281,12 +275,11 @@ public:
         friend class multimap;
 
     public:
-        using iterator_category =
-            std::bidirectional_iterator_tag;            ///< 迭代器类别（双向迭代器）
-        using value_type      = std::pair<const K, T>;     ///< 元素类型
-        using difference_type = std::ptrdiff_t;            ///< 差值类型
-        using pointer         = const value_type*;         ///< 常量元素指针类型
-        using reference       = const value_type&;         ///< 常量元素引用类型
+        using iterator_category = std::bidirectional_iterator_tag;  ///< 迭代器类别（双向迭代器）
+        using value_type        = std::pair<const K, T>;            ///< 元素类型
+        using difference_type   = std::ptrdiff_t;                   ///< 差值类型
+        using pointer           = const multimap::value_type*;      ///< 常量元素指针类型
+        using reference         = const multimap::value_type&;      ///< 常量元素引用类型
 
     public:
         /// @brief 默认构造函数，创建空迭代器
@@ -370,15 +363,13 @@ public:
     /// @param first 范围起始迭代器
     /// @param last 范围结束迭代器
     /// @param comp 比较函数对象，默认为 Compare()
-    template <typename InputIt,
-              std::enable_if_t<!std::is_integral<InputIt>::value, int> = 0>
+    template <typename InputIt, std::enable_if_t<!std::is_integral<InputIt>::value, int> = 0>
     multimap(InputIt first, InputIt last, const Compare& comp = Compare());
 
     /// @brief 初始化列表构造函数
     /// @param ilist 初始化列表
     /// @param comp 比较函数对象，默认为 Compare()
-    multimap(std::initializer_list<value_type> ilist,
-             const Compare&                    comp = Compare());
+    multimap(std::initializer_list<value_type> ilist, const Compare& comp = Compare());
 
     /// @brief 非标准接口：从已排序的 vector 构造 multimap（优化版本）
     /// @param vec 已排序的键值对 vector
@@ -515,8 +506,7 @@ public:
     /// @tparam InputIt 输入迭代器类型
     /// @param first 范围起始迭代器
     /// @param last 范围结束迭代器
-    template <typename InputIt,
-              std::enable_if_t<!std::is_integral<InputIt>::value, int> = 0>
+    template <typename InputIt, std::enable_if_t<!std::is_integral<InputIt>::value, int> = 0>
     void insert(InputIt first, InputIt last);
 
     /// @brief 插入初始化列表中的元素
@@ -576,8 +566,7 @@ public:
     /// @param key 键
     /// @return 包含 lower_bound 和 upper_bound 的 pair（multimap
     /// 中范围可能包含多个元素）
-    std::pair<const_iterator, const_iterator> equal_range(
-        const key_type& key) const;
+    std::pair<const_iterator, const_iterator> equal_range(const key_type& key) const;
 
     /// @brief 返回第一个不小于指定键的元素迭代器
     /// @param key 键
@@ -620,8 +609,7 @@ private:
     /// @param right 右边界索引
     /// @param depth 当前深度（用于确定节点颜色）
     /// @return 构建的子树根节点
-    Node* build_tree(std::vector<value_type>& vec, int left, int right,
-                     size_type depth);
+    Node* build_tree(std::vector<value_type>& vec, int left, int right, size_type depth);
 
     /// @brief 递归拷贝节点
     /// @param cur 当前节点
@@ -691,8 +679,8 @@ private:
 
 private:
     /// @brief 节点分配器类型（从 value_type 分配器 rebind 而来）
-    using node_alloc_type = typename std::allocator_traits<
-        allocator_type>::template rebind_alloc<Node>;
+    using node_alloc_type =
+        typename std::allocator_traits<allocator_type>::template rebind_alloc<Node>;
 
     /// @brief 节点分配器的 traits 类型
     using alloc_traits = std::allocator_traits<node_alloc_type>;
@@ -707,14 +695,12 @@ private:
 
 //------------------------- iterator 实现 -----------------------------
 template <typename K, typename T, typename Compare, typename Allocator>
-multimap<K, T, Compare, Allocator>::iterator::iterator()
-    : m_node(nullptr), m_container(nullptr)
+multimap<K, T, Compare, Allocator>::iterator::iterator() : m_node(nullptr), m_container(nullptr)
 {
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
-multimap<K, T, Compare, Allocator>::iterator::iterator(Node*     node,
-                                                       multimap* container)
+multimap<K, T, Compare, Allocator>::iterator::iterator(Node* node, multimap* container)
     : m_node(node), m_container(container)
 {
 }
@@ -819,15 +805,13 @@ multimap<K, T, Compare, Allocator>::iterator::operator--(int)
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
-inline bool multimap<K, T, Compare, Allocator>::iterator::operator==(
-    const iterator& other) const
+inline bool multimap<K, T, Compare, Allocator>::iterator::operator==(const iterator& other) const
 {
     return m_node == other.m_node;
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
-inline bool multimap<K, T, Compare, Allocator>::iterator::operator!=(
-    const iterator& other) const
+inline bool multimap<K, T, Compare, Allocator>::iterator::operator!=(const iterator& other) const
 {
     return m_node != other.m_node;
 }
@@ -840,23 +824,21 @@ multimap<K, T, Compare, Allocator>::const_iterator::const_iterator()
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
-multimap<K, T, Compare, Allocator>::const_iterator::const_iterator(
-    Node* node, const multimap* container)
+multimap<K, T, Compare, Allocator>::const_iterator::const_iterator(Node*           node,
+                                                                   const multimap* container)
     : m_node(node), m_container(container)
 {
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
-multimap<K, T, Compare, Allocator>::const_iterator::const_iterator(
-    const const_iterator& other)
+multimap<K, T, Compare, Allocator>::const_iterator::const_iterator(const const_iterator& other)
     : m_node(other.m_node), m_container(other.m_container)
 {
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
 inline typename multimap<K, T, Compare, Allocator>::const_iterator&
-multimap<K, T, Compare, Allocator>::const_iterator::operator=(
-    const const_iterator& other)
+multimap<K, T, Compare, Allocator>::const_iterator::operator=(const const_iterator& other)
 {
     m_node      = other.m_node;
     m_container = other.m_container;
@@ -864,8 +846,7 @@ multimap<K, T, Compare, Allocator>::const_iterator::operator=(
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
-multimap<K, T, Compare, Allocator>::const_iterator::const_iterator(
-    const iterator& other)
+multimap<K, T, Compare, Allocator>::const_iterator::const_iterator(const iterator& other)
     : m_node(other.m_node), m_container(other.m_container)
 {
 }
@@ -913,8 +894,7 @@ multimap<K, T, Compare, Allocator>::const_iterator::operator--()
 {
     if (m_node == m_container->m_nil)
     {
-        m_node =
-            const_cast<Node*>(m_container->max_node(m_container->m_root));
+        m_node = const_cast<Node*>(m_container->max_node(m_container->m_root));
         return *this;
     }
 
@@ -997,10 +977,8 @@ multimap<K, T, Compare, Allocator>::multimap(const Compare& comp)
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
-template <typename InputIt,
-          std::enable_if_t<!std::is_integral<InputIt>::value, int>>
-multimap<K, T, Compare, Allocator>::multimap(InputIt first, InputIt last,
-                                             const Compare& comp)
+template <typename InputIt, std::enable_if_t<!std::is_integral<InputIt>::value, int>>
+multimap<K, T, Compare, Allocator>::multimap(InputIt first, InputIt last, const Compare& comp)
     : m_root(nullptr), m_nil(nullptr), m_size(0), m_comp(comp), m_node_alloc()
 {
     m_nil = alloc_traits::allocate(m_node_alloc, 1);
@@ -1016,8 +994,8 @@ multimap<K, T, Compare, Allocator>::multimap(InputIt first, InputIt last,
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
-multimap<K, T, Compare, Allocator>::multimap(
-    std::initializer_list<value_type> ilist, const Compare& comp)
+multimap<K, T, Compare, Allocator>::multimap(std::initializer_list<value_type> ilist,
+                                             const Compare&                    comp)
     : m_root(nullptr), m_nil(nullptr), m_size(0), m_comp(comp), m_node_alloc()
 {
     m_nil = alloc_traits::allocate(m_node_alloc, 1);
@@ -1033,8 +1011,7 @@ multimap<K, T, Compare, Allocator>::multimap(
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
-multimap<K, T, Compare, Allocator>::multimap(
-    const std::vector<value_type>& vec, unsorted_tag)
+multimap<K, T, Compare, Allocator>::multimap(const std::vector<value_type>& vec, unsorted_tag)
     : m_root(nullptr), m_nil(nullptr), m_size(0), m_comp(), m_node_alloc()
 {
     m_nil = alloc_traits::allocate(m_node_alloc, 1);
@@ -1050,13 +1027,8 @@ multimap<K, T, Compare, Allocator>::multimap(
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
-multimap<K, T, Compare, Allocator>::multimap(
-    const std::vector<value_type>& vec, sorted_tag)
-    : m_root(nullptr),
-      m_nil(nullptr),
-      m_size(vec.size()),
-      m_comp(),
-      m_node_alloc()
+multimap<K, T, Compare, Allocator>::multimap(const std::vector<value_type>& vec, sorted_tag)
+    : m_root(nullptr), m_nil(nullptr), m_size(vec.size()), m_comp(), m_node_alloc()
 {
     m_nil = alloc_traits::allocate(m_node_alloc, 1);
     alloc_traits::construct(m_node_alloc, m_nil);
@@ -1066,14 +1038,8 @@ multimap<K, T, Compare, Allocator>::multimap(
     m_nil->right  = m_nil;
 
     std::vector<value_type> vec_copy(vec);
-    m_root = build_tree(vec_copy, 0, static_cast<int>(vec_copy.size()) - 1, 0);
+    m_root         = build_tree(vec_copy, 0, static_cast<int>(vec_copy.size()) - 1, 0);
     m_root->parent = m_nil;
-
-    if (vec.empty())
-    {
-        m_root->left  = m_nil;
-        m_root->right = m_nil;
-    }
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
@@ -1121,19 +1087,24 @@ multimap<K, T, Compare, Allocator>::~multimap()
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
-inline multimap<K, T, Compare, Allocator>&
-multimap<K, T, Compare, Allocator>::operator=(const multimap& other)
+inline multimap<K, T, Compare, Allocator>& multimap<K, T, Compare, Allocator>::operator=(
+    const multimap& other)
 {
     if (this == &other)
         return *this;
     clear();
-    insert(other.begin(), other.end());
+    // insert(other.begin(), other.end());
+    m_root         = copy_node(other.m_root, other);
+    m_root->parent = m_nil;
+    m_size         = other.m_size;
+    m_comp         = other.m_comp;
+    m_node_alloc   = other.m_node_alloc;
     return *this;
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
-inline multimap<K, T, Compare, Allocator>&
-multimap<K, T, Compare, Allocator>::operator=(multimap&& other) noexcept
+inline multimap<K, T, Compare, Allocator>& multimap<K, T, Compare, Allocator>::operator=(
+    multimap&& other) noexcept
 {
     if (this == &other)
         return *this;
@@ -1157,8 +1128,7 @@ multimap<K, T, Compare, Allocator>::operator=(multimap&& other) noexcept
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
-inline multimap<K, T, Compare, Allocator>&
-multimap<K, T, Compare, Allocator>::operator=(
+inline multimap<K, T, Compare, Allocator>& multimap<K, T, Compare, Allocator>::operator=(
     std::initializer_list<value_type> ilist)
 {
     clear();
@@ -1349,8 +1319,7 @@ multimap<K, T, Compare, Allocator>::insert(value_type&& value)
 
 template <typename K, typename T, typename Compare, typename Allocator>
 inline typename multimap<K, T, Compare, Allocator>::iterator
-multimap<K, T, Compare, Allocator>::insert(const_iterator    pos,
-                                           const value_type& value)
+multimap<K, T, Compare, Allocator>::insert(const_iterator pos, const value_type& value)
 {
     value_type val = value;
     return insert(pos, std::move(val));
@@ -1358,8 +1327,7 @@ multimap<K, T, Compare, Allocator>::insert(const_iterator    pos,
 
 template <typename K, typename T, typename Compare, typename Allocator>
 inline typename multimap<K, T, Compare, Allocator>::iterator
-multimap<K, T, Compare, Allocator>::insert(const_iterator pos,
-                                           value_type&&   value)
+multimap<K, T, Compare, Allocator>::insert(const_iterator pos, value_type&& value)
 {
     // 默认从根节点开始比较
     Node* parent = m_nil;
@@ -1413,18 +1381,15 @@ multimap<K, T, Compare, Allocator>::insert(const_iterator pos,
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
-template <typename InputIt,
-          std::enable_if_t<!std::is_integral<InputIt>::value, int>>
-inline void multimap<K, T, Compare, Allocator>::insert(InputIt first,
-                                                       InputIt last)
+template <typename InputIt, std::enable_if_t<!std::is_integral<InputIt>::value, int>>
+inline void multimap<K, T, Compare, Allocator>::insert(InputIt first, InputIt last)
 {
     for (; first != last; ++first)
         insert(*first);
 }
 
 template <typename K, typename T, typename Compare, typename Allocator>
-inline void multimap<K, T, Compare, Allocator>::insert(
-    std::initializer_list<value_type> ilist)
+inline void multimap<K, T, Compare, Allocator>::insert(std::initializer_list<value_type> ilist)
 {
     for (const value_type& val : ilist)
         insert(val);
@@ -1494,11 +1459,7 @@ multimap<K, T, Compare, Allocator>::erase(const_iterator pos)
         fill_node      = node_to_replace->right;
 
         // 把 node_to_replace 分离出来，并用 fill_node 去代替它
-        if (node_to_replace->parent == cur)
-        {
-            // fill_node->parent = node_to_replace;
-        }
-        else
+        if (node_to_replace->parent != cur)
         {
             if (node_to_replace->parent->left == node_to_replace)
             {
@@ -1562,8 +1523,7 @@ multimap<K, T, Compare, Allocator>::erase(const key_type& key)
 
 template <typename K, typename T, typename Compare, typename Allocator>
 inline typename multimap<K, T, Compare, Allocator>::iterator
-multimap<K, T, Compare, Allocator>::erase(const_iterator first,
-                                          const_iterator last)
+multimap<K, T, Compare, Allocator>::erase(const_iterator first, const_iterator last)
 {
     iterator ret(last.m_node, const_cast<multimap*>(this));
     while (first != last)
@@ -1583,8 +1543,7 @@ inline void multimap<K, T, Compare, Allocator>::swap(multimap& other)
 
 template <typename K, typename T, typename Compare, typename Allocator>
 template <typename Compare2>
-inline void multimap<K, T, Compare, Allocator>::merge(
-    multimap<K, T, Compare2, Allocator>& other)
+inline void multimap<K, T, Compare, Allocator>::merge(multimap<K, T, Compare2, Allocator>& other)
 {
     insert(other.begin(), other.end());
 }
@@ -1594,7 +1553,7 @@ inline typename multimap<K, T, Compare, Allocator>::size_type
 multimap<K, T, Compare, Allocator>::count(const key_type& key) const
 {
     // multimap: 利用 equal_range 统计指定键的元素数量
-    auto     range  = equal_range(key);
+    auto      range  = equal_range(key);
     size_type result = 0;
     for (auto it = range.first; it != range.second; ++it)
         result++;
@@ -1619,8 +1578,7 @@ multimap<K, T, Compare, Allocator>::find(const key_type& key) const
 
 template <typename K, typename T, typename Compare, typename Allocator>
 inline typename multimap<K, T, Compare, Allocator>::Node*
-multimap<K, T, Compare, Allocator>::build_tree(std::vector<value_type>& vec,
-                                               int left, int right,
+multimap<K, T, Compare, Allocator>::build_tree(std::vector<value_type>& vec, int left, int right,
                                                size_type depth)
 {
     if (vec.empty() || left > right)
@@ -1646,8 +1604,7 @@ multimap<K, T, Compare, Allocator>::build_tree(std::vector<value_type>& vec,
 
 template <typename K, typename T, typename Compare, typename Allocator>
 inline typename multimap<K, T, Compare, Allocator>::Node*
-multimap<K, T, Compare, Allocator>::copy_node(Node*            cur,
-                                              const multimap& other)
+multimap<K, T, Compare, Allocator>::copy_node(Node* cur, const multimap& other)
 {
     if (cur == other.m_nil)
         return m_nil;
@@ -1760,8 +1717,7 @@ inline void multimap<K, T, Compare, Allocator>::erase_balance(Node* node)
                 sibling = parent->right;
             }
 
-            if (sibling->left->color == Color::BLACK &&
-                sibling->right->color == Color::BLACK)
+            if (sibling->left->color == Color::BLACK && sibling->right->color == Color::BLACK)
             {
                 sibling->color = Color::RED;
                 node           = parent;
@@ -1795,8 +1751,7 @@ inline void multimap<K, T, Compare, Allocator>::erase_balance(Node* node)
                 sibling = parent->left;
             }
 
-            if (sibling->right->color == Color::BLACK &&
-                sibling->left->color == Color::BLACK)
+            if (sibling->right->color == Color::BLACK && sibling->left->color == Color::BLACK)
             {
                 sibling->color = Color::RED;
                 node           = parent;
@@ -2077,8 +2032,8 @@ inline bool multimap<K, T, Compare, Allocator>::validate_tree() const
 
 #ifndef NDEBUG
 template <typename K, typename T, typename Compare, typename Allocator>
-inline bool multimap<K, T, Compare, Allocator>::validate_properties(
-    Node* node, size_type& black_height) const
+inline bool multimap<K, T, Compare, Allocator>::validate_properties(Node*      node,
+                                                                    size_type& black_height) const
 {
     if (node == m_nil)
     {
