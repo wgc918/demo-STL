@@ -22,13 +22,6 @@
 //     - 提供双向迭代器支持
 //     - 符合 STL 容器规范
 //
-// 常用操作:
-//     - 插入: insert(), emplace(), emplace_hint()
-//     - 删除: erase(), clear()
-//     - 查找: find(), count(), lower_bound(), upper_bound(), equal_range()
-//     - 遍历: begin(), end(), iterator, const_iterator
-//     - 容量: size(), empty(), max_size()
-//
 // 使用场景:
 //     - 需要存储可重复值的集合
 //     - 需要统计元素出现次数
@@ -101,8 +94,7 @@ namespace demo
 /// @tparam Key 键类型，必须满足可比较（Compare）要求
 /// @tparam Compare 比较函数对象类型，用于键的比较，默认为 std::less<Key>
 /// @tparam Allocator 分配器类型，用于内存管理，默认为 std::allocator<Key>
-template <typename Key, typename Compare = std::less<Key>,
-          typename Allocator = std::allocator<Key>>
+template <typename Key, typename Compare = std::less<Key>, typename Allocator = std::allocator<Key>>
 class multiset;
 
 /// @brief 比较两个 multiset 是否相等
@@ -177,23 +169,22 @@ private:
         Node*      parent;  ///< 父节点指针
         Color      color;   ///< 节点颜色
 
-        /// @brief 默认构造函数，创建空节点
-        Node()
-            : left(nullptr),
-              right(nullptr),
-              parent(nullptr),
-              color(Color::BLACK)
+        /// @brief 默认构造函数，创建空节点(默认黑色)
+        Node() : key(), left(nullptr), right(nullptr), parent(nullptr), color(Color::BLACK)
         {
         }
 
-        /// @brief 构造函数，从键创建节点
+        /// @brief 构造函数，从键创建节点(默认黑色)
         /// @param k 键值
-        explicit Node(value_type k)
-            : key(std::move(k)),
-              left(nullptr),
-              right(nullptr),
-              parent(nullptr),
-              color(Color::BLACK)
+        explicit Node(value_type&& k)
+            : key(std::move(k)), left(nullptr), right(nullptr), parent(nullptr), color(Color::BLACK)
+        {
+        }
+
+        /// @brief 构造函数，从键创建节点(默认黑色)
+        /// @param k 键值
+        explicit Node(const value_type& k)
+            : key(k), left(nullptr), right(nullptr), parent(nullptr), color(Color::BLACK)
         {
         }
     };
@@ -208,20 +199,21 @@ public:
         friend class multiset;
 
     public:
-        using iterator_category =
-            std::bidirectional_iterator_tag;          ///< 迭代器类别（双向迭代器）
-        using value_type      = multiset::value_type;  ///< 元素类型
-        using difference_type = multiset::difference_type;  ///< 差值类型
-        using pointer         = multiset::pointer;          ///< 元素指针类型
-        using reference       = multiset::reference;        ///< 元素引用类型
+        using iterator_category = std::bidirectional_iterator_tag;  ///< 迭代器类别（双向迭代器）
+        using value_type        = multiset::value_type;             ///< 元素类型
+        using difference_type   = multiset::difference_type;        ///< 差值类型
+        using pointer           = multiset::pointer;                ///< 元素指针类型
+        using reference         = multiset::reference;              ///< 元素引用类型
 
     public:
         /// @brief 默认构造函数，创建空迭代器
         iterator();
+
         /// @brief 构造函数，从节点指针和容器指针创建迭代器
         /// @param n 节点指针
         /// @param container multiset 容器指针
         explicit iterator(Node* n, multiset* container);
+
         /// @brief 拷贝构造函数
         /// @param other 要拷贝的迭代器
         iterator(const iterator& other);
@@ -229,6 +221,7 @@ public:
         /// @brief 箭头操作符，返回指向元素的指针
         /// @return 指向键值的指针
         pointer operator->() const;
+
         /// @brief 解引用操作符，返回元素的引用
         /// @return 键值的引用
         reference operator*() const;
@@ -236,12 +229,15 @@ public:
         /// @brief 前置自增，移动到下一个元素（按中序遍历顺序）
         /// @return 自增后的迭代器引用
         iterator& operator++();
+
         /// @brief 前置自减，移动到前一个元素（按中序遍历顺序）
         /// @return 自减后的迭代器引用
         iterator& operator--();
+
         /// @brief 后置自增，移动到下一个元素
         /// @return 自增前的迭代器副本
         iterator operator++(int);
+
         /// @brief 后置自减，移动到前一个元素
         /// @return 自减前的迭代器副本
         iterator operator--(int);
@@ -250,6 +246,7 @@ public:
         /// @param other 要比较的另一个迭代器
         /// @return 如果相等返回 true，否则返回 false
         bool operator==(const iterator& other) const;
+
         /// @brief 比较两个迭代器是否不相等
         /// @param other 要比较的另一个迭代器
         /// @return 如果不相等返回 true，否则返回 false
@@ -267,23 +264,25 @@ public:
         friend class multiset;
 
     public:
-        using iterator_category =
-            std::bidirectional_iterator_tag;          ///< 迭代器类别（双向迭代器）
-        using value_type      = multiset::value_type;  ///< 元素类型
-        using difference_type = multiset::difference_type;  ///< 差值类型
-        using pointer         = multiset::const_pointer;    ///< 常量元素指针类型
-        using reference       = multiset::const_reference;  ///< 常量元素引用类型
+        using iterator_category = std::bidirectional_iterator_tag;  ///< 迭代器类别（双向迭代器）
+        using value_type        = multiset::value_type;             ///< 元素类型
+        using difference_type   = multiset::difference_type;        ///< 差值类型
+        using pointer           = multiset::const_pointer;          ///< 常量元素指针类型
+        using reference         = multiset::const_reference;        ///< 常量元素引用类型
 
     public:
         /// @brief 默认构造函数，创建空迭代器
         const_iterator();
+
         /// @brief 构造函数，从节点指针和容器指针创建迭代器
         /// @param n 节点指针
         /// @param container multiset 容器指针（const）
         explicit const_iterator(Node* n, const multiset* container);
+
         /// @brief 从非 const 迭代器构造
         /// @param other 非 const 迭代器
         const_iterator(const iterator& other);
+
         /// @brief 拷贝构造函数
         /// @param other 要拷贝的常量迭代器
         const_iterator(const const_iterator& other);
@@ -291,6 +290,7 @@ public:
         /// @brief 箭头操作符，返回指向元素的常量指针
         /// @return 指向键值的常量指针
         pointer operator->() const;
+
         /// @brief 解引用操作符，返回元素的常量引用
         /// @return 键值的常量引用
         reference operator*() const;
@@ -298,12 +298,15 @@ public:
         /// @brief 前置自增，移动到下一个元素（按中序遍历顺序）
         /// @return 自增后的迭代器引用
         const_iterator& operator++();
+
         /// @brief 前置自减，移动到前一个元素（按中序遍历顺序）
         /// @return 自减后的迭代器引用
         const_iterator& operator--();
+
         /// @brief 后置自增，移动到下一个元素
         /// @return 自增前的迭代器副本
         const_iterator operator++(int);
+
         /// @brief 后置自减，移动到前一个元素
         /// @return 自减前的迭代器副本
         const_iterator operator--(int);
@@ -312,6 +315,7 @@ public:
         /// @param other 要比较的另一个迭代器
         /// @return 如果相等返回 true，否则返回 false
         bool operator==(const const_iterator& other) const;
+
         /// @brief 比较两个迭代器是否不相等
         /// @param other 要比较的另一个迭代器
         /// @return 如果不相等返回 true，否则返回 false
@@ -332,36 +336,42 @@ public:
 
     /// @brief 默认构造函数，创建空 multiset
     multiset();
+
     /// @brief 构造函数，使用指定的比较函数创建空 multiset
     /// @param comp 比较函数对象
     explicit multiset(const Compare& comp);
+
     /// @brief 非标准接口：从已排序的 vector 构造 multiset（优化版本）
     /// @param values 已排序的键值 vector
     /// @param tag 已排序标记（sorted_tag）
     multiset(std::vector<value_type>& values, sorted_tag);
+
     /// @brief 非标准接口：从未排序的 vector 构造 multiset
     /// @param values 未排序的键值 vector
     /// @param tag 未排序标记（unsorted_tag）
     multiset(std::vector<value_type>& values, unsorted_tag);
+
     /// @brief 范围构造函数，复制 [first, last) 范围内的元素
     /// @tparam InputIt 输入迭代器类型
     /// @param first 范围起始迭代器
     /// @param last 范围结束迭代器
     /// @param comp 比较函数对象，默认为 Compare()
-    template <typename InputIt,
-              std::enable_if_t<!std::is_integral<InputIt>::value, int> = 0>
+    template <typename InputIt, std::enable_if_t<!std::is_integral<InputIt>::value, int> = 0>
     multiset(InputIt first, InputIt last, const Compare& comp = Compare());
+
     /// @brief 初始化列表构造函数
     /// @param ilist 初始化列表
     /// @param comp 比较函数对象，默认为 Compare()
-    multiset(std::initializer_list<value_type> ilist,
-             const Compare&                    comp = Compare());
+    multiset(std::initializer_list<value_type> ilist, const Compare& comp = Compare());
+
     /// @brief 拷贝构造函数
     /// @param other 要拷贝的 multiset
     multiset(const multiset& other);
+
     /// @brief 移动构造函数
     /// @param other 要移动的 multiset
     multiset(multiset&& other) noexcept;
+
     /// @brief 析构函数，释放所有资源
     ~multiset();
 
@@ -369,10 +379,12 @@ public:
     /// @param other 要拷贝的 multiset
     /// @return 当前 multiset 的引用
     multiset& operator=(const multiset& other);
+
     /// @brief 移动赋值运算符
     /// @param other 要移动的 multiset
     /// @return 当前 multiset 的引用
     multiset& operator=(multiset&& other) noexcept;
+
     /// @brief 初始化列表赋值运算符
     /// @param ilist 初始化列表
     /// @return 当前 multiset 的引用
@@ -381,6 +393,7 @@ public:
     /// @brief 获取分配器
     /// @return 分配器对象
     allocator_type get_allocator() const;
+
     /// @brief 获取键比较函数对象
     /// @return 比较函数对象
     key_compare key_comp() const;
@@ -390,36 +403,47 @@ public:
     /// @brief 返回指向第一个元素的迭代器
     /// @return 指向最小键元素的迭代器
     iterator begin() noexcept;
+
     /// @brief 返回指向第一个元素的常量迭代器
     /// @return 指向最小键元素的常量迭代器
     const_iterator begin() const noexcept;
+
     /// @brief 返回指向第一个元素的常量迭代器（const 版本）
     /// @return 指向最小键元素的常量迭代器
     const_iterator cbegin() const noexcept;
+
     /// @brief 返回指向末尾的迭代器
     /// @return 指向末尾的迭代器（不指向任何元素）
     iterator end() noexcept;
+
     /// @brief 返回指向末尾的常量迭代器
     /// @return 指向末尾的常量迭代器（不指向任何元素）
     const_iterator end() const noexcept;
+
     /// @brief 返回指向末尾的常量迭代器（const 版本）
     /// @return 指向末尾的常量迭代器（不指向任何元素）
     const_iterator cend() const noexcept;
+
     /// @brief 返回指向最后一个元素的反向迭代器
     /// @return 指向最大键元素的反向迭代器
     reverse_iterator rbegin() noexcept;
+
     /// @brief 返回指向最后一个元素的常量反向迭代器
     /// @return 指向最大键元素的常量反向迭代器
     const_reverse_iterator rbegin() const noexcept;
+
     /// @brief 返回指向最后一个元素的常量反向迭代器（const 版本）
     /// @return 指向最大键元素的常量反向迭代器
     const_reverse_iterator crbegin() const noexcept;
+
     /// @brief 返回指向第一个元素之前位置的反向迭代器
     /// @return 指向最小键元素之前位置的反向迭代器
     reverse_iterator rend() noexcept;
+
     /// @brief 返回指向第一个元素之前位置的常量反向迭代器
     /// @return 指向最小键元素之前位置的常量反向迭代器
     const_reverse_iterator rend() const noexcept;
+
     /// @brief 返回指向第一个元素之前位置的常量反向迭代器（const 版本）
     /// @return 指向最小键元素之前位置的常量反向迭代器
     const_reverse_iterator crend() const noexcept;
@@ -429,9 +453,11 @@ public:
     /// @brief 返回 multiset 中的元素数量
     /// @return 元素数量（包含重复键的元素）
     size_type size() const noexcept;
+
     /// @brief 检查 multiset 是否为空
     /// @return 如果为空返回 true，否则返回 false
     bool empty() const noexcept;
+
     /// @brief 返回 multiset 能容纳的最大元素数量
     /// @return 最大元素数量
     size_type max_size() const noexcept;
@@ -440,31 +466,36 @@ public:
 
     /// @brief 清空 multiset，删除所有元素
     void clear() noexcept;
+
     /// @brief 插入元素（拷贝版本）
     /// @param value 要插入的键值
     /// @return 指向插入元素的迭代器（multiset 总是插入成功）
     iterator insert(const value_type& value);
+
     /// @brief 插入元素（移动版本）
     /// @param value 要插入的键值（右值）
     /// @return 指向插入元素的迭代器（multiset 总是插入成功）
     iterator insert(value_type&& value);
+
     /// @brief 在指定位置附近插入元素（拷贝版本）
     /// @param hint 提示位置（可能优化插入性能）
     /// @param value 要插入的键值
     /// @return 指向插入元素的迭代器
     iterator insert(const_iterator hint, const value_type& value);
+
     /// @brief 在指定位置附近插入元素（移动版本）
     /// @param hint 提示位置（可能优化插入性能）
     /// @param value 要插入的键值（右值）
     /// @return 指向插入元素的迭代器
     iterator insert(const_iterator hint, value_type&& value);
+
     /// @brief 插入 [first, last) 范围内的元素
     /// @tparam InputIt 输入迭代器类型
     /// @param first 范围起始迭代器
     /// @param last 范围结束迭代器
-    template <typename InputIt,
-              std::enable_if_t<!std::is_integral<InputIt>::value, int> = 0>
+    template <typename InputIt, std::enable_if_t<!std::is_integral<InputIt>::value, int> = 0>
     void insert(InputIt first, InputIt last);
+
     /// @brief 插入初始化列表中的元素
     /// @param ilist 初始化列表
     void insert(std::initializer_list<value_type> ilist);
@@ -475,6 +506,7 @@ public:
     /// @return 指向插入元素的迭代器（multiset 总是插入成功）
     template <typename... Args>
     iterator emplace(Args&&... args);
+
     /// @brief 在指定位置附近原地构造元素并插入
     /// @tparam Args 构造参数类型
     /// @param hint 提示位置
@@ -487,11 +519,13 @@ public:
     /// @param pos 要删除的元素位置
     /// @return 指向被删除元素之后的迭代器，如果删除的是 end() 则返回 end()
     iterator erase(const_iterator pos);
+
     /// @brief 删除 [first, last) 范围内的元素
     /// @param first 范围起始迭代器
     /// @param last 范围结束迭代器
     /// @return 指向最后一个被删除元素之后的迭代器
     iterator erase(const_iterator first, const_iterator last);
+
     /// @brief 删除指定键的所有元素
     /// @param key 要删除的键
     /// @return 被删除的元素数量（multiset 中可能删除多个）
@@ -513,45 +547,52 @@ public:
     /// @param key 要查找的键
     /// @return 指向找到的第一个元素的迭代器，如果未找到则返回 end()
     iterator find(const key_type& key);
+
     /// @brief 查找指定键的第一个元素（const 版本）
     /// @param key 要查找的键
     /// @return 指向找到的第一个元素的常量迭代器，如果未找到则返回 cend()
     const_iterator find(const key_type& key) const;
+
     /// @brief 统计指定键的元素数量
     /// @param key 要查找的键
     /// @return 指定键的元素数量（multiset 中可能大于 1）
     size_type count(const key_type& key) const;
+
     /// @brief 返回第一个不小于指定键的元素迭代器
     /// @param key 键
     /// @return 指向第一个不小于 key 的元素迭代器，如果所有元素都小于 key 则返回
     /// end()
     iterator lower_bound(const key_type& key);
+
     /// @brief 返回第一个不小于指定键的元素迭代器（const 版本）
     /// @param key 键
     /// @return 指向第一个不小于 key 的元素常量迭代器，如果所有元素都小于 key
     /// 则返回 cend()
     const_iterator lower_bound(const key_type& key) const;
+
     /// @brief 返回第一个大于指定键的元素迭代器
     /// @param key 键
     /// @return 指向第一个大于 key 的元素迭代器，如果所有元素都小于等于 key
     /// 则返回 end()
     iterator upper_bound(const key_type& key);
+
     /// @brief 返回第一个大于指定键的元素迭代器（const 版本）
     /// @param key 键
     /// @return 指向第一个大于 key 的元素常量迭代器，如果所有元素都小于等于 key
     /// 则返回 cend()
     const_iterator upper_bound(const key_type& key) const;
+
     /// @brief 返回等于指定键的元素范围
     /// @param key 键
     /// @return 包含 lower_bound 和 upper_bound 的 pair（multiset
     /// 中范围可能包含多个元素）
     std::pair<iterator, iterator> equal_range(const key_type& key);
+
     /// @brief 返回等于指定键的元素范围（const 版本）
     /// @param key 键
     /// @return 包含 lower_bound 和 upper_bound 的 pair（multiset
     /// 中范围可能包含多个元素）
-    std::pair<const_iterator, const_iterator> equal_range(
-        const key_type& key) const;
+    std::pair<const_iterator, const_iterator> equal_range(const key_type& key) const;
 
 #ifndef NDEBUG
     /// @brief 验证红黑树的性质（调试用）
@@ -566,50 +607,61 @@ private:
     /// @param right 右边界索引
     /// @param depth 当前深度（用于确定节点颜色）
     /// @return 构建的子树根节点
-    Node* build_tree(std::vector<value_type>& values, int left, int right,
-                     size_type depth);
+    Node* build_tree(std::vector<value_type>& values, int left, int right, size_type depth);
+
     /// @brief 递归拷贝节点
     /// @param cur 当前节点
     /// @param other 源 multiset
     /// @return 拷贝后的节点
     Node* copy_node(Node* cur, const multiset& other);
+
     /// @brief 递归销毁节点
     /// @param node 要销毁的节点
     void destroy(Node* node);
+
     /// @brief 插入后平衡红黑树
     /// @param node 新插入的节点
     void insert_balance(Node* node);
+
     /// @brief 删除后平衡红黑树
     /// @param node 替换被删除节点的节点
     void erase_balance(Node* node);
+
     /// @brief 左旋操作
     /// @param node 旋转节点
     /// @return 旋转后的子树根节点
     Node* rotate_left(Node* node);
+
     /// @brief 右旋操作
     /// @param node 旋转节点
     /// @return 旋转后的子树根节点
     Node* rotate_right(Node* node);
+
     /// @brief 查找指定键的第一个节点
     /// @param key 要查找的键
     /// @return 找到的节点，如果未找到返回 m_nil
     Node* find_node(const key_type& key);
+
     /// @brief 查找指定键的第一个节点（const 版本）
     /// @param key 要查找的键
     /// @return 找到的节点，如果未找到返回 m_nil
     const Node* find_node(const key_type& key) const;
+
     /// @brief 获取子树中的最小节点
     /// @param node 子树根节点
     /// @return 子树中的最小节点
     Node* min_node(Node* node);
+
     /// @brief 获取子树中的最小节点（const 版本）
     /// @param node 子树根节点
     /// @return 子树中的最小节点
     const Node* min_node(const Node* node) const;
+
     /// @brief 获取子树中的最大节点
     /// @param node 子树根节点
     /// @return 子树中的最大节点
     Node* max_node(Node* node);
+
     /// @brief 获取子树中的最大节点（const 版本）
     /// @param node 子树根节点
     /// @return 子树中的最大节点
@@ -625,8 +677,7 @@ private:
 
 private:
     /// @brief 节点分配器类型（从 value_type 分配器 rebind 而来）
-    using node_alloc_type =
-        typename std::allocator_traits<Allocator>::template rebind_alloc<Node>;
+    using node_alloc_type = typename std::allocator_traits<Allocator>::template rebind_alloc<Node>;
     /// @brief 节点分配器的 traits 类型
     using alloc_traits = std::allocator_traits<node_alloc_type>;
 
@@ -639,14 +690,12 @@ private:
 };
 
 template <typename Key, typename Compare, typename Allocator>
-multiset<Key, Compare, Allocator>::iterator::iterator()
-    : m_node(nullptr), m_container(nullptr)
+multiset<Key, Compare, Allocator>::iterator::iterator() : m_node(nullptr), m_container(nullptr)
 {
 }
 
 template <typename Key, typename Compare, typename Allocator>
-multiset<Key, Compare, Allocator>::iterator::iterator(Node*     n,
-                                                      multiset* container)
+multiset<Key, Compare, Allocator>::iterator::iterator(Node* n, multiset* container)
     : m_node(n), m_container(container)
 {
 }
@@ -742,15 +791,13 @@ multiset<Key, Compare, Allocator>::iterator::operator--(int)
 }
 
 template <typename Key, typename Compare, typename Allocator>
-inline bool multiset<Key, Compare, Allocator>::iterator::operator==(
-    const iterator& other) const
+inline bool multiset<Key, Compare, Allocator>::iterator::operator==(const iterator& other) const
 {
     return m_node == other.m_node;
 }
 
 template <typename Key, typename Compare, typename Allocator>
-inline bool multiset<Key, Compare, Allocator>::iterator::operator!=(
-    const iterator& other) const
+inline bool multiset<Key, Compare, Allocator>::iterator::operator!=(const iterator& other) const
 {
     return m_node != other.m_node;
 }
@@ -762,22 +809,20 @@ multiset<Key, Compare, Allocator>::const_iterator::const_iterator()
 }
 
 template <typename Key, typename Compare, typename Allocator>
-multiset<Key, Compare, Allocator>::const_iterator::const_iterator(
-    Node* n, const multiset* container)
+multiset<Key, Compare, Allocator>::const_iterator::const_iterator(Node*           n,
+                                                                  const multiset* container)
     : m_node(n), m_container(container)
 {
 }
 
 template <typename Key, typename Compare, typename Allocator>
-multiset<Key, Compare, Allocator>::const_iterator::const_iterator(
-    const const_iterator& other)
+multiset<Key, Compare, Allocator>::const_iterator::const_iterator(const const_iterator& other)
     : m_node(other.m_node), m_container(other.m_container)
 {
 }
 
 template <typename Key, typename Compare, typename Allocator>
-multiset<Key, Compare, Allocator>::const_iterator::const_iterator(
-    const iterator& other)
+multiset<Key, Compare, Allocator>::const_iterator::const_iterator(const iterator& other)
     : m_node(other.m_node), m_container(other.m_container)
 {
 }
@@ -907,10 +952,8 @@ multiset<Key, Compare, Allocator>::multiset(const Compare& comp)
 }
 
 template <typename Key, typename Compare, typename Allocator>
-template <typename InputIt,
-          std::enable_if_t<!std::is_integral<InputIt>::value, int>>
-multiset<Key, Compare, Allocator>::multiset(InputIt first, InputIt last,
-                                            const Compare& comp)
+template <typename InputIt, std::enable_if_t<!std::is_integral<InputIt>::value, int>>
+multiset<Key, Compare, Allocator>::multiset(InputIt first, InputIt last, const Compare& comp)
     : m_root(nullptr), m_nil(nullptr), m_size(0), m_comp(comp), m_node_alloc()
 {
     m_nil = alloc_traits::allocate(m_node_alloc, 1);
@@ -926,8 +969,8 @@ multiset<Key, Compare, Allocator>::multiset(InputIt first, InputIt last,
 }
 
 template <typename Key, typename Compare, typename Allocator>
-multiset<Key, Compare, Allocator>::multiset(
-    std::initializer_list<value_type> ilist, const Compare& comp)
+multiset<Key, Compare, Allocator>::multiset(std::initializer_list<value_type> ilist,
+                                            const Compare&                    comp)
     : m_root(nullptr), m_nil(nullptr), m_size(0), m_comp(comp), m_node_alloc()
 {
     m_nil = alloc_traits::allocate(m_node_alloc, 1);
@@ -943,8 +986,7 @@ multiset<Key, Compare, Allocator>::multiset(
 }
 
 template <typename Key, typename Compare, typename Allocator>
-multiset<Key, Compare, Allocator>::multiset(std::vector<value_type>& values,
-                                            unsorted_tag)
+multiset<Key, Compare, Allocator>::multiset(std::vector<value_type>& values, unsorted_tag)
     : m_root(nullptr), m_nil(nullptr), m_size(0), m_comp(), m_node_alloc()
 {
     m_nil = alloc_traits::allocate(m_node_alloc, 1);
@@ -960,13 +1002,8 @@ multiset<Key, Compare, Allocator>::multiset(std::vector<value_type>& values,
 }
 
 template <typename Key, typename Compare, typename Allocator>
-multiset<Key, Compare, Allocator>::multiset(std::vector<value_type>& values,
-                                            sorted_tag)
-    : m_root(nullptr),
-      m_nil(nullptr),
-      m_size(values.size()),
-      m_comp(),
-      m_node_alloc()
+multiset<Key, Compare, Allocator>::multiset(std::vector<value_type>& values, sorted_tag)
+    : m_root(nullptr), m_nil(nullptr), m_size(values.size()), m_comp(), m_node_alloc()
 {
     m_nil = alloc_traits::allocate(m_node_alloc, 1);
     alloc_traits::construct(m_node_alloc, m_nil);
@@ -974,14 +1011,8 @@ multiset<Key, Compare, Allocator>::multiset(std::vector<value_type>& values,
     m_nil->left   = m_nil;
     m_nil->right  = m_nil;
 
-    m_root = build_tree(values, 0, static_cast<int>(values.size()) - 1, 0);
+    m_root         = build_tree(values, 0, static_cast<int>(values.size()) - 1, 0);
     m_root->parent = m_nil;
-
-    if (values.empty())
-    {
-        m_root->left  = m_nil;
-        m_root->right = m_nil;
-    }
 }
 
 template <typename Key, typename Compare, typename Allocator>
@@ -1028,19 +1059,24 @@ multiset<Key, Compare, Allocator>::~multiset()
 }
 
 template <typename Key, typename Compare, typename Allocator>
-inline multiset<Key, Compare, Allocator>&
-multiset<Key, Compare, Allocator>::operator=(const multiset& other)
+inline multiset<Key, Compare, Allocator>& multiset<Key, Compare, Allocator>::operator=(
+    const multiset& other)
 {
     if (this == &other)
         return *this;
     clear();
-    insert(other.begin(), other.end());
+    // insert(other.begin(), other.end());
+    m_root         = copy_node(other.m_root, other);
+    m_root->parent = m_nil;
+    m_size         = other.m_size;
+    m_comp         = other.m_comp;
+    m_node_alloc   = other.m_node_alloc;
     return *this;
 }
 
 template <typename Key, typename Compare, typename Allocator>
-inline multiset<Key, Compare, Allocator>&
-multiset<Key, Compare, Allocator>::operator=(multiset&& other) noexcept
+inline multiset<Key, Compare, Allocator>& multiset<Key, Compare, Allocator>::operator=(
+    multiset&& other) noexcept
 {
     if (this == &other)
         return *this;
@@ -1064,8 +1100,7 @@ multiset<Key, Compare, Allocator>::operator=(multiset&& other) noexcept
 }
 
 template <typename Key, typename Compare, typename Allocator>
-inline multiset<Key, Compare, Allocator>&
-multiset<Key, Compare, Allocator>::operator=(
+inline multiset<Key, Compare, Allocator>& multiset<Key, Compare, Allocator>::operator=(
     std::initializer_list<value_type> ilist)
 {
     clear();
@@ -1262,8 +1297,7 @@ multiset<Key, Compare, Allocator>::insert(value_type&& value)
 
 template <typename Key, typename Compare, typename Allocator>
 inline typename multiset<Key, Compare, Allocator>::iterator
-multiset<Key, Compare, Allocator>::insert(const_iterator    pos,
-                                          const value_type& value)
+multiset<Key, Compare, Allocator>::insert(const_iterator pos, const value_type& value)
 {
     value_type val = value;
     return insert(pos, std::move(val));
@@ -1323,18 +1357,15 @@ multiset<Key, Compare, Allocator>::insert(const_iterator pos, value_type&& value
 }
 
 template <typename Key, typename Compare, typename Allocator>
-template <typename InputIt,
-          std::enable_if_t<!std::is_integral<InputIt>::value, int>>
-inline void multiset<Key, Compare, Allocator>::insert(InputIt first,
-                                                      InputIt last)
+template <typename InputIt, std::enable_if_t<!std::is_integral<InputIt>::value, int>>
+inline void multiset<Key, Compare, Allocator>::insert(InputIt first, InputIt last)
 {
     for (; first != last; ++first)
         insert(*first);
 }
 
 template <typename Key, typename Compare, typename Allocator>
-inline void multiset<Key, Compare, Allocator>::insert(
-    std::initializer_list<value_type> ilist)
+inline void multiset<Key, Compare, Allocator>::insert(std::initializer_list<value_type> ilist)
 {
     for (const value_type& val : ilist)
         insert(val);
@@ -1351,8 +1382,7 @@ multiset<Key, Compare, Allocator>::emplace(Args&&... args)
 template <typename Key, typename Compare, typename Allocator>
 template <typename... Args>
 inline typename multiset<Key, Compare, Allocator>::iterator
-multiset<Key, Compare, Allocator>::emplace_hint(const_iterator hint,
-                                                Args&&...     args)
+multiset<Key, Compare, Allocator>::emplace_hint(const_iterator hint, Args&&... args)
 {
     return insert(hint, value_type(std::forward<Args>(args)...));
 }
@@ -1418,10 +1448,7 @@ multiset<Key, Compare, Allocator>::erase(const_iterator pos)
         original_color = node_to_replace->color;
         fill_node      = node_to_replace->right;
 
-        if (node_to_replace->parent == cur)
-        {
-        }
-        else
+        if (node_to_replace->parent != cur)
         {
             if (node_to_replace->parent->left == node_to_replace)
             {
@@ -1467,8 +1494,7 @@ multiset<Key, Compare, Allocator>::erase(const_iterator pos)
 
 template <typename Key, typename Compare, typename Allocator>
 inline typename multiset<Key, Compare, Allocator>::iterator
-multiset<Key, Compare, Allocator>::erase(const_iterator first,
-                                         const_iterator last)
+multiset<Key, Compare, Allocator>::erase(const_iterator first, const_iterator last)
 {
     iterator ret(last.m_node, const_cast<multiset*>(this));
     while (first != last)
@@ -1505,15 +1531,14 @@ inline void multiset<Key, Compare, Allocator>::swap(multiset& other) noexcept
 
 template <typename Key, typename Compare, typename Allocator>
 template <typename Compare2>
-inline void multiset<Key, Compare, Allocator>::merge(
-    multiset<Key, Compare2, Allocator>& other)
+inline void multiset<Key, Compare, Allocator>::merge(multiset<Key, Compare2, Allocator>& other)
 {
     insert(other.begin(), other.end());
 }
 
 template <typename Key, typename Compare, typename Allocator>
-inline typename multiset<Key, Compare, Allocator>::iterator
-multiset<Key, Compare, Allocator>::find(const key_type& key)
+inline typename multiset<Key, Compare, Allocator>::iterator multiset<Key, Compare, Allocator>::find(
+    const key_type& key)
 {
     Node* cur = find_node(key);
     return iterator(cur, this);
@@ -1532,7 +1557,7 @@ inline typename multiset<Key, Compare, Allocator>::size_type
 multiset<Key, Compare, Allocator>::count(const key_type& key) const
 {
     // multiset: 利用 equal_range 统计指定键的元素数量
-    auto     range  = equal_range(key);
+    auto      range  = equal_range(key);
     size_type result = 0;
     for (auto it = range.first; it != range.second; ++it)
         result++;
@@ -1633,8 +1658,7 @@ multiset<Key, Compare, Allocator>::equal_range(const key_type& key) const
 
 template <typename Key, typename Compare, typename Allocator>
 inline typename multiset<Key, Compare, Allocator>::Node*
-multiset<Key, Compare, Allocator>::build_tree(std::vector<value_type>& values,
-                                              int left, int right,
+multiset<Key, Compare, Allocator>::build_tree(std::vector<value_type>& values, int left, int right,
                                               size_type depth)
 {
     if (values.empty() || left > right)
@@ -1660,8 +1684,7 @@ multiset<Key, Compare, Allocator>::build_tree(std::vector<value_type>& values,
 
 template <typename Key, typename Compare, typename Allocator>
 inline typename multiset<Key, Compare, Allocator>::Node*
-multiset<Key, Compare, Allocator>::copy_node(Node*             cur,
-                                             const multiset& other)
+multiset<Key, Compare, Allocator>::copy_node(Node* cur, const multiset& other)
 {
     if (cur == other.m_nil)
         return m_nil;
@@ -1774,8 +1797,7 @@ inline void multiset<Key, Compare, Allocator>::erase_balance(Node* m_node)
                 sibling = parent->right;
             }
 
-            if (sibling->left->color == Color::BLACK &&
-                sibling->right->color == Color::BLACK)
+            if (sibling->left->color == Color::BLACK && sibling->right->color == Color::BLACK)
             {
                 sibling->color = Color::RED;
                 m_node         = parent;
@@ -1809,8 +1831,7 @@ inline void multiset<Key, Compare, Allocator>::erase_balance(Node* m_node)
                 sibling = parent->left;
             }
 
-            if (sibling->right->color == Color::BLACK &&
-                sibling->left->color == Color::BLACK)
+            if (sibling->right->color == Color::BLACK && sibling->left->color == Color::BLACK)
             {
                 sibling->color = Color::RED;
                 m_node         = parent;
@@ -1986,8 +2007,8 @@ inline bool multiset<Key, Compare, Allocator>::validate_tree() const
 }
 
 template <typename Key, typename Compare, typename Allocator>
-inline bool multiset<Key, Compare, Allocator>::validate_properties(
-    Node* m_node, size_type& black_height) const
+inline bool multiset<Key, Compare, Allocator>::validate_properties(Node*      m_node,
+                                                                   size_type& black_height) const
 {
     if (m_node == m_nil)
     {
@@ -2018,13 +2039,6 @@ inline bool multiset<Key, Compare, Allocator>::validate_properties(
 }
 #endif
 
-/// @brief 比较两个 multiset 是否相等
-/// @tparam Key 键类型
-/// @tparam Compare 比较函数对象类型
-/// @tparam Allocator 分配器类型
-/// @param lhs 左操作数
-/// @param rhs 右操作数
-/// @return 如果两个 multiset 相等返回 true，否则返回 false
 template <typename Key, typename Compare, typename Allocator>
 inline bool operator==(const multiset<Key, Compare, Allocator>& lhs,
                        const multiset<Key, Compare, Allocator>& rhs)
@@ -2042,13 +2056,6 @@ inline bool operator==(const multiset<Key, Compare, Allocator>& lhs,
     return true;
 }
 
-/// @brief 比较两个 multiset 是否不相等
-/// @tparam Key 键类型
-/// @tparam Compare 比较函数对象类型
-/// @tparam Allocator 分配器类型
-/// @param lhs 左操作数
-/// @param rhs 右操作数
-/// @return 如果两个 multiset 不相等返回 true，否则返回 false
 template <typename Key, typename Compare, typename Allocator>
 inline bool operator!=(const multiset<Key, Compare, Allocator>& lhs,
                        const multiset<Key, Compare, Allocator>& rhs)
