@@ -1,0 +1,10 @@
+# yaml-language-server: $schema=https://json.schemastore.org/clangd.json
+
+#CompileFlags:
+  # 如果你的 compile_commands.json 在 build/ 目录下，可以保持默认或指定
+  # CompilationDatabase: build
+
+# 显式指定使用当前目录下的 .clang-format 文件
+# 并将格式化行为改回文件优先
+#Format:
+  #Style: file
