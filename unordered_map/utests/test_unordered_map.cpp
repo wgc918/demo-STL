@@ -808,10 +808,18 @@ TEST_SUITE("Unordered_Map Modifiers - Erase")
             {4, 40},
             {5, 50}
         };
-        // for (auto it = m.begin(); it != m.end(); ++it)
-        // {
-        //     std::cout << it->first << std::endl;
-        // }
+
+        // unordered_map 是无序容器，元素的存储顺序由哈希函数和桶的分布决定。
+        // 而本项目的默认哈希函数是 std::hash
+        // 不同平台的标准库实现：
+        // Windows(MSVC)：使用自己的标准库实现，哈希算法与 Linux 不同
+        // Ubuntu(GCC / libstdc++)：使用 GNU 的标准库实现
+        // 该测试用例想验证迭代器范围删除，所以只有分两种情况
+#ifdef _WIN32
+        for (auto it = m.begin(); it != m.end(); ++it)
+        {
+            std::cout << it->first << std::endl;
+        }
         auto it = m.begin();  // 5
         it++;                 // 4
         auto first = it;      // 4
@@ -821,11 +829,11 @@ TEST_SUITE("Unordered_Map Modifiers - Erase")
         // 会删除4,1这2个元素
         m.erase(first, last);
 
-        // std::cout<<"===================="<<std::endl;
-        // for (auto it = m.begin(); it != m.end(); ++it)
-        // {
-        //     std::cout << it->first << std::endl;
-        // }
+        std::cout << "====================" << std::endl;
+        for (auto it = m.begin(); it != m.end(); ++it)
+        {
+            std::cout << it->first << std::endl;  // 输出 5 4 1 3 2
+        }
 
         CHECK(m.size() == 3);
         CHECK(m.find(2) != m.end());
@@ -833,6 +841,35 @@ TEST_SUITE("Unordered_Map Modifiers - Erase")
         CHECK(m.find(1) == m.end());
         CHECK(m.find(4) == m.end());
         CHECK(m.find(5) != m.end());
+
+#else
+        for (auto it = m.begin(); it != m.end(); ++it)
+        {
+            std::cout << it->first << std::endl;  // 输出 1 2 3 4 5
+        }
+        auto it = m.begin();  // 1
+        it++;                 // 2
+        auto first = it;      // 2
+        it++;                 // 3
+        it++;                 // 4
+        auto last = it;       // 4
+        // 会删除2，3这2个元素
+        m.erase(first, last);
+
+        std::cout << "====================" << std::endl;
+        for (auto it = m.begin(); it != m.end(); ++it)
+        {
+            std::cout << it->first << std::endl;
+        }
+
+        CHECK(m.size() == 3);
+        CHECK(m.find(2) == m.end());
+        CHECK(m.find(3) == m.end());
+        CHECK(m.find(1) != m.end());
+        CHECK(m.find(4) != m.end());
+        CHECK(m.find(5) != m.end());
+
+#endif
     }
 
     TEST_CASE("clear() removes all elements")
