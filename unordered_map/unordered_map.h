@@ -430,7 +430,7 @@ public:
     /// @details
     /// 从 [first, last) 范围内的元素创建 unordered_map。
     /// 范围中的每个元素都会被插入到容器中。
-    template <typename InputIt>
+    template <typename InputIt, std::enable_if_t<!std::is_integral<InputIt>::value, int> = 0>
     unordered_map(InputIt first, InputIt last,
                   size_type bucket_count = UNORDERED_MAP_DEFAULT_BUCKET_COUNT);
 
@@ -568,7 +568,7 @@ public:
     /// @param last 范围结束迭代器
     /// @details
     /// 依次插入范围内的每个元素。如果某个键已存在，则跳过该元素。
-    template <typename InputIt>
+    template <typename InputIt, std::enable_if_t<!std::is_integral<InputIt>::value, int> = 0>
     void insert(InputIt first, InputIt last);
 
     /// @brief 插入初始化列表中的元素
@@ -1269,9 +1269,6 @@ unordered_map<Key, T, Hash, KeyEqual, Allocator>::unordered_map(size_type bucket
       m_node_allocator(),
       m_bucket_allocator()
 {
-    if (bucket_count == 0)
-        bucket_count = UNORDERED_MAP_DEFAULT_BUCKET_COUNT;
-
     m_bucket_count = next_power_of_two(bucket_count);
     m_mask         = m_bucket_count - 1;
     m_table        = bucket_alloc_traits::allocate(m_bucket_allocator, m_bucket_count);
@@ -1282,7 +1279,7 @@ unordered_map<Key, T, Hash, KeyEqual, Allocator>::unordered_map(size_type bucket
 }
 
 template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
-template <typename InputIt>
+template <typename InputIt, std::enable_if_t<!std::is_integral<InputIt>::value, int>>
 unordered_map<Key, T, Hash, KeyEqual, Allocator>::unordered_map(InputIt first, InputIt last,
                                                                 size_type bucket_count)
     : m_table(nullptr),
@@ -1588,7 +1585,7 @@ unordered_map<Key, T, Hash, KeyEqual, Allocator>::insert(const_iterator hint, va
 // }
 
 template <typename Key, typename T, typename Hash, typename KeyEqual, typename Allocator>
-template <typename InputIt>
+template <typename InputIt, std::enable_if_t<!std::is_integral<InputIt>::value, int>>
 void unordered_map<Key, T, Hash, KeyEqual, Allocator>::insert(InputIt first, InputIt last)
 {
     for (InputIt it = first; last != it; it++)
@@ -1608,7 +1605,7 @@ template <typename M>
 inline std::pair<typename unordered_map<Key, T, Hash, KeyEqual, Allocator>::iterator, bool>
 unordered_map<Key, T, Hash, KeyEqual, Allocator>::insert_or_assign(const Key& k, M&& obj)
 {
-    const Key key = k;
+    Key key = k;
     return insert_or_assign(std::move(key), std::forward<M>(obj));
 }
 
