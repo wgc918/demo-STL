@@ -15,6 +15,34 @@
 - **性能优化**：在保证正确性的前提下，优化关键路径的性能表现
 - **异常安全**：提供完善的异常处理机制，确保内存安全和程序稳定性
 
+
+
+### demo-STL vs std-STL
+
+demo-STL 和 std-STL 各有明显优势，无法简单判定谁"更好"。demo 在顺序容器（尤其是 deque 和 vector）的多数操作上大幅领先 std，但在关联容器的遍历、list 排序、以及无序容器的删除操作上明显落后。 综合来看，demo 在 15 个容器中取得了约 45% 的操作领先，std 在约 35% 的操作中领先，其余约 20% 持平。
+
+![demo vs std 总览](benchmark/visualize/output/demo_vs_std_overview.png)
+
+**详细文档跳转**：跳转至[demo::benchmark详细数据对比](./benchmark/benchmark_analysis.md)
+
+| 容器 | demo 优势 | std 优势 | 综合判断 |
+|------|-----------|----------|----------|
+| **deque** | ★★★★★ | ★ | **demo 碾压** |
+| **stack** | ★★★★★ | ★ | **demo 碾压** |
+| **queue** | ★★★★★ | ★ | **demo 碾压** |
+| **vector** | ★★★★ | ★★★ | demo 略优 |
+| **list** | ★★ | ★★★ | std 略优 |
+| **forward_list** | ★★ | ★★★ | std 略优 |
+| **map** | ★★★ | ★★★ | 基本持平 |
+| **multimap** | ★★★ | ★★ | 基本持平 |
+| **set** | ★★★ | ★★ | 基本持平 |
+| **multiset** | ★★★ | ★★ | 基本持平 |
+| **unordered_map** | ★★ | ★★★ | std 略优 |
+| **unordered_set** | ★★ | ★★★★ | **std 明显优** |
+| **unordered_multimap** | ★★ | ★★★ | std 略优 |
+| **unordered_multiset** | ★★ | ★★★ | std 略优 |
+| **priority_queue** | ★★ | ★★★ | std 略优 |
+
 ### 设计理念
 
 1. **RAII 原则**：所有资源管理遵循 RAII（Resource Acquisition Is Initialization）原则，确保异常安全
@@ -393,6 +421,19 @@ demo-STL/
 
 本项目采用 MIT 许可证，详见 [LICENSE](LICENSE) 文件。
 
+
+
+## 现存问题
+
+### 1.关联容器的查询接口的透明版本的实现
+
+- 具体问题： 想通过SFINAE机制在编译期就根据T的类型（是否支持透明比较）决定是否生成透明接口，但是这种写法会导致如果T不是支持透明比较的类型，会导致整个容器都声明失败
+
+### 2.  哈希表（unordered_/set/multiset/map/multimap）带提示位置的插入接口的实现
+
+- 具体问题：目前的实现只是为了接口的统一而直接把`hint` 忽略的，不进行任何优化的
+- 详细原因：因为在插入时，我的设计原理是把key相同的键值对连续存储的，如果直接按提示位置插入，可能会导致key相同的连续键值对截断从而`equal_range` 返回的范围受到影响。如果对提示位置是否会导致key相同的连续键值对截断进行判断，会有O(m)的开销（m为key相同的连续键值对个数），那还不如不优化，直接计算哈希值，计算桶索引，执行普通插入逻辑。导致目前想不到在我的这种设计原理下的更好的优化方案。
+
 ## 致谢
 
 - 感谢 C++ 标准库委员会提供的优秀接口设计
@@ -405,3 +446,4 @@ demo-STL/
 **项目地址**：[demo-STL](https://github.com/wgc918/demo-STL)
 
 > **提示**：如需了解各容器的详细实现，请查阅 [自定义STL容器综合文档](./自定义STL容器综合文档.md)
+
