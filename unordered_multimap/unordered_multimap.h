@@ -1232,9 +1232,6 @@ unordered_multimap<Key, T, Hash, KeyEqual, Allocator>::unordered_multimap(size_t
       m_node_allocator(),
       m_bucket_allocator()
 {
-    if (bucket_count == 0)
-        bucket_count = UNORDERED_MULTIMAP_DEFAULT_BUCKET_COUNT;
-
     m_bucket_count = next_power_of_two(bucket_count);
     m_mask         = m_bucket_count - 1;
     m_table        = bucket_alloc_traits::allocate(m_bucket_allocator, m_bucket_count);
