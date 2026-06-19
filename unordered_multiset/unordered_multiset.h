@@ -445,7 +445,7 @@ public:
     /// @details
     /// 从 [first, last) 范围内的元素创建 unordered_multiset。
     /// 范围中的每个元素都会被插入到容器中（允许重复）。
-    template <typename InputIt>
+    template <typename InputIt, std::enable_if_t<!std::is_integral<InputIt>::value, int> = 0>
     unordered_multiset(InputIt first, InputIt last,
                        size_type bucket_count = UNORDERED_MULTISET_DEFAULT_BUCKET_COUNT);
 
@@ -562,7 +562,7 @@ public:
     /// @param first 范围起始迭代器
     /// @param last 范围结束迭代器
     /// @details 依次插入范围内的每个元素（允许重复）。
-    template <typename InputIt>
+    template <typename InputIt, std::enable_if_t<!std::is_integral<InputIt>::value, int> = 0>
     void insert(InputIt first, InputIt last);
 
     /// @brief 插入初始化列表中的元素
@@ -1194,9 +1194,6 @@ unordered_multiset<Key, Hash, KeyEqual, Allocator>::unordered_multiset(size_type
       m_node_allocator(),
       m_bucket_allocator()
 {
-    if (bucket_count == 0)
-        bucket_count = UNORDERED_MULTISET_DEFAULT_BUCKET_COUNT;
-
     m_bucket_count = next_power_of_two(bucket_count);
     m_mask         = m_bucket_count - 1;
     m_table        = bucket_alloc_traits::allocate(m_bucket_allocator, m_bucket_count);
@@ -1207,7 +1204,7 @@ unordered_multiset<Key, Hash, KeyEqual, Allocator>::unordered_multiset(size_type
 }
 
 template <typename Key, typename Hash, typename KeyEqual, typename Allocator>
-template <typename InputIt>
+template <typename InputIt, std::enable_if_t<!std::is_integral<InputIt>::value, int>>
 unordered_multiset<Key, Hash, KeyEqual, Allocator>::unordered_multiset(InputIt first, InputIt last,
                                                                        size_type bucket_count)
     : m_table(nullptr),
@@ -1504,7 +1501,7 @@ unordered_multiset<Key, Hash, KeyEqual, Allocator>::insert(const_iterator hint, 
 }
 
 template <typename Key, typename Hash, typename KeyEqual, typename Allocator>
-template <typename InputIt>
+template <typename InputIt, std::enable_if_t<!std::is_integral<InputIt>::value, int>>
 void unordered_multiset<Key, Hash, KeyEqual, Allocator>::insert(InputIt first, InputIt last)
 {
     for (InputIt it = first; last != it; it++)
