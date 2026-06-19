@@ -18,4 +18,4 @@ constexpr int WARMUP_COUNT = 1;
 // 结果输出目录
 inline constexpr const char* RESULTS_DIR = "results";
 
-} // namespace benchmark_config
+}  // namespace benchmark_config

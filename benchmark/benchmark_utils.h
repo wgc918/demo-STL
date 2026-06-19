@@ -1,7 +1,7 @@
 #pragma once
 
-#include <chrono>
 #include <algorithm>
+#include <chrono>
 #include <vector>
 
 #include "benchmark_config.h"
@@ -11,7 +11,7 @@ template <typename F>
 double measure_median_us(F&& func)
 {
     namespace bc = benchmark_config;
-    using clock = std::chrono::high_resolution_clock;
+    using clock  = std::chrono::high_resolution_clock;
 
     // 预热
     for (int i = 0; i < bc::WARMUP_COUNT; ++i)
@@ -26,9 +26,10 @@ double measure_median_us(F&& func)
     {
         auto start = clock::now();
         func();
-        auto end = clock::now();
+        auto   end = clock::now();
         double us = static_cast<double>(
-            std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count()) / 1000.0;
+                        std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count()) /
+                    1000.0;
         times.push_back(us);
     }
 

@@ -23,20 +23,6 @@ endif()
 include_directories(
     ${PROJECT_SOURCE_DIR}/..        # 各容器头文件所在目录
     ${PROJECT_SOURCE_DIR}           # 当前目录
-    ${PROJECT_SOURCE_DIR}/../vector
-    ${PROJECT_SOURCE_DIR}/../list
-    ${PROJECT_SOURCE_DIR}/../deque
-    ${PROJECT_SOURCE_DIR}/../map
-    ${PROJECT_SOURCE_DIR}/../multimap
-    ${PROJECT_SOURCE_DIR}/../set
-    ${PROJECT_SOURCE_DIR}/../multiset
-    ${PROJECT_SOURCE_DIR}/../unordered_map
-    ${PROJECT_SOURCE_DIR}/../unordered_multimap
-    ${PROJECT_SOURCE_DIR}/../unordered_set
-    ${PROJECT_SOURCE_DIR}/../unordered_multiset
-    ${PROJECT_SOURCE_DIR}/../stack
-    ${PROJECT_SOURCE_DIR}/../queue
-    ${PROJECT_SOURCE_DIR}/../priority_queue
 )
 
 # 收集所有 benchmark 源文件

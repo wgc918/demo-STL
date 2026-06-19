@@ -1,12 +1,11 @@
 #include <forward_list>
-#include <vector>
 #include <random>
+#include <vector>
 
-#include "list/forward_list.h"
 #include "benchmark_config.h"
-#include "csv_writer.h"
-
 #include "benchmark_utils.h"
+#include "csv_writer.h"
+#include "list/forward_list.h"
 
 namespace
 {
@@ -14,8 +13,8 @@ volatile long long sink = 0;
 
 std::vector<int> generate_ints(std::size_t n)
 {
-    std::vector<int> data(n);
-    std::mt19937 rng(42);
+    std::vector<int>                   data(n);
+    std::mt19937                       rng(42);
     std::uniform_int_distribution<int> dist(1, 1000000);
     for (auto& x : data)
         x = dist(rng);
@@ -23,12 +22,12 @@ std::vector<int> generate_ints(std::size_t n)
 }
 
 template <typename FL>
-void run_construct(FL&, csv_writer::CsvWriter& writer, const std::vector<int>& src,
-                   std::size_t n)
+void run_construct(FL&, csv_writer::CsvWriter& writer, const std::vector<int>& src, std::size_t n)
 {
     // 默认构造
     {
-        auto op = [&]() {
+        auto op = [&]()
+        {
             FL fl;
             sink = 0;
         };
@@ -36,7 +35,8 @@ void run_construct(FL&, csv_writer::CsvWriter& writer, const std::vector<int>& s
         writer.write_row({"forward_list", "default_construct", n, "demo", t});
     }
     {
-        auto op = [&]() {
+        auto op = [&]()
+        {
             std::forward_list<int> fl;
             sink = 0;
         };
@@ -46,7 +46,8 @@ void run_construct(FL&, csv_writer::CsvWriter& writer, const std::vector<int>& s
 
     // 范围构造
     {
-        auto op = [&]() {
+        auto op = [&]()
+        {
             FL fl(src.begin(), src.begin() + static_cast<std::ptrdiff_t>(n));
             sink = 0;
         };
@@ -54,7 +55,8 @@ void run_construct(FL&, csv_writer::CsvWriter& writer, const std::vector<int>& s
         writer.write_row({"forward_list", "range_construct", n, "demo", t});
     }
     {
-        auto op = [&]() {
+        auto op = [&]()
+        {
             std::forward_list<int> fl(src.begin(), src.begin() + static_cast<std::ptrdiff_t>(n));
             sink = 0;
         };
@@ -64,11 +66,11 @@ void run_construct(FL&, csv_writer::CsvWriter& writer, const std::vector<int>& s
 }
 
 template <typename FL>
-void run_push_front(FL&, csv_writer::CsvWriter& writer, const std::vector<int>& src,
-                    std::size_t n)
+void run_push_front(FL&, csv_writer::CsvWriter& writer, const std::vector<int>& src, std::size_t n)
 {
     {
-        auto op = [&]() {
+        auto op = [&]()
+        {
             FL fl;
             for (std::size_t i = 0; i < n; ++i)
                 fl.push_front(src[i]);
@@ -78,7 +80,8 @@ void run_push_front(FL&, csv_writer::CsvWriter& writer, const std::vector<int>& 
         writer.write_row({"forward_list", "push_front", n, "demo", t});
     }
     {
-        auto op = [&]() {
+        auto op = [&]()
+        {
             std::forward_list<int> fl;
             for (std::size_t i = 0; i < n; ++i)
                 fl.push_front(src[i]);
@@ -95,7 +98,8 @@ void run_insert_after(FL&, csv_writer::CsvWriter& writer, const std::vector<int>
 {
     std::size_t insert_count = n / 10 > 0 ? n / 10 : 1;
     {
-        auto op = [&]() {
+        auto op = [&]()
+        {
             FL fl;
             fl.push_front(0);
             for (std::size_t i = 0; i < insert_count; ++i)
@@ -106,7 +110,8 @@ void run_insert_after(FL&, csv_writer::CsvWriter& writer, const std::vector<int>
         writer.write_row({"forward_list", "insert_after", n, "demo", t});
     }
     {
-        auto op = [&]() {
+        auto op = [&]()
+        {
             std::forward_list<int> fl;
             fl.push_front(0);
             for (std::size_t i = 0; i < insert_count; ++i)
@@ -122,7 +127,8 @@ template <typename FL>
 void run_pop_front(FL& prebuilt, csv_writer::CsvWriter& writer, std::size_t n)
 {
     {
-        auto op = [&]() {
+        auto op = [&]()
+        {
             FL fl(prebuilt);
             for (std::size_t i = 0; i < n && !fl.empty(); ++i)
                 fl.pop_front();
@@ -133,7 +139,8 @@ void run_pop_front(FL& prebuilt, csv_writer::CsvWriter& writer, std::size_t n)
     }
     {
         std::forward_list<int> std_prebuilt(prebuilt.begin(), prebuilt.end());
-        auto op = [&]() {
+        auto                   op = [&]()
+        {
             std::forward_list<int> fl(std_prebuilt);
             for (std::size_t i = 0; i < n && !fl.empty(); ++i)
                 fl.pop_front();
@@ -148,7 +155,8 @@ template <typename FL>
 void run_clear(FL& prebuilt, csv_writer::CsvWriter& writer, std::size_t n)
 {
     {
-        auto op = [&]() {
+        auto op = [&]()
+        {
             FL fl(prebuilt);
             fl.clear();
             sink = 0;
@@ -158,7 +166,8 @@ void run_clear(FL& prebuilt, csv_writer::CsvWriter& writer, std::size_t n)
     }
     {
         std::forward_list<int> std_prebuilt(prebuilt.begin(), prebuilt.end());
-        auto op = [&]() {
+        auto                   op = [&]()
+        {
             std::forward_list<int> fl(std_prebuilt);
             fl.clear();
             sink = 0;
@@ -172,7 +181,8 @@ template <typename FL>
 void run_iterate(FL& prebuilt, csv_writer::CsvWriter& writer, std::size_t n)
 {
     {
-        auto op = [&]() {
+        auto op = [&]()
+        {
             long long sum = 0;
             for (auto it = prebuilt.begin(); it != prebuilt.end(); ++it)
                 sum += *it;
@@ -183,7 +193,8 @@ void run_iterate(FL& prebuilt, csv_writer::CsvWriter& writer, std::size_t n)
     }
     {
         std::forward_list<int> std_prebuilt(prebuilt.begin(), prebuilt.end());
-        auto op = [&]() {
+        auto                   op = [&]()
+        {
             long long sum = 0;
             for (auto it = std_prebuilt.begin(); it != std_prebuilt.end(); ++it)
                 sum += *it;
@@ -198,7 +209,8 @@ template <typename FL>
 void run_sort(FL& prebuilt, csv_writer::CsvWriter& writer, std::size_t n)
 {
     {
-        auto op = [&]() {
+        auto op = [&]()
+        {
             FL fl(prebuilt);
             fl.sort();
             sink = 0;
@@ -208,7 +220,8 @@ void run_sort(FL& prebuilt, csv_writer::CsvWriter& writer, std::size_t n)
     }
     {
         std::forward_list<int> std_prebuilt(prebuilt.begin(), prebuilt.end());
-        auto op = [&]() {
+        auto                   op = [&]()
+        {
             std::forward_list<int> fl(std_prebuilt);
             fl.sort();
             sink = 0;
@@ -218,7 +231,7 @@ void run_sort(FL& prebuilt, csv_writer::CsvWriter& writer, std::size_t n)
     }
 }
 
-} // anonymous namespace
+}  // anonymous namespace
 
 void benchmark_forward_list(csv_writer::CsvWriter& writer)
 {

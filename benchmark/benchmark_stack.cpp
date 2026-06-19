@@ -1,12 +1,11 @@
+#include <random>
 #include <stack>
 #include <vector>
-#include <random>
 
-#include "stack/stack.h"
 #include "benchmark_config.h"
-#include "csv_writer.h"
-
 #include "benchmark_utils.h"
+#include "csv_writer.h"
+#include "stack/stack.h"
 
 namespace
 {
@@ -14,8 +13,8 @@ volatile long long sink = 0;
 
 std::vector<int> generate_ints(std::size_t n)
 {
-    std::vector<int> data(n);
-    std::mt19937 rng(42);
+    std::vector<int>                   data(n);
+    std::mt19937                       rng(42);
     std::uniform_int_distribution<int> dist(1, 1000000);
     for (auto& x : data)
         x = dist(rng);
@@ -26,7 +25,8 @@ template <typename S>
 void run_push(S&, csv_writer::CsvWriter& writer, const std::vector<int>& src, std::size_t n)
 {
     {
-        auto op = [&]() {
+        auto op = [&]()
+        {
             S s;
             for (std::size_t i = 0; i < n; ++i)
                 s.push(src[i]);
@@ -36,7 +36,8 @@ void run_push(S&, csv_writer::CsvWriter& writer, const std::vector<int>& src, st
         writer.write_row({"stack", "push", n, "demo", t});
     }
     {
-        auto op = [&]() {
+        auto op = [&]()
+        {
             std::stack<int> s;
             for (std::size_t i = 0; i < n; ++i)
                 s.push(src[i]);
@@ -51,7 +52,8 @@ template <typename S>
 void run_pop(S& prebuilt, csv_writer::CsvWriter& writer, std::size_t n)
 {
     {
-        auto op = [&]() {
+        auto op = [&]()
+        {
             S s(prebuilt);
             for (std::size_t i = 0; i < n && !s.empty(); ++i)
                 s.pop();
@@ -71,7 +73,8 @@ void run_pop(S& prebuilt, csv_writer::CsvWriter& writer, std::size_t n)
                 tmp.pop();
             }
         }
-        auto op = [&]() {
+        auto op = [&]()
+        {
             std::stack<int> s(std_prebuilt);
             for (std::size_t i = 0; i < n && !s.empty(); ++i)
                 s.pop();
@@ -87,10 +90,8 @@ void run_top(S& prebuilt, csv_writer::CsvWriter& writer, std::size_t n)
 {
     (void)n;
     {
-        auto op = [&]() {
-            sink = prebuilt.top();
-        };
-        double t = measure_median_us(op);
+        auto   op = [&]() { sink = prebuilt.top(); };
+        double t  = measure_median_us(op);
         writer.write_row({"stack", "top", n, "demo", t});
     }
     {
@@ -103,15 +104,13 @@ void run_top(S& prebuilt, csv_writer::CsvWriter& writer, std::size_t n)
                 tmp.pop();
             }
         }
-        auto op = [&]() {
-            sink = std_prebuilt.top();
-        };
-        double t = measure_median_us(op);
+        auto   op = [&]() { sink = std_prebuilt.top(); };
+        double t  = measure_median_us(op);
         writer.write_row({"stack", "top", n, "std", t});
     }
 }
 
-} // anonymous namespace
+}  // anonymous namespace
 
 void benchmark_stack(csv_writer::CsvWriter& writer)
 {

@@ -1,7 +1,7 @@
+#include <filesystem>
 #include <iostream>
 #include <string>
 #include <vector>
-#include <filesystem>
 
 #include "benchmark_config.h"
 #include "benchmark_utils.h"
@@ -37,9 +37,8 @@ int main()
     std::cout << "Results directory: " << std::filesystem::absolute(results_dir) << std::endl;
 
     // 创建 results 目录下的所有 CSV 文件
-    auto make_path = [&](const char* filename) -> std::string {
-        return (results_dir / filename).string();
-    };
+    auto make_path = [&](const char* filename) -> std::string
+    { return (results_dir / filename).string(); };
 
     csv_writer::CsvWriter writer_vec(make_path("benchmark_vector.csv"));
     std::cout << "vector CSV opened: " << writer_vec.is_open() << std::endl;

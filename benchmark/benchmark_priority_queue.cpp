@@ -1,12 +1,11 @@
 #include <queue>
-#include <vector>
 #include <random>
+#include <vector>
 
-#include "priority_queue/priority_queue.h"
 #include "benchmark_config.h"
-#include "csv_writer.h"
-
 #include "benchmark_utils.h"
+#include "csv_writer.h"
+#include "priority_queue/priority_queue.h"
 
 namespace
 {
@@ -14,8 +13,8 @@ volatile long long sink = 0;
 
 std::vector<int> generate_ints(std::size_t n)
 {
-    std::vector<int> data(n);
-    std::mt19937 rng(42);
+    std::vector<int>                   data(n);
+    std::mt19937                       rng(42);
     std::uniform_int_distribution<int> dist(1, 1000000);
     for (auto& x : data)
         x = dist(rng);
@@ -26,7 +25,8 @@ template <typename PQ>
 void run_push(PQ&, csv_writer::CsvWriter& writer, const std::vector<int>& src, std::size_t n)
 {
     {
-        auto op = [&]() {
+        auto op = [&]()
+        {
             PQ pq;
             for (std::size_t i = 0; i < n; ++i)
                 pq.push(src[i]);
@@ -36,7 +36,8 @@ void run_push(PQ&, csv_writer::CsvWriter& writer, const std::vector<int>& src, s
         writer.write_row({"priority_queue", "push", n, "demo", t});
     }
     {
-        auto op = [&]() {
+        auto op = [&]()
+        {
             std::priority_queue<int> pq;
             for (std::size_t i = 0; i < n; ++i)
                 pq.push(src[i]);
@@ -51,7 +52,8 @@ template <typename PQ>
 void run_pop(PQ& prebuilt, csv_writer::CsvWriter& writer, std::size_t n)
 {
     {
-        auto op = [&]() {
+        auto op = [&]()
+        {
             PQ pq(prebuilt);
             for (std::size_t i = 0; i < n && !pq.empty(); ++i)
                 pq.pop();
@@ -71,7 +73,8 @@ void run_pop(PQ& prebuilt, csv_writer::CsvWriter& writer, std::size_t n)
                 tmp.pop();
             }
         }
-        auto op = [&]() {
+        auto op = [&]()
+        {
             std::priority_queue<int> pq(std_prebuilt);
             for (std::size_t i = 0; i < n && !pq.empty(); ++i)
                 pq.pop();
@@ -87,10 +90,8 @@ void run_top(PQ& prebuilt, csv_writer::CsvWriter& writer, std::size_t n)
 {
     (void)n;
     {
-        auto op = [&]() {
-            sink = prebuilt.top();
-        };
-        double t = measure_median_us(op);
+        auto   op = [&]() { sink = prebuilt.top(); };
+        double t  = measure_median_us(op);
         writer.write_row({"priority_queue", "top", n, "demo", t});
     }
     {
@@ -103,15 +104,13 @@ void run_top(PQ& prebuilt, csv_writer::CsvWriter& writer, std::size_t n)
                 tmp.pop();
             }
         }
-        auto op = [&]() {
-            sink = std_prebuilt.top();
-        };
-        double t = measure_median_us(op);
+        auto   op = [&]() { sink = std_prebuilt.top(); };
+        double t  = measure_median_us(op);
         writer.write_row({"priority_queue", "top", n, "std", t});
     }
 }
 
-} // anonymous namespace
+}  // anonymous namespace
 
 void benchmark_priority_queue(csv_writer::CsvWriter& writer)
 {
@@ -119,7 +118,8 @@ void benchmark_priority_queue(csv_writer::CsvWriter& writer)
 
     for (std::size_t n : benchmark_config::DATA_SIZES)
     {
-        if (n > 100000) continue; // skip 1M for pq
+        if (n > 100000)
+            continue;  // skip 1M for pq
         const auto& src = full_data;
 
         demo::priority_queue<int> demo_prebuilt;

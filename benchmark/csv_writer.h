@@ -12,7 +12,7 @@ struct CsvRow
     std::string container;
     std::string operation;
     std::size_t data_size;
-    std::string implementation; // "demo" or "std"
+    std::string implementation;  // "demo" or "std"
     double      time_us;
 };
 
@@ -36,15 +36,18 @@ public:
 
     void write_row(const CsvRow& row)
     {
-        m_file << row.container << "," << row.operation << "," << row.data_size
-               << "," << row.implementation << "," << row.time_us << "\n";
+        m_file << row.container << "," << row.operation << "," << row.data_size << ","
+               << row.implementation << "," << row.time_us << "\n";
         m_file.flush();
     }
 
-    bool is_open() const { return m_file.is_open(); }
+    bool is_open() const
+    {
+        return m_file.is_open();
+    }
 
 private:
     std::ofstream m_file;
 };
 
-} // namespace csv_writer
+}  // namespace csv_writer

@@ -1,12 +1,11 @@
+#include <random>
 #include <set>
 #include <vector>
-#include <random>
 
-#include "set/set.h"
 #include "benchmark_config.h"
-#include "csv_writer.h"
-
 #include "benchmark_utils.h"
+#include "csv_writer.h"
+#include "set/set.h"
 
 namespace
 {
@@ -16,7 +15,7 @@ std::vector<int> generate_ints(std::size_t n)
 {
     std::vector<int> data;
     data.reserve(n);
-    std::mt19937 rng(42);
+    std::mt19937                       rng(42);
     std::uniform_int_distribution<int> dist(1, 10000000);
     for (std::size_t i = 0; i < n; ++i)
         data.push_back(dist(rng));
@@ -24,11 +23,11 @@ std::vector<int> generate_ints(std::size_t n)
 }
 
 template <typename S>
-void run_construct(S&, csv_writer::CsvWriter& writer, const std::vector<int>& src,
-                   std::size_t n)
+void run_construct(S&, csv_writer::CsvWriter& writer, const std::vector<int>& src, std::size_t n)
 {
     {
-        auto op = [&]() {
+        auto op = [&]()
+        {
             S s;
             sink = s.size();
         };
@@ -36,7 +35,8 @@ void run_construct(S&, csv_writer::CsvWriter& writer, const std::vector<int>& sr
         writer.write_row({"set", "default_construct", n, "demo", t});
     }
     {
-        auto op = [&]() {
+        auto op = [&]()
+        {
             std::set<int> s;
             sink = s.size();
         };
@@ -45,7 +45,8 @@ void run_construct(S&, csv_writer::CsvWriter& writer, const std::vector<int>& sr
     }
 
     {
-        auto op = [&]() {
+        auto op = [&]()
+        {
             S s(src.begin(), src.begin() + static_cast<std::ptrdiff_t>(n));
             sink = s.size();
         };
@@ -53,7 +54,8 @@ void run_construct(S&, csv_writer::CsvWriter& writer, const std::vector<int>& sr
         writer.write_row({"set", "range_construct", n, "demo", t});
     }
     {
-        auto op = [&]() {
+        auto op = [&]()
+        {
             std::set<int> s(src.begin(), src.begin() + static_cast<std::ptrdiff_t>(n));
             sink = s.size();
         };
@@ -66,7 +68,8 @@ template <typename S>
 void run_insert(S&, csv_writer::CsvWriter& writer, const std::vector<int>& src, std::size_t n)
 {
     {
-        auto op = [&]() {
+        auto op = [&]()
+        {
             S s;
             for (std::size_t i = 0; i < n; ++i)
                 s.insert(src[i]);
@@ -76,7 +79,8 @@ void run_insert(S&, csv_writer::CsvWriter& writer, const std::vector<int>& src, 
         writer.write_row({"set", "insert", n, "demo", t});
     }
     {
-        auto op = [&]() {
+        auto op = [&]()
+        {
             std::set<int> s;
             for (std::size_t i = 0; i < n; ++i)
                 s.insert(src[i]);
@@ -91,7 +95,8 @@ template <typename S>
 void run_find(S& prebuilt, csv_writer::CsvWriter& writer, std::size_t n)
 {
     {
-        auto op = [&]() {
+        auto op = [&]()
+        {
             long long sum = 0;
             for (std::size_t i = 0; i < n; ++i)
             {
@@ -105,7 +110,8 @@ void run_find(S& prebuilt, csv_writer::CsvWriter& writer, std::size_t n)
     }
     {
         std::set<int> std_prebuilt(prebuilt.begin(), prebuilt.end());
-        auto op = [&]() {
+        auto          op = [&]()
+        {
             long long sum = 0;
             for (std::size_t i = 0; i < n; ++i)
             {
@@ -124,7 +130,8 @@ void run_erase(S& prebuilt, csv_writer::CsvWriter& writer, std::size_t n)
 {
     std::size_t erase_count = n / 10 > 0 ? n / 10 : 1;
     {
-        auto op = [&]() {
+        auto op = [&]()
+        {
             S s(prebuilt);
             for (std::size_t i = 0; i < erase_count; ++i)
             {
@@ -139,7 +146,8 @@ void run_erase(S& prebuilt, csv_writer::CsvWriter& writer, std::size_t n)
     }
     {
         std::set<int> std_prebuilt(prebuilt.begin(), prebuilt.end());
-        auto op = [&]() {
+        auto          op = [&]()
+        {
             std::set<int> s(std_prebuilt);
             for (std::size_t i = 0; i < erase_count; ++i)
             {
@@ -158,7 +166,8 @@ template <typename S>
 void run_clear(S& prebuilt, csv_writer::CsvWriter& writer, std::size_t n)
 {
     {
-        auto op = [&]() {
+        auto op = [&]()
+        {
             S s(prebuilt);
             s.clear();
             sink = s.size();
@@ -168,7 +177,8 @@ void run_clear(S& prebuilt, csv_writer::CsvWriter& writer, std::size_t n)
     }
     {
         std::set<int> std_prebuilt(prebuilt.begin(), prebuilt.end());
-        auto op = [&]() {
+        auto          op = [&]()
+        {
             std::set<int> s(std_prebuilt);
             s.clear();
             sink = s.size();
@@ -182,7 +192,8 @@ template <typename S>
 void run_iterate(S& prebuilt, csv_writer::CsvWriter& writer, std::size_t n)
 {
     {
-        auto op = [&]() {
+        auto op = [&]()
+        {
             long long sum = 0;
             for (auto it = prebuilt.begin(); it != prebuilt.end(); ++it)
                 sum += *it;
@@ -193,7 +204,8 @@ void run_iterate(S& prebuilt, csv_writer::CsvWriter& writer, std::size_t n)
     }
     {
         std::set<int> std_prebuilt(prebuilt.begin(), prebuilt.end());
-        auto op = [&]() {
+        auto          op = [&]()
+        {
             long long sum = 0;
             for (auto it = std_prebuilt.begin(); it != std_prebuilt.end(); ++it)
                 sum += *it;
@@ -204,7 +216,7 @@ void run_iterate(S& prebuilt, csv_writer::CsvWriter& writer, std::size_t n)
     }
 }
 
-} // anonymous namespace
+}  // anonymous namespace
 
 void benchmark_set(csv_writer::CsvWriter& writer)
 {
@@ -212,7 +224,8 @@ void benchmark_set(csv_writer::CsvWriter& writer)
 
     for (std::size_t n : benchmark_config::DATA_SIZES)
     {
-        if (n > 100000) continue;
+        if (n > 100000)
+            continue;
         const auto& src = full_data;
 
         demo::set<int> demo_s;

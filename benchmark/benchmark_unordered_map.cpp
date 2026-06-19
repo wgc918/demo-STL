@@ -1,13 +1,12 @@
+#include <random>
+#include <string>
 #include <unordered_map>
 #include <vector>
-#include <string>
-#include <random>
 
-#include "unordered_map/unordered_map.h"
 #include "benchmark_config.h"
-#include "csv_writer.h"
-
 #include "benchmark_utils.h"
+#include "csv_writer.h"
+#include "unordered_map/unordered_map.h"
 
 namespace
 {
@@ -17,7 +16,7 @@ std::vector<std::pair<int, std::string>> generate_pairs(std::size_t n)
 {
     std::vector<std::pair<int, std::string>> data;
     data.reserve(n);
-    std::mt19937 rng(42);
+    std::mt19937                       rng(42);
     std::uniform_int_distribution<int> dist(1, 10000000);
     for (std::size_t i = 0; i < n; ++i)
         data.emplace_back(dist(rng), "value_" + std::to_string(i));
@@ -29,7 +28,8 @@ void run_construct(M&, csv_writer::CsvWriter& writer,
                    const std::vector<std::pair<int, std::string>>& src, std::size_t n)
 {
     {
-        auto op = [&]() {
+        auto op = [&]()
+        {
             M m;
             sink = m.size();
         };
@@ -37,7 +37,8 @@ void run_construct(M&, csv_writer::CsvWriter& writer,
         writer.write_row({"unordered_map", "default_construct", n, "demo", t});
     }
     {
-        auto op = [&]() {
+        auto op = [&]()
+        {
             std::unordered_map<int, std::string> m;
             sink = m.size();
         };
@@ -46,7 +47,8 @@ void run_construct(M&, csv_writer::CsvWriter& writer,
     }
 
     {
-        auto op = [&]() {
+        auto op = [&]()
+        {
             M m(src.begin(), src.begin() + static_cast<std::ptrdiff_t>(n));
             sink = m.size();
         };
@@ -54,9 +56,10 @@ void run_construct(M&, csv_writer::CsvWriter& writer,
         writer.write_row({"unordered_map", "range_construct", n, "demo", t});
     }
     {
-        auto op = [&]() {
-            std::unordered_map<int, std::string> m(
-                src.begin(), src.begin() + static_cast<std::ptrdiff_t>(n));
+        auto op = [&]()
+        {
+            std::unordered_map<int, std::string> m(src.begin(),
+                                                   src.begin() + static_cast<std::ptrdiff_t>(n));
             sink = m.size();
         };
         double t = measure_median_us(op);
@@ -69,7 +72,8 @@ void run_insert(M&, csv_writer::CsvWriter& writer,
                 const std::vector<std::pair<int, std::string>>& src, std::size_t n)
 {
     {
-        auto op = [&]() {
+        auto op = [&]()
+        {
             M m;
             for (std::size_t i = 0; i < n; ++i)
                 m.insert(src[i]);
@@ -79,7 +83,8 @@ void run_insert(M&, csv_writer::CsvWriter& writer,
         writer.write_row({"unordered_map", "insert", n, "demo", t});
     }
     {
-        auto op = [&]() {
+        auto op = [&]()
+        {
             std::unordered_map<int, std::string> m;
             for (std::size_t i = 0; i < n; ++i)
                 m.insert(src[i]);
@@ -94,7 +99,8 @@ template <typename M>
 void run_find(M& prebuilt, csv_writer::CsvWriter& writer, std::size_t n)
 {
     {
-        auto op = [&]() {
+        auto op = [&]()
+        {
             long long sum = 0;
             for (std::size_t i = 0; i < n; ++i)
             {
@@ -109,7 +115,8 @@ void run_find(M& prebuilt, csv_writer::CsvWriter& writer, std::size_t n)
     }
     {
         std::unordered_map<int, std::string> std_prebuilt(prebuilt.begin(), prebuilt.end());
-        auto op = [&]() {
+        auto                                 op = [&]()
+        {
             long long sum = 0;
             for (std::size_t i = 0; i < n; ++i)
             {
@@ -129,7 +136,8 @@ void run_erase(M& prebuilt, csv_writer::CsvWriter& writer, std::size_t n)
 {
     std::size_t erase_count = n / 10 > 0 ? n / 10 : 1;
     {
-        auto op = [&]() {
+        auto op = [&]()
+        {
             M m(prebuilt);
             for (std::size_t i = 0; i < erase_count; ++i)
             {
@@ -144,7 +152,8 @@ void run_erase(M& prebuilt, csv_writer::CsvWriter& writer, std::size_t n)
     }
     {
         std::unordered_map<int, std::string> std_prebuilt(prebuilt.begin(), prebuilt.end());
-        auto op = [&]() {
+        auto                                 op = [&]()
+        {
             std::unordered_map<int, std::string> m(std_prebuilt);
             for (std::size_t i = 0; i < erase_count; ++i)
             {
@@ -163,7 +172,8 @@ template <typename M>
 void run_clear(M& prebuilt, csv_writer::CsvWriter& writer, std::size_t n)
 {
     {
-        auto op = [&]() {
+        auto op = [&]()
+        {
             M m(prebuilt);
             m.clear();
             sink = m.size();
@@ -173,7 +183,8 @@ void run_clear(M& prebuilt, csv_writer::CsvWriter& writer, std::size_t n)
     }
     {
         std::unordered_map<int, std::string> std_prebuilt(prebuilt.begin(), prebuilt.end());
-        auto op = [&]() {
+        auto                                 op = [&]()
+        {
             std::unordered_map<int, std::string> m(std_prebuilt);
             m.clear();
             sink = m.size();
@@ -187,7 +198,8 @@ template <typename M>
 void run_iterate(M& prebuilt, csv_writer::CsvWriter& writer, std::size_t n)
 {
     {
-        auto op = [&]() {
+        auto op = [&]()
+        {
             long long sum = 0;
             for (auto it = prebuilt.begin(); it != prebuilt.end(); ++it)
                 sum += it->first;
@@ -198,7 +210,8 @@ void run_iterate(M& prebuilt, csv_writer::CsvWriter& writer, std::size_t n)
     }
     {
         std::unordered_map<int, std::string> std_prebuilt(prebuilt.begin(), prebuilt.end());
-        auto op = [&]() {
+        auto                                 op = [&]()
+        {
             long long sum = 0;
             for (auto it = std_prebuilt.begin(); it != std_prebuilt.end(); ++it)
                 sum += it->first;
@@ -209,7 +222,7 @@ void run_iterate(M& prebuilt, csv_writer::CsvWriter& writer, std::size_t n)
     }
 }
 
-} // anonymous namespace
+}  // anonymous namespace
 
 void benchmark_unordered_map(csv_writer::CsvWriter& writer)
 {
@@ -217,7 +230,8 @@ void benchmark_unordered_map(csv_writer::CsvWriter& writer)
 
     for (std::size_t n : benchmark_config::DATA_SIZES)
     {
-        if (n > 100000) continue;
+        if (n > 100000)
+            continue;
         const auto& src = full_data;
 
         demo::unordered_map<int, std::string> demo_m;
