@@ -73,8 +73,7 @@ namespace demo
 /// @tparam KeyEqual 键比较函数对象类型，用于判断键是否相等，默认为
 /// std::equal_to<Key>
 /// @tparam Allocator 分配器类型，用于内存管理，默认为 std::allocator<Key>
-template <typename Key, typename Hash = std::hash<Key>,
-          typename KeyEqual  = std::equal_to<Key>,
+template <typename Key, typename Hash = std::hash<Key>, typename KeyEqual = std::equal_to<Key>,
           typename Allocator = std::allocator<Key>>
 class unordered_set;
 
@@ -115,17 +114,17 @@ class unordered_set
     friend bool operator!= <>(const unordered_set& lhs, const unordered_set& rhs);
 
 public:
-    using key_type        = Key;                      ///< 键类型
-    using hash_type       = Hash;                     ///< 哈希函数类型
-    using key_equal       = KeyEqual;                 ///< 键比较函数类型
-    using allocator_type  = Allocator;                ///< 分配器类型
-    using value_type      = Key;                      ///< 元素类型（键）
-    using size_type       = std::size_t;              ///< 大小类型
-    using difference_type = std::ptrdiff_t;           ///< 差值类型
-    using pointer         = value_type*;              ///< 元素指针类型
-    using const_pointer   = const value_type*;        ///< 常量元素指针类型
-    using reference       = value_type&;              ///< 元素引用类型
-    using const_reference = const value_type&;        ///< 常量元素引用类型
+    using key_type        = Key;                ///< 键类型
+    using hash_type       = Hash;               ///< 哈希函数类型
+    using key_equal       = KeyEqual;           ///< 键比较函数类型
+    using allocator_type  = Allocator;          ///< 分配器类型
+    using value_type      = Key;                ///< 元素类型（键）
+    using size_type       = std::size_t;        ///< 大小类型
+    using difference_type = std::ptrdiff_t;     ///< 差值类型
+    using pointer         = value_type*;        ///< 元素指针类型
+    using const_pointer   = const value_type*;  ///< 常量元素指针类型
+    using reference       = value_type&;        ///< 元素引用类型
+    using const_reference = const value_type&;  ///< 常量元素引用类型
 
 public:
     /// @brief 哈希桶节点结构体
@@ -424,7 +423,7 @@ public:
     /// @details
     /// 从 [first, last) 范围内的元素创建 unordered_set。
     /// 范围中的每个元素都会被插入到容器中。
-    template <typename InputIt>
+    template <typename InputIt, std::enable_if_t<!std::is_integral<InputIt>::value, int> = 0>
     unordered_set(InputIt first, InputIt last,
                   size_type bucket_count = UNORDERED_SET_DEFAULT_BUCKET_COUNT);
 
@@ -544,7 +543,7 @@ public:
     /// @param last 范围结束迭代器
     /// @details
     /// 依次插入范围内的每个元素。如果某个键已存在，则跳过该元素。
-    template <typename InputIt>
+    template <typename InputIt, std::enable_if_t<!std::is_integral<InputIt>::value, int> = 0>
     void insert(InputIt first, InputIt last);
 
     /// @brief 插入初始化列表中的元素
@@ -833,7 +832,7 @@ unordered_set<Key, Hash, KeyEqual, Allocator>::iterator::iterator()
 
 template <typename Key, typename Hash, typename KeyEqual, typename Allocator>
 unordered_set<Key, Hash, KeyEqual, Allocator>::iterator::iterator(Node*          node,
-                                                                   unordered_set* container)
+                                                                  unordered_set* container)
     : m_node(node), m_container(container)
 {
 }
@@ -925,8 +924,7 @@ unordered_set<Key, Hash, KeyEqual, Allocator>::const_iterator::const_iterator(
 }
 
 template <typename Key, typename Hash, typename KeyEqual, typename Allocator>
-unordered_set<Key, Hash, KeyEqual, Allocator>::const_iterator::const_iterator(
-    const iterator& other)
+unordered_set<Key, Hash, KeyEqual, Allocator>::const_iterator::const_iterator(const iterator& other)
     : m_node(other.m_node), m_container(other.m_container)
 {
 }
@@ -1133,9 +1131,6 @@ unordered_set<Key, Hash, KeyEqual, Allocator>::unordered_set(size_type bucket_co
       m_node_allocator(),
       m_bucket_allocator()
 {
-    if (bucket_count == 0)
-        bucket_count = UNORDERED_SET_DEFAULT_BUCKET_COUNT;
-
     m_bucket_count = next_power_of_two(bucket_count);
     m_mask         = m_bucket_count - 1;
     m_table        = bucket_alloc_traits::allocate(m_bucket_allocator, m_bucket_count);
@@ -1146,7 +1141,7 @@ unordered_set<Key, Hash, KeyEqual, Allocator>::unordered_set(size_type bucket_co
 }
 
 template <typename Key, typename Hash, typename KeyEqual, typename Allocator>
-template <typename InputIt>
+template <typename InputIt, std::enable_if_t<!std::is_integral<InputIt>::value, int>>
 unordered_set<Key, Hash, KeyEqual, Allocator>::unordered_set(InputIt first, InputIt last,
                                                              size_type bucket_count)
     : m_table(nullptr),
@@ -1409,8 +1404,7 @@ unordered_set<Key, Hash, KeyEqual, Allocator>::insert(value_type&& value)
 
 template <typename Key, typename Hash, typename KeyEqual, typename Allocator>
 typename unordered_set<Key, Hash, KeyEqual, Allocator>::iterator
-unordered_set<Key, Hash, KeyEqual, Allocator>::insert(const_iterator    hint,
-                                                      const value_type& value)
+unordered_set<Key, Hash, KeyEqual, Allocator>::insert(const_iterator hint, const value_type& value)
 {
     (void)hint;
     return insert(value).first;
@@ -1425,7 +1419,7 @@ unordered_set<Key, Hash, KeyEqual, Allocator>::insert(const_iterator hint, value
 }
 
 template <typename Key, typename Hash, typename KeyEqual, typename Allocator>
-template <typename InputIt>
+template <typename InputIt, std::enable_if_t<!std::is_integral<InputIt>::value, int>>
 void unordered_set<Key, Hash, KeyEqual, Allocator>::insert(InputIt first, InputIt last)
 {
     for (InputIt it = first; last != it; it++)
@@ -1433,8 +1427,7 @@ void unordered_set<Key, Hash, KeyEqual, Allocator>::insert(InputIt first, InputI
 }
 
 template <typename Key, typename Hash, typename KeyEqual, typename Allocator>
-void unordered_set<Key, Hash, KeyEqual, Allocator>::insert(
-    std::initializer_list<value_type> ilist)
+void unordered_set<Key, Hash, KeyEqual, Allocator>::insert(std::initializer_list<value_type> ilist)
 {
     for (auto& value : ilist)
         insert(value);
