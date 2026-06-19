@@ -42,9 +42,8 @@
 
 #pragma once
 
-#include <typeinfo>
-
 #include <climits>
+#include <typeinfo>
 #include <utility>
 
 #include "../deque/deque.h"
